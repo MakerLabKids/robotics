@@ -7,7 +7,7 @@ are set aside for later; the 2WD robot is retired to archive/. See CLAUDE.md, "W
 the site shows".
 
 It is a static site with no build step. The source lives in this GitHub
-repository (acklenx/robotics); a Cloudflare Worker (static assets) deploys every push to main and
+repository (MakerLabKids/robotics); a Cloudflare Worker (static assets) deploys every push to main and
 serves it at https://robotics.makerlabkids.com (build command: none; output
 directory: /). `_headers` carries the Content-Security-Policy, which has no
 unsafe-eval: the Blocks page runs its programs in an interpreter for that reason.
