@@ -17,26 +17,30 @@ project, /srv/robotics on the host. Old notes and commit messages may still say
 
 ## Setting up a fresh container
 
-- Node deps for the tests: `cd scripts && npm install` (puppeteer + jsdom; puppeteer
-  downloads its own Chrome into ~/.cache/puppeteer). In the old container
-  scripts/node_modules was a symlink to the main repo's node_modules; it is not any more.
-- Firmware compile: `arduino-cli` in `~/.local/bin` with the `arduino:avr@1.8.8` core,
-  no extra libraries:
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh
-  ~/.local/bin/arduino-cli core update-index && ~/.local/bin/arduino-cli core install arduino:avr@1.8.8
-  ```
-  The simulator suites call `~/.local/bin/arduino-cli` by that exact path.
-- Simulator: `sudo apt-get update && sudo apt-get install -y simavr libsimavr-dev libelf-dev gcc`.
-  The suites build `temp/mecanum-sim/uno-sim` from `scripts/mecanum-sim/uno-sim.c` themselves.
-  (These apt packages are not in the image; ask the human to add them to the Containerfile.)
+**First thing on a new container, and again after every recreate:**
+`sh scripts/setup-container.sh`. It is safe to rerun and skips what is already there. It:
+- apt-installs simavr, libsimavr-dev, libelf-dev and gcc (these do not survive a recreate);
+- installs `~/.local/bin/arduino-cli` with the `arduino:avr@1.8.8` core (the home
+  folder survives a recreate, so this happens once);
+- runs `npm install` in scripts/ (puppeteer + jsdom) and downloads puppeteer's Chrome into ~/.cache/puppeteer;
+- turns on the 20 MB commit guard (`git config core.hooksPath .githooks`).
+
+Then check it worked: `cd scripts && npm run test:site && npm run check:shared`.
+Tell the user about the full simulator suite (`npm run test:mecanum`, several minutes)
+before running it.
+
+Other facts:
+- The simulator suites call `~/.local/bin/arduino-cli` by that exact path and build
+  `temp/mecanum-sim/uno-sim` from `scripts/mecanum-sim/uno-sim.c` themselves.
 - Python figure scripts (scripts/*.py) use only the standard library.
-- 20 MB guard: `git config core.hooksPath .githooks`.
-- Local server: `cd scripts && npm run serve` (port 8191, bind check: the project's
-  published ports decide what the human can open; use one of them).
+- Local server: `cd scripts && npm run serve` (port 8191; use one of the project's
+  published ports and bind 0.0.0.0 so the human can open it).
 - Push: `sh scripts/push.sh` (token `makerlabkids_robotics` in /workspace/.env, a
   fine-grained token for MakerLabKids/robotics with Contents read/write; never print it).
   Older tokens in the old container belonged to the acklenx account and get 403 here.
+- Your memory: if `temp/robotics-handoff/memory/` exists, copy its files into your
+  memory directory (they are the old container's robotics notes, paths already
+  rewritten), then tell the user it is done.
 
 Gitignored local-only files (not on GitHub; copied over by hand if at all): the kit's
 assembly video (`Assembly Tutorial Video.mp4`), the kit PDF (`Mecanum Wheels Robot Car Kit (1).pdf`),
