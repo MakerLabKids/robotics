@@ -9,3 +9,4 @@ mecanum/lafvin/
 mecanum/.cache/
 !resources/*.pdf
 __pycache__/
+.env

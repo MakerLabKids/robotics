@@ -13,3 +13,4 @@ build-site.py
 flyers/build-flyers.py
 scripts
 __pycache__
+NOTES.md

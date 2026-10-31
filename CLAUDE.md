@@ -5,6 +5,9 @@ that used to live under /abot/ on makerlabkids.com. The site root here is what
 /abot/ was there, so `mecanum/ir.html` is https://robotics.makerlabkids.com/mecanum/ir.html.
 Links to the main site are absolute (https://makerlabkids.com/...).
 
+**Read NOTES.md next**: where things stand, open items, the robot troubleshooting log,
+setting up a fresh container, and how the user likes to work. Keep it current.
+
 This repository is the source (since 2026-10-21): edit and commit here. The main
 repo's `_redirects` sends makerlabkids.com/abot/* here; there is no staging step any more.
 Large local-only files (the assembly video, the kit PDFs, mecanum/lafvin/) sit in this
@@ -144,4 +147,4 @@ The sandbox auto-allows simple single commands and prompts for compound shell pr
 
 - No co-author bylines in commits
 - No file over 20 MB in git: `git config core.hooksPath .githooks` once per clone
-- Push: `sh /workspace/temp/push-robotics.sh` (reads the token from /workspace/.env; never print it)
+- Push: `sh scripts/push.sh` (reads the token `makerlabkids_robotics` from /workspace/.env; never print it)
