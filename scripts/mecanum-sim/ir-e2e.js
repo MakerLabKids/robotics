@@ -36,6 +36,11 @@ function check(condition, message) { console.log((condition ? 'ok   ' : 'FAIL ')
 const KEY = { U: '18', D: '52', L: '08', R: '5A', O: '1C', '*': '16', '#': '0D', 0: '19', 1: '45', 2: '46', 3: '47', 4: '44', 5: '40', 6: '43', 7: '07', 8: '15', 9: '09' };
 const press = (keys, holdMs) => keys.split('').map((k) => 'ir ' + KEY[k] + (holdMs ? ' ' + holdMs : '')).join('\n');
 // A marker line so the output can be cut into sections
+// The light calibration: a shine on one LDR (A4 left, A5 right), then nothing
+// (both back to the room's 2 V); both at once; and the whole start sequence
+const shine = (ch, mv) => ['adc ' + ch + ' ' + mv, 'wait 300', 'adc ' + ch + ' 2000', 'wait 400'];
+const both = (left, right, stay) => ['adc 4 ' + left, 'adc 5 ' + right, 'wait ' + (stay ? 400 : 300)].concat(stay ? [] : ['adc 4 2000', 'adc 5 2000', 'wait 400']);
+const calibrate = (left, right, bothLeft, bothRight) => [].concat(shine(4, left), shine(5, right), shine(4, left), shine(5, right), both(bothLeft, bothRight), both(bothLeft, bothRight, true));
 let markers = 0;
 const mark = () => '[script: --- ' + (++markers) + ' ---]';
 
@@ -103,20 +108,34 @@ const script = [
   mark(),                            // 16 follow the light (# # 1): LDRs on A4 / A5, room light ~2 V
   'adc 4 2000', 'adc 5 2000', 'wait 100', 'send b\\n', 'wait 100',
   press('##1'), 'wait 800', 'pwm',
+  ...shine(4, 3500), ...shine(4, 3500), ...shine(5, 3500), ...shine(4, 3500), ...shine(5, 3500),   // (left twice: counted once)
+  ...both(3000, 3000), ...both(3000, 3000, true), 'pwm', 'dirs',
+  'adc 4 2000', 'adc 5 2000', 'wait 800', 'pwm',
   'adc 5 3500', 'wait 500', 'pwm',
   'adc 4 3500', 'wait 500', 'pwm', 'dirs',
   'sonar 150', 'wait 300', 'pwm', 'sonar -1',
   'adc 4 2000', 'adc 5 2000', 'wait 800', 'pwm',
   press('O'), 'wait 300',
   mark(),                            // 17 run from the light (# # 2); x stops it
-  press('##2'), 'wait 800', 'adc 4 3500', 'adc 5 3500', 'wait 500', 'pwm', 'dirs',
+  press('##2'), 'wait 800', press('O'), 'wait 300', 'adc 4 3500', 'adc 5 3500', 'wait 500', 'pwm', 'dirs',
   'send x\\n', 'wait 200', 'pwm', 'adc 4 2000', 'adc 5 2000',
   mark(),                            // 18 not a flash start: left left (same side), then three hits and too slow
   'wait 1500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300',
   'wait 5500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'wait 5500', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'wait 300', 'pwm',
   mark(),                            // 19 the flash start: left right left right in 5 s follows, like # # 1
   'wait 5500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300',
-  'wait 300', 'adc 5 3500', 'wait 500', 'pwm', press('O'), 'wait 300', 'adc 5 2000',
+  'wait 300', ...both(3000, 3000), ...both(3000, 3000, true), 'adc 4 2000', 'adc 5 3500', 'wait 500', 'pwm', press('O'), 'wait 300', 'adc 5 2000',
+  mark(),                            // 20 mismatched LDRs: the left rises 3x the right (the simulator's ADC tops out at 3.3 V); after the calibration "both" drives straight; OK keeps those gains
+  'wait 300', press('##1'), 'wait 800', ...calibrate(3250, 2400, 3000, 2300), 'pwm', 'dirs',
+  press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000', 'wait 300',
+  press('##1'), 'wait 800', press('O'), 'wait 300', 'adc 4 3000', 'adc 5 2300', 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000',
+  mark(),                            // 21 the other LDR lit with no "nothing" between: not counted; a sensor that barely changes: "no", start over; # stops
+  'wait 300', press('##1'), 'wait 800',
+  'adc 4 3500', 'wait 300', 'adc 5 3500', 'wait 300', 'adc 4 2000', 'wait 300', 'adc 5 2000', 'wait 400',
+  ...shine(5, 2170), ...shine(4, 3500), ...shine(5, 2170), 'wait 1500', 'pwm', press('#'), 'wait 300',
+  mark(),                            // 22 a brighter floor (no flashlight): it sees it at first, then the room's light catches up and it stops
+  'wait 300', press('##1'), 'wait 800', ...calibrate(3500, 3500, 3000, 3000),
+  'adc 4 2300', 'adc 5 2300', 'wait 500', 'pwm', 'wait 11000', 'pwm', press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000',
   mark(),
   '',
 ].join('\n');
@@ -235,19 +254,26 @@ s = sections[16];
 p = pwms(s);
 const nums = (line) => (line || '').replace(/[^-\d ]/g, ' ').trim().split(/\s+/).map(Number);
 check(/^B,0,(\d+),\1,\1$/m.test(s), 'b reads both LDRs (the same 2 V on each: straight ahead, brightest = each)');
-check(/light: follow \(left \d+, right \d+\)/.test(s) && /gesture: nod/.test(s), '# # 1 starts following with a nod and says the room light');
-check(p.length >= 5 && !moving(p[0]), 'no torch: it waits, motors off: ' + p[0]);
+check(/light: follow \(left \d+, right \d+\)/.test(s) && /light: calibrate, one sensor at a time/.test(s) && /gesture: wiggle/.test(s), '# # 1 says the room light and wiggles for the calibration');
+check(p.length >= 7 && !moving(p[0]), 'calibrating: motors off: ' + p[0]);
+const shines = (s.match(/light: shine \d \w+/g) || []).join(', ');
+check(shines === 'light: shine 1 left, light: shine 2 right, light: shine 3 left, light: shine 4 right', 'left, left again (not counted), right, left, right: four shines, alternating: ' + shines);
+check((s.match(/gesture: tick/g) || []).length === 5 && /light: now both/.test(s) && /light: both 1/.test(s), 'a tick for each of the four shines and the first "both"');
+check(/light: calibrated, gains left 100%, right 100%/.test(s) && /gesture: nod/.test(s), 'matched LDRs: gains 100% and 100%, a nod');
 const dirs = (text) => (text.match(/\[dirs [^\]]*\]/g) || []);   // [dirs FL FR RL RR]
-const [m1, m2, m3, m4] = nums(p[1]);   // M1 RL, M2 RR, M3 FR, M4 FL
-check(/light: sees it/.test(s) && moving(p[1]) && m4 > m3 && m1 > m2, 'torch on the right: it turns right (left wheels harder): ' + p[1]);
-check(moving(p[2]) && dirs(s)[0] === '[dirs + + + +]', 'torch on both: straight ahead, every wheel forward: ' + p[2] + ' ' + dirs(s)[0]);
-check(!nums(p[3]).some((n) => n > 0) || nums(p[3]).every((n) => n === 0), 'something 150 mm ahead: it stops going forward: ' + p[3]);
-check(/light: lost it/.test(s) && !moving(p[4]), 'torch gone: lost it, motors off: ' + p[4]);
+check(moving(p[1]) && dirs(s)[0] === '[dirs + + + +]', 'the second "both" starts it, straight ahead: ' + p[1] + ' ' + dirs(s)[0]);
+check(!moving(p[2]), 'flashlight off: it waits: ' + p[2]);
+const [m1, m2, m3, m4] = nums(p[3]);   // M1 RL, M2 RR, M3 FR, M4 FL
+check(/light: sees it/.test(s) && moving(p[3]) && m4 > m3 && m1 > m2, 'torch on the right: it turns right (left wheels harder): ' + p[3]);
+check(moving(p[4]) && dirs(s)[1] === '[dirs + + + +]', 'torch on both: straight ahead, every wheel forward: ' + p[4] + ' ' + dirs(s)[1]);
+check(!nums(p[5]).some((n) => n > 0) || nums(p[5]).every((n) => n === 0), 'something 150 mm ahead: it stops going forward: ' + p[5]);
+check(/light: lost it/.test(s) && !moving(p[6]), 'torch gone: lost it, motors off: ' + p[6]);
 check(/light: stop/.test(s), 'OK stops light mode');
 
 // 17 run from the light
 s = sections[17];
 p = pwms(s);
+check(/light: calibration skipped/.test(s), '# # 2 then OK: calibration skipped');
 check(/light: run away/.test(s) && p.length >= 2 && moving(p[0]) && dirs(s)[0] === '[dirs - - - -]', '# # 2 with a torch ahead: it backs away, every wheel backward: ' + p[0] + ' ' + dirs(s)[0]);
 check(/light: stop/.test(s) && !moving(p[1]), 'x stops it');
 
@@ -259,16 +285,41 @@ check(/light: flash 3/.test(s) && !/light: flash 4/.test(s) && !/light: follow/.
 // 19 the flash start
 s = sections[19];
 p = pwms(s);
-check(/light: flash 4/.test(s) && /light: follow/.test(s) && /gesture: nod/.test(s), 'left right left right within 5 s: nod, following');
+check(/light: flash 4/.test(s) && /light: follow/.test(s) && /light: calibrate, both sensors now/.test(s) && !/light: shine/.test(s), 'left right left right within 5 s: following, the side shines done, "both" next');
+check(/light: calibrated, gains left 100%, right 100%/.test(s) && /gesture: nod/.test(s), 'both, nothing, both: calibrated, nod');
 check(/light: sees it/.test(s) && p.length && moving(p[0]) && /light: stop/.test(s), 'then it follows the torch and OK stops it: ' + p[0]);
+
+// 20 mismatched LDRs
+s = sections[20];
+p = pwms(s);
+{
+  const g = s.match(/light: calibrated, gains left (\d+)%, right (\d+)%/);
+  check(g && +g[1] < 80 && +g[2] > 150, 'left 3x as sensitive: its gain goes down, the right one up: ' + (g ? g[0] : 'none'));
+  // straight = what matched LDRs with the same light on both drive (section 22; the drive's own trims make the sides differ a little)
+  const straight = pwms(sections[22])[0];
+  check(moving(p[0]) && dirs(s)[0] === '[dirs + + + +]' && p[0] === straight, 'the flashlight straight ahead: drives the same as matched LDRs do: ' + p[0] + ' vs ' + straight);
+  check(/light: calibration skipped, gains left (\d+)%/.test(s) && p[1] === straight, 'next start, OK skips: the same gains, still straight: ' + p[1]);
+}
+
+// 21 strict shines, a weak LDR
+s = sections[21];
+p = pwms(s);
+check((s.match(/light: shine \d \w+/g) || []).join(', ') === 'light: shine 1 left, light: shine 2 right, light: shine 3 left, light: shine 4 right', 'the right lit before the left went dark: not counted (counted on its own later): ' + (s.match(/light: shine \d \w+/g) || []).join(', '));
+check(/light: the right sensor barely changes \(\+\d+\): check it; start over/.test(s) && /gesture: no/.test(s) && (s.match(/light: calibrate, one sensor at a time/g) || []).length === 2, 'a right LDR that rises only ~40: "no", and the calibration starts over');
+check(p.length && !moving(p[0]) && /light: stop/.test(s), 'it never drove; # stops');
+
+// 22 a brighter floor
+s = sections[22];
+p = pwms(s);
+check(/light: calibrated/.test(s) && moving(p[0]) && p.length >= 2 && !moving(p[1]) && /light: lost it/.test(s), 'floor a bit brighter, no flashlight: drives at first, then the room catches up and it stops: ' + p[0] + ' then ' + p[1]);
 
 // The back LDR on A3 (USE_LIGHT_BACK 1): a light behind
 const backScript = [
   'irpin B 2', 'wait 2600',
   'adc 3 2000', 'adc 4 2000', 'adc 5 2000', 'wait 100', 'send b\\n', 'wait 200',
-  press('##1'), 'wait 800', 'adc 3 3500', 'wait 500', 'pwm', 'dirs',
+  press('##1'), 'wait 800', press('O'), 'wait 300', 'adc 3 3500', 'wait 500', 'pwm', 'dirs',
   'adc 4 2900', 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', 'adc 3 2000', 'adc 4 2000', 'wait 300',
-  press('##2'), 'wait 800', 'adc 3 3500', 'wait 500', 'pwm', 'dirs', 'send x\\n', 'wait 300', 'adc 3 2000',
+  press('##2'), 'wait 800', press('O'), 'wait 300', 'adc 3 3500', 'wait 500', 'pwm', 'dirs', 'send x\\n', 'wait 300', 'adc 3 2000',
   'adc 3 5000', 'wait 100', press('##1'), 'wait 800', 'send x\\n', 'wait 300',
   '',
 ].join('\n');
