@@ -82,6 +82,13 @@ OTHERS.forEach((other) => {
   compare('enum', 'M_ (motion number order)', motionEnum(robot), motionEnum(other.text));
 });
 
+// The version in each sketch's first comment line must match its FIRMWARE_VERSION
+[{ name: 'mecanum_holonomic.ino', text: robot }].concat(OTHERS).forEach((sketch) => {
+  const fw = (sketch.text.match(/#define FIRMWARE_VERSION "([^"]+)"/) || [])[1];
+  const header = (sketch.text.split('\n')[0].match(/\(v(\d+\.\d+\.\d+)/) || [])[1];
+  if (fw !== header) failures.push(sketch.name + ': first line says v' + header + ', FIRMWARE_VERSION is ' + fw);
+});
+
 if (failures.length) {
   console.log('mecanum_holonomic.ino and the other sketches disagree:\n  ' + failures.join('\n  '));
   process.exit(1);
