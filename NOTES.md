@@ -61,13 +61,15 @@ in resources/).
 - Pages: Programming Guide (mecanum/ir.html) 0.1.19, Remote Guide 0.1.19, Light bot 0.1.15,
   Wiring 0.1.10. Versions live in the page titles.
 - Hosting: Cloudflare Worker (static assets) deploys every push to main in about a minute.
-  **BROKEN since the repo transfer (checked 2026-11-01).** The live site still serves the
-  content of 618e9d7, the last commit before the transfer that touched a served file;
-  55abbf2 (the footer Source link, on every page) was still not live 11 minutes after the
-  push, and the responses carry no cf-cache-status or age, so it is the Worker serving old
-  assets, not a cache. Almost certainly Cloudflare's GitHub app is not installed on the
-  MakerLabKids org. Only the human can fix it: Cloudflare dashboard, Workers, the robotics
-  worker, Settings, Build. Until then nothing pushed here reaches the class.
+  It stopped after the repo transfer and was reconnected on 2026-11-01: for a while the
+  live site still served 618e9d7 (the last pre-transfer commit touching a served file),
+  then reconnecting the repo to the MakerLabKids org plus an empty commit (1a2f253) started
+  it again. Confirmed working: the live site is byte-identical to HEAD. If it ever stalls
+  again, the symptom is pushes that never appear with no cf-cache-status or age on the
+  responses (the Worker serving old assets, not a cache), and the fix is the human's:
+  Cloudflare dashboard, Workers, the robotics worker, Settings, Build.
+  Note when checking: /index.html 307s to /, so diff against `curl -sL .../` or curl
+  saves an empty redirect body and the page looks like it does not match.
 
 ## Open items
 
