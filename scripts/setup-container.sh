@@ -27,6 +27,20 @@ fi
 # one; fetch it explicitly (a no-op when ~/.cache/puppeteer already has it).
 (cd scripts && npx puppeteer browsers install chrome)
 
+# Chrome itself lives in ~/.cache/puppeteer and survives a recreate, but the system
+# libraries it links against do not, and then every browser suite fails with
+# "Failed to launch the browser process: Code: 127". Install them when Chrome will not
+# even print its version.
+CHROME=$(ls -d "$HOME"/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome 2>/dev/null | tail -1)
+if [ -n "$CHROME" ] && ! "$CHROME" --version >/dev/null 2>&1; then
+  sudo apt-get update
+  sudo apt-get install -y libglib2.0-0t64 libnss3 libnspr4 libatk1.0-0t64 \
+    libatk-bridge2.0-0t64 libdbus-1-3 libcups2t64 libxkbcommon0 libasound2t64 \
+    libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libxcomposite1 libxdamage1 \
+    libxfixes3 libxrandr2 libatspi2.0-0t64 libgbm1 libdrm2 libxext6 libx11-xcb1 \
+    libxcb-dri3-0 fonts-liberation
+fi
+
 git config core.hooksPath .githooks
 
 # A fresh container has no git identity, so the first commit fails. Set one if missing
