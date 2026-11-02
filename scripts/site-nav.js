@@ -89,7 +89,7 @@ function navFor(page) {
 
 const FOOT = '<!-- mlk-foot -->\n<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a>' +
   '<span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a>' +
-  '<span class="sep">&middot;</span><a href="/archive/">Archive</a></footer>\n<!-- /mlk-foot -->';
+  '<span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>\n<!-- /mlk-foot -->';
 const CSS = '<link rel="stylesheet" href="/css/nav.css">';
 
 function render(source, page) {
