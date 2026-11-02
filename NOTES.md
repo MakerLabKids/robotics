@@ -167,7 +167,22 @@ item for the guide, or a code fix).
    the shield's I2C header, because A4/A5 are SDA/SCL; a cold joint or loose connector
    (the number jumps when the wire is wiggled); too little swing (the teach-in needs a
    rise of 60, a flashlight should give 150 or more; GL5537 with 4.7k worked on the
-   user's robot). Also note the flash start can steal the bench: shining left, right,
+   **Bench procedure** (2026-11-02, bot on the test stand, USB in, serial monitor at
+   9600, wheels free to spin): the keys can be typed, so the remote is out of the loop -
+   `i##1;` is `# # 1` and `iO;` is OK. 1) `b` three times, room light, no flashlight:
+   both numbers mid-scale and within about 50 of each other. 2) cover the left LDR with a
+   hand, `b`: left must DROP and right must barely move; uncover; same for the right.
+   3) flashlight on the left from 10-20 cm, `b`: left up 150 or more, right up much less
+   (a shine has to beat the other side by 1.5x to count). Keep each flashlight test to
+   ONE side and pause 6 s between sides, or the alternating hits are the flash start.
+   4) `i##1;`: `light: # # - press 1 to follow, 2 to run away`, tick, `light: follow
+   (left N, right N)`, `light: calibrate, one sensor at a time`, wiggle. Then left,
+   nothing, right, nothing, left, nothing, right (`light: shine 1 left` ... 4 + a tick
+   each), `light: now both`, both, nothing, both (`light: both 1`, tick, then
+   `light: calibrated, gains left X%, right Y% (shine left +N ...)` and a nod).
+   5) it drives: `light: sees it`, wheels follow the light, `light: lost it` and stop.
+   The spans in the calibrated line are the numbers to report.
+   Also note the flash start can steal the bench: shining left, right,
    left, right to TEST the sensors is itself the no-remote start, and it drops the robot
    into the "both sensors now" half of the teach-in, so the side shines the user then
    does are ignored. Watch for "light: follow" appearing by itself.
