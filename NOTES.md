@@ -61,9 +61,13 @@ in resources/).
 - Pages: Programming Guide (mecanum/ir.html) 0.1.19, Remote Guide 0.1.19, Light bot 0.1.15,
   Wiring 0.1.10. Versions live in the page titles.
 - Hosting: Cloudflare Worker (static assets) deploys every push to main in about a minute.
-  After the repo transfer, check once that a push still deploys (Cloudflare's GitHub app
-  must be installed on the MakerLabKids org). If it does not, tell the human: the fix
-  is in the Cloudflare dashboard, Workers, the robotics worker, Settings, Build.
+  **BROKEN since the repo transfer (checked 2026-11-01).** The live site still serves the
+  content of 618e9d7, the last commit before the transfer that touched a served file;
+  55abbf2 (the footer Source link, on every page) was still not live 11 minutes after the
+  push, and the responses carry no cf-cache-status or age, so it is the Worker serving old
+  assets, not a cache. Almost certainly Cloudflare's GitHub app is not installed on the
+  MakerLabKids org. Only the human can fix it: Cloudflare dashboard, Workers, the robotics
+  worker, Settings, Build. Until then nothing pushed here reaches the class.
 
 ## Open items
 
@@ -90,7 +94,10 @@ Site and tests:
    inside Blockly. Pre-existing.
 9. Pre-existing simulator failures, same on code from before the move: sticks (expects a
    161.8 mm/s start and 0.45 strafe), sensors (ADC layout), rename (answer timeout). Do not
-   chase them as new regressions; fix them when asked.
+   chase them as new regressions; fix them when asked. Confirmed again 2026-11-01 on a
+   fresh container: `npm run test:mecanum` is 6 of 12 failed, and the six are exactly
+   these three in both usb and bt. The other six (calpage usb/bt, program usb/bt, blocks
+   usb, ir usb) pass, so that is what a healthy run looks like right now.
 10. mecanum/README.md still points at /arduinobot/remote.html, which lives on
     makerlabkids.com, not here.
 11. The older 2WD pages under arduinobot/ are still in the makerlabkids repo (not this one).
