@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.81 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.82 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -78,7 +78,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.81"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.82"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -1298,7 +1298,7 @@ void cancelProgramming() {
   remoteMode = IDLE;
   draftCount = 0;
   stars = 0;
-  out.println(F("program: cancelled"));
+  out.println(F("program: canceled"));
   gestureNo();
 }
 
@@ -1416,7 +1416,7 @@ void calCancel() {
   // The saved numbers come back (or the code's, if none are saved)
   memcpy_P(motion, MOTION_DEFAULT_VALUES, sizeof(motion));
   loadMotion();
-  out.println(F("calibrate: cancelled"));
+  out.println(F("calibrate: canceled"));
   gestureNo();
   leaveCalibration();
 }
@@ -1893,6 +1893,12 @@ void handleKeyIdle(char key) {
     pounds++;
     starAt = millis();
     if (pounds >= 3) enterCalibration();
+    // Two #: a tick says both landed and it is waiting (IR_STAR_TIMEOUT_MS) for
+    // the 1 or 2. Without it a lost # looks like a window that ran out.
+    else if (pounds == 2) {
+      out.println(F("light: # # - press 1 to follow, 2 to run away"));
+      gestureTick();
+    }
     return;
   }
   pounds = 0;

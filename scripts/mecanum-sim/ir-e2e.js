@@ -194,7 +194,7 @@ check(/run: slot 4 \(built-in demo\)/.test(s) && /step 1: forward 50 cm/.test(s)
 // 7 instructor commands
 s = sections[7];
 check(/program: slot 5 = 3 steps/.test(s) && /^P,5,f20,t-90,b20$/m.test(s), 'p5=f20 t-90 b20 stored and listed');
-check(/program: listening/.test(s) && /ir: up/.test(s) && /program: cancelled/.test(s) && /gesture: no/.test(s), 'i***; iU5; i#; types keys: program mode then cancelled');
+check(/program: listening/.test(s) && /ir: up/.test(s) && /program: canceled/.test(s) && /gesture: no/.test(s), 'i***; iU5; i#; types keys: program mode then cancelled');
 check(/run: slot 5/.test(s) && /step 2: turn left 90 deg/.test(s) && /run: done/.test(s), 'i*5; runs slot 5 (turn left 90 included)');
 
 // 8 the sonar stops a running program (OK = try the draft)
@@ -203,7 +203,7 @@ p = pwms(s);
 check(/run: the new program/.test(s) && /step 1: forward 99 cm/.test(s), 'OK after * * * tries the new program');
 check(/stop: something ahead/.test(s) && /run: stopped/.test(s), 'something 100 mm ahead stops the forward step');
 check(p.length && !moving(p[0]), 'motors off after the sonar stop');
-check(/program: cancelled/.test(s), '# afterwards leaves program mode');
+check(/program: canceled/.test(s), '# afterwards leaves program mode');
 
 // 9 timeouts and #
 s = sections[9];
@@ -231,7 +231,7 @@ check(/stop: something ahead/.test(s) && moving(p[2]), 'v with something 150 mm 
 
 // 11 cancel
 s = sections[12];
-check(/calibrate: cancelled/.test(s) && /gesture: no/.test(s) && /^K,cal,84\.000,85\.000,301\.500,432\.000,.*,e$/m.test(s), '# in calibration: cancelled, saved numbers back');
+check(/calibrate: canceled/.test(s) && /gesture: no/.test(s) && /^K,cal,84\.000,85\.000,301\.500,432\.000,.*,e$/m.test(s), '# in calibration: cancelled, saved numbers back');
 
 // 13 diagonals / pause / repeat
 s = sections[13];
@@ -258,7 +258,8 @@ check(/light: follow \(left \d+, right \d+\)/.test(s) && /light: calibrate, one 
 check(p.length >= 7 && !moving(p[0]), 'calibrating: motors off: ' + p[0]);
 const shines = (s.match(/light: shine \d \w+/g) || []).join(', ');
 check(shines === 'light: shine 1 left, light: shine 2 right, light: shine 3 left, light: shine 4 right', 'left, left again (not counted), right, left, right: four shines, alternating: ' + shines);
-check((s.match(/gesture: tick/g) || []).length === 5 && /light: now both/.test(s) && /light: both 1/.test(s), 'a tick for each of the four shines and the first "both"');
+check(/light: # # - press 1 to follow, 2 to run away/.test(s), '# # ticks and says 1 follows, 2 runs away (so a lost # is not mistaken for a window that ran out)');
+check((s.match(/gesture: tick/g) || []).length === 6 && /light: now both/.test(s) && /light: both 1/.test(s), 'a tick for # #, for each of the four shines and for the first "both"');
 check(/light: calibrated, gains left 100%, right 100%/.test(s) && /gesture: nod/.test(s), 'matched LDRs: gains 100% and 100%, a nod');
 const dirs = (text) => (text.match(/\[dirs [^\]]*\]/g) || []);   // [dirs FL FR RL RR]
 check(moving(p[1]) && dirs(s)[0] === '[dirs + + + +]', 'the second "both" starts it, straight ahead: ' + p[1] + ' ' + dirs(s)[0]);

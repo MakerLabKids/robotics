@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Programming Guide 0.1.19 - Maker Lab Kids</title>
+<title>Programming Guide 0.1.20 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -150,6 +150,14 @@
   .slots div { padding: 3px 0; border-bottom: 1px solid #262c34; }
   .slots .n { color: var(--orange); display: inline-block; width: 2.2em; }
   .slots .empty { color: var(--ink-dim); }
+  .lightwatch { margin-top: 10px; font-family: var(--mono); font-size: 14px; }
+  .lightwatch .row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .lightwatch .who { width: 4.2em; color: var(--orange); }
+  .lightwatch .bar { flex: 1 1 60px; height: 14px; background: #11151a; border: 1px solid #3a434e; border-radius: 3px; overflow: hidden; }
+  .lightwatch .bar i { display: block; height: 100%; background: var(--yellow); width: 0; }
+  .lightwatch .now { width: 3.4em; text-align: right; color: var(--ink); }
+  .lightwatch .span { width: 8.5em; text-align: right; color: var(--ink-dim); }
+  .lightwatch .hint { color: var(--ink-dim); font-family: inherit; font-size: 14px; padding-top: 6px; }
   .heard { font-family: var(--mono); font-size: 22px; min-height: 1.4em; color: var(--yellow); letter-spacing: 0.08em; word-break: break-all; }
   .state { font-size: 15px; color: var(--ink-dim); min-height: 1.4em; }
   .more { margin-top: 10px; }
@@ -353,7 +361,7 @@
       <h3 style="margin-top:0">Set up a robot</h3>
       <p>Flash <a href="../ir/ir.ino" download><b>ir.ino</b></a> (Arduino IDE, Uno). It drives on the same motion numbers as mecanum_holonomic.ino, including a set saved by the <a href="calibration.html">Calibrate / Tune</a> page.</p>
       <p><b>IR receiver</b> (3 pins: OUT, VCC, GND): OUT to <b>D10</b>, the signal pin of the shield's <b>SER1</b> servo header, 5 V and GND beside it. No soldering. Any other pin works too: change <code>IR_RECEIVER_PIN</code> at the top of the sketch (the robot says which pin it uses when it boots).</p>
-      <p><b>Light sensors</b> (for # # 1 / # # 2): two LDRs, each with a fixed resistor: 5V - LDR - pin - resistor - GND. Left front corner to <b>A4</b>, right front corner to <b>A5</b>, each looking 45 degrees out. Unplug a gyro from A4/A5 first if there is one. Diagram and how to pick the resistor: <a href="wiring.html">Wiring</a>. Check them with <code>b</code>: cover one and its number drops. <b>Optional back LDR</b> on <b>A3</b>, middle of the back, looking straight back, wired the same way: the robot finds it by itself at the start of each light mode (<code>light: back sensor found</code>).</p>
+      <p><b>Light sensors</b> (for # # 1 / # # 2): two LDRs, each with a fixed resistor: 5V - LDR - pin - resistor - GND. Left front corner to <b>A4</b>, right front corner to <b>A5</b>, each looking 45 degrees out. Unplug a gyro from A4/A5 first if there is one. Diagram and how to pick the resistor: <a href="wiring.html">Wiring</a>. Check them with <b>Watch the light sensors</b> below (or a single <code>b</code>): cover one and its number drops. If it rises instead, that LDR and its resistor are swapped. <b>A4 and A5 are also the I2C pins</b> (SDA/SCL), so an IMU left plugged into the shield's I2C header fights the two dividers: unplug it. <b>Optional back LDR</b> on <b>A3</b>, middle of the back, looking straight back, wired the same way: the robot finds it by itself at the start of each light mode (<code>light: back sensor found</code>).</p>
       <p><b>Sonar</b> (HC-SR04): <b>off</b> as shipped since 0.10.79, because A3 (its Trig) is the back LDR's pin; the robot says <code>no sonar</code> when it boots. To bring it back, set <code>USE_LIGHT_BACK</code> to 0 at the top of the sketch and plug it in where the kit puts it: trig A3, echo A2. Then under 25 cm ahead = stop; <code>SONAR_STOP_MM</code> sets the distance, <code>SONAR_STOPS_EVERYTHING</code> makes it stop every move.</p>
       <p>The remote is the kit's 17-key one (arrows, OK, 0-9, * #). Another remote prints <code>ir: key 0x.. not mapped</code> in the console below; its codes go in <code>IR_KEYS</code>.</p>
     </div>
@@ -387,8 +395,19 @@
       <div class="tools">
         <button class="stop" id="stopButton" disabled>Stop (x)</button>
         <button id="sonarButton" disabled>Sonar reading (u)</button>
+        <button id="lightWatchButton" disabled>Watch the light sensors</button>
         <button id="slotsButton" disabled>List the slots (p?)</button>
         <button id="clearHeardButton">Clear</button>
+      </div>
+      <div class="lightwatch" id="lightWatch" hidden>
+        <div class="row"><span class="who">left</span><span class="bar"><i id="lwBarLeft"></i></span><span class="now" id="lwNowLeft">-</span><span class="span" id="lwSpanLeft"></span></div>
+        <div class="row"><span class="who">right</span><span class="bar"><i id="lwBarRight"></i></span><span class="now" id="lwNowRight">-</span><span class="span" id="lwSpanRight"></span></div>
+        <div class="row" id="lwRowBack" hidden><span class="who">back</span><span class="bar"><i id="lwBarBack"></i></span><span class="now" id="lwNowBack">-</span><span class="span" id="lwSpanBack"></span></div>
+        <div class="hint">Readings 0-1000, brighter = higher, with the lowest and highest seen since you started watching.
+          <b>Cover a sensor with your hand: its number must drop.</b> If it rises instead, that LDR and its resistor are
+          swapped (it should be 5V - LDR - pin - resistor - GND). A number that jumps on its own, or jumps when you
+          wiggle the wire, is a bad joint or connector. A flashlight should lift a sensor by 150 or more; the teach-in
+          needs at least 60. Left and right should read within about 50 of each other in plain room light.</div>
       </div>
       <div class="slots" id="slots"></div>
       <details class="more"><summary>Commands you can type to the robot</summary>
@@ -476,7 +495,7 @@ function sendCommand(text, quiet) {
   }).catch(function (error) { logLine("write failed: " + error.message); });
 }
 
-function sendAndAwait(text, pattern, timeoutMs) {
+function sendAndAwait(text, pattern, timeoutMs, quiet) {
   return new Promise(function (resolve, reject) {
     var waiter = { pattern: pattern, resolve: resolve };
     waiter.timer = setTimeout(function () {
@@ -485,13 +504,13 @@ function sendAndAwait(text, pattern, timeoutMs) {
     }, timeoutMs);
     replyWaiters.push(waiter);
     if (text) {
-      sendCommand(text);
+      sendCommand(text, quiet);
     }
   });
 }
 // A command over Bluetooth can be lost while the robot talks: try twice.
-function ask(text, pattern, timeoutMs) {
-  return sendAndAwait(text, pattern, timeoutMs).catch(function () { return sendAndAwait(text, pattern, timeoutMs); });
+function ask(text, pattern, timeoutMs, quiet) {
+  return sendAndAwait(text, pattern, timeoutMs, quiet).catch(function () { return sendAndAwait(text, pattern, timeoutMs, quiet); });
 }
 
 function handleIncomingBytes(bytes) {
@@ -651,8 +670,67 @@ var robot = freshRobot();
 var heard = document.getElementById("heard");
 var KEY_GLYPH = { up: "▲", down: "▼", left: "◀", right: "▶", ok: "OK" };
 
+// ---------------------------------------------------------------------------
+// Watching the light sensors: ask b over and over and show each reading with
+// the range it has covered, for checking an LDR's wiring on the bench.
+// ---------------------------------------------------------------------------
+var lightWatch = { on: false, low: {}, high: {} };
+var LIGHT_WATCH_SIDES = ["Left", "Right", "Back"];
+
+function startLightWatch() {
+  lightWatch.on = true;
+  lightWatch.low = {};
+  lightWatch.high = {};
+  LIGHT_WATCH_SIDES.forEach(function (side) {
+    document.getElementById("lwNow" + side).textContent = "-";
+    document.getElementById("lwSpan" + side).textContent = "";
+    document.getElementById("lwBar" + side).style.width = "0";
+  });
+  document.getElementById("lightWatch").hidden = false;
+  document.getElementById("lightWatchButton").textContent = "Stop watching";
+  lightWatchTick();
+}
+
+function stopLightWatch() {
+  lightWatch.on = false;
+  document.getElementById("lightWatchButton").textContent = "Watch the light sensors";
+}
+
+function lightWatchTick() {
+  if (!lightWatch.on || !link) {
+    stopLightWatch();
+    return;
+  }
+  ask("b\n", /^B,/, 1500, true).catch(function () {
+    robot.state = "The robot did not answer b (is it ir.ino, and is it still connected?)";
+    render();
+  }).then(function () {
+    if (lightWatch.on) {
+      setTimeout(lightWatchTick, 150);
+    }
+  });
+}
+
+function showLightWatch(left, right, back) {
+  document.getElementById("lwRowBack").hidden = back === undefined;
+  [left, right, back].forEach(function (text, index) {
+    if (text === undefined) {
+      return;
+    }
+    var side = LIGHT_WATCH_SIDES[index];
+    var value = parseInt(text, 10);
+    lightWatch.low[side] = Math.min(value, lightWatch.low[side] === undefined ? value : lightWatch.low[side]);
+    lightWatch.high[side] = Math.max(value, lightWatch.high[side] === undefined ? value : lightWatch.high[side]);
+    document.getElementById("lwNow" + side).textContent = value;
+    document.getElementById("lwBar" + side).style.width = Math.min(value / 10, 100) + "%";
+    document.getElementById("lwSpan" + side).textContent = lightWatch.low[side] + " - " + lightWatch.high[side];
+  });
+}
+
 function handleRobotLine(line) {
-  logLine("< " + line);
+  if (!(lightWatch.on && /^B,/.test(line))) {
+    logLine("< " + line);      // the light watch would fill the log with its own readings
+  }
   replyWaiters = replyWaiters.filter(function (waiter) {
     if (!waiter.pattern.test(line)) {
       return true;
@@ -679,7 +757,11 @@ function handleRobotLine(line) {
   } else if ((match = /^P,(\d)(.*)$/.exec(line))) {
     robot.slots[match[1]] = match[2].replace(/^,/, "");
   } else if ((match = /^B,-?\d+,\d+,(\d+),(\d+)(?:,(\d+))?/.exec(line))) {
-    robot.state = "Light: left " + match[1] + ", right " + match[2] + (match[3] ? ", back " + match[3] : "") + " (cover one: it should drop)";
+    if (lightWatch.on) {
+      showLightWatch(match[1], match[2], match[3]);
+    } else {
+      robot.state = "Light: left " + match[1] + ", right " + match[2] + (match[3] ? ", back " + match[3] : "") + " (cover one: it should drop)";
+    }
   } else if ((match = /^U,(-?\d+)/.exec(line))) {
     robot.state = match[1] < 0 ? "Sonar: nothing within 4 m" : "Sonar: " + match[1] + " mm" + (match[1] < 250 ? " - too close, it will not go forward" : "");
   }
@@ -716,7 +798,10 @@ function render() {
     (robot.pin ? " - the receiver is read on pin D" + escapeHtml(robot.pin) : "") + ". Keys the robot hears show below; tap the remote drawing to press keys from here.</div>" :
     '<div class="headline">Not ir.ino</div><div>This robot runs ' + escapeHtml(robot.role || "?") + ". Flash ir.ino and connect again.</div>";
   document.getElementById("robotState").textContent = robot.state;
-  ["stopButton", "sonarButton", "slotsButton", "sendButton"].forEach(function (id) { document.getElementById(id).disabled = !isIr; });
+  ["stopButton", "sonarButton", "slotsButton", "sendButton", "lightWatchButton"].forEach(function (id) { document.getElementById(id).disabled = !isIr; });
+  if (lightWatch.on && !isIr) {
+    stopLightWatch();
+  }
   document.getElementById("remoteDrawing").className = "remote" + (isIr ? " live" : "");
   var slots = document.getElementById("slots");
   var keys = Object.keys(robot.slots).sort();
@@ -754,6 +839,9 @@ document.getElementById("connectUsbButton").addEventListener("click", function (
 });
 document.getElementById("stopButton").addEventListener("click", function () { sendCommand("x\n"); });
 document.getElementById("sonarButton").addEventListener("click", function () { sendCommand("u\n"); });
+document.getElementById("lightWatchButton").addEventListener("click", function () {
+  if (lightWatch.on) { stopLightWatch(); } else { startLightWatch(); }
+});
 document.getElementById("slotsButton").addEventListener("click", function () { robot.slots = {}; sendCommand("p?;\n"); });
 document.getElementById("clearHeardButton").addEventListener("click", function () { heard.textContent = ""; robot.state = ""; render(); });
 document.getElementById("sendButton").addEventListener("click", sendTyped);

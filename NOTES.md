@@ -56,9 +56,10 @@ in resources/).
 
 ## Where things stand
 
-- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.81
-  and share one motion engine (`npm run check:shared`). ir.ino is what the class runs.
-- Pages: Programming Guide (mecanum/ir.html) 0.1.19, Remote Guide 0.1.19, Light bot 0.1.15,
+- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.82
+  and share one motion engine (`npm run check:shared`, which checks FIRMWARE_VERSION too:
+  bump all three together). ir.ino is what the class runs.
+- Pages: Programming Guide (mecanum/ir.html) 0.1.20, Remote Guide 0.1.19, Light bot 0.1.15,
   Wiring 0.1.10. Versions live in the page titles.
 - Hosting: Cloudflare Worker (static assets) deploys every push to main in about a minute.
   It stopped after the repo transfer and was reconnected on 2026-11-01: for a while the
@@ -74,35 +75,40 @@ in resources/).
 ## Open items
 
 Robots and firmware:
-1. ir.ino 0.10.81 flashlight calibration for the light modes (`# # 1` / `# # 2`) is
-   sim-tested only. The user still has to flash it and try it on the class robots. Ask
-   how it went before building on it.
+1. The flashlight calibration for the light modes (`# # 1` / `# # 2`, ir.ino 0.10.81)
+   worked well on the first real bot (the user, 2026-11-02). On a second bot the user
+   rewired connector, LDR and resistor and it still only "sometimes sees the light", and
+   they could not get cleanly through the calibration. Open: whether that bot's LDRs are
+   wired and soldered right, so 0.10.82 ships the tools to tell: a live light-sensor
+   readout on the instructor console of mecanum/ir.html ("Watch the light sensors": it
+   asks `b` over and over and shows left, right and back with the range each has covered)
+   and a tick plus "light: # # - press 1 to follow, 2 to run away" when `# #` is armed,
+   so a dropped `#` is not mistaken for the 5 s window running out. Ask what the readings
+   showed before changing any light code.
 2. Troubleshooting guide page: wanted, not written. Collect entries in the log below as
    problems come up; build the page when the user asks.
 3. Crab walking (strafe) is very poor; the user wants it fixed, ideally inside the remote
    calibration `# # #` of ir.ino.
-4. ir.ino still prints British "program: cancelled" and "calibrate: cancelled": change to
-   "canceled" at the next firmware change (bump the build number).
-5. mecanum_holonomic.ino is nearly out of flash (about 32.1 of 32.26 KB). It ships with
+4. mecanum_holonomic.ino is nearly out of flash (about 32.1 of 32.26 KB). It ships with
    USE_TOF 0 and USE_SONAR 0, so the Blocks page's laser/sonar blocks fault on it (clean
    message, no hang). IMU tilt/accel blocks are simulator-only.
-6. Never confirmed on real hardware: HC-06 rename with rename.ino (HC-05 rename works),
+5. Never confirmed on real hardware: HC-06 rename with rename.ino (HC-05 rename works),
    the mecanum_holonomic Tune Save surviving a power cycle.
 
 Site and tests:
-7. `npm run check:contrast` flags 17 low-contrast styles on ir.html, remote-guide.html and
+6. `npm run check:contrast` flags 17 low-contrast styles on ir.html, remote-guide.html and
    challenges.html (pre-existing).
-8. `npm run test:workshop` (the archived 2WD app) crashes in jsdom: "fetch is not defined"
+7. `npm run test:workshop` (the archived 2WD app) crashes in jsdom: "fetch is not defined"
    inside Blockly. Pre-existing.
-9. Pre-existing simulator failures, same on code from before the move: sticks (expects a
+8. Pre-existing simulator failures, same on code from before the move: sticks (expects a
    161.8 mm/s start and 0.45 strafe), sensors (ADC layout), rename (answer timeout). Do not
    chase them as new regressions; fix them when asked. Confirmed again 2026-11-01 on a
    fresh container: `npm run test:mecanum` is 6 of 12 failed, and the six are exactly
    these three in both usb and bt. The other six (calpage usb/bt, program usb/bt, blocks
    usb, ir usb) pass, so that is what a healthy run looks like right now.
-10. mecanum/README.md still points at /arduinobot/remote.html, which lives on
-    makerlabkids.com, not here.
-11. The older 2WD pages under arduinobot/ are still in the makerlabkids repo (not this one).
+9. mecanum/README.md still points at /arduinobot/remote.html, which lives on
+   makerlabkids.com, not here.
+10. The older 2WD pages under arduinobot/ are still in the makerlabkids repo (not this one).
 
 ## Robot troubleshooting log
 
@@ -121,6 +127,18 @@ item for the guide, or a code fix).
    (flashlight calibration, per-LDR gains, room catch-up). Guide items: the two new rows
    on the Light bot page (never twitches = needs "nothing" between shines; slow "no"
    shake = weak sensor).
+3. 2026-11-02, a second light bot (0.10.81/0.10.82): "sometimes sees the light", never
+   cleanly through the teach-in, after rewiring connector, LDR and resistor. Not yet
+   diagnosed. Suspects, in the order worth checking: a swapped LDR and resistor (the
+   divider is 5V - LDR - pin - resistor - GND, so covering the LDR must make the number
+   DROP; swapped, it rises and nothing ever counts as a shine); an IMU still plugged into
+   the shield's I2C header, because A4/A5 are SDA/SCL; a cold joint or loose connector
+   (the number jumps when the wire is wiggled); too little swing (the teach-in needs a
+   rise of 60, a flashlight should give 150 or more; GL5537 with 4.7k worked on the
+   user's robot). Also note the flash start can steal the bench: shining left, right,
+   left, right to TEST the sensors is itself the no-remote start, and it drops the robot
+   into the "both sensors now" half of the teach-in, so the side shines the user then
+   does are ignored. Watch for "light: follow" appearing by itself.
 
 ## How the user works (learned the hard way)
 
