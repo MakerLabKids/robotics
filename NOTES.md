@@ -33,8 +33,8 @@ Other facts:
 - The simulator suites call `~/.local/bin/arduino-cli` by that exact path and build
   `temp/mecanum-sim/uno-sim` from `scripts/mecanum-sim/uno-sim.c` themselves.
 - Python figure scripts (scripts/*.py) use only the standard library.
-- Local server: `cd scripts && npm run serve` (port 8191; use one of the project's
-  published ports and bind 0.0.0.0 so the human can open it).
+- Local server: `cd scripts && npm run serve` (port 8220, one of this project's published
+  ports 8220-8229, bound 0.0.0.0, so the human opens http://127.0.0.1:8220/).
 - Push: `sh scripts/push.sh` (token `makerlabkids_robotics` in /workspace/.env, a
   fine-grained token for MakerLabKids/robotics with Contents read/write; never print it).
   Older tokens in the old container belonged to the acklenx account and get 403 here.

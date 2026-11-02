@@ -1,10 +1,10 @@
 // Local preview that serves the site the way the Worker does: /x serves x.html,
-// a folder serves its index.html. Run: node serve.js [port]   (default 8191)
+// a folder serves its index.html. Run: node serve.js [port]   (default 8220)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const root = path.resolve(__dirname, "..");
-const port = parseInt(process.argv[2] || "8191", 10);
+const port = parseInt(process.argv[2] || "8220", 10);
 const types = { ".html": "text/html", ".css": "text/css", ".js": "application/javascript", ".png": "image/png",
   ".svg": "image/svg+xml", ".json": "application/json", ".pdf": "application/pdf", ".ino": "text/plain",
   ".mp3": "audio/mpeg", ".gif": "image/gif", ".ico": "image/x-icon", ".cur": "image/x-icon", ".stl": "model/stl" };
