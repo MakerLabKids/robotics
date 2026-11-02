@@ -34,6 +34,38 @@ Then check it worked: `cd scripts && npm run test:site && npm run check:shared`.
 Tell the user about the full simulator suite (`npm run test:mecanum`, several minutes)
 before running it.
 
+## Talking to a real robot over USB
+
+**Not enabled for this container as of 2026-11-02.** There is no `/dev/host`, no
+`/dev/bus/usb` and no `/dev/ttyUSB*` in here, and `arduino-cli board list` finds nothing,
+so a plugged-in robot is invisible: everything has to go through the human (flash, then
+read the instructor console on mecanum/ir.html in their own browser).
+
+The human's other projects (the picos, the wormhole container) do have it, so it is a
+conf change plus a recreate, not new machinery. What those containers get:
+
+- the host's `/dev` mounted at `/dev/host`, and `/dev/bus/usb` passed through;
+- boards then show up as `/dev/host/ttyUSB*` (CH340 clones, 1a86:7523) or
+  `/dev/host/ttyACM*` (genuine Uno). **Always glob, never hardcode the port.**
+
+Check it with `python3 -c "open('/dev/host/ttyUSB0','rb+')"`. Permission denied means the
+host's udev rule or device group, which is the human's to fix: tell them, do not work
+around it.
+
+Ready for the day it is enabled (both in the home volume, so they survive a recreate):
+- `~/.venvs/bot/bin/python` has pyserial 3.5;
+- `arduino-cli` with `arduino:avr@1.8.8`, so `arduino-cli upload -p /dev/host/ttyUSB0
+  --fqbn arduino:avr:uno ir/ir.ino` is the flash step;
+- `scripts/bot-console.py` is the bench version of the instructor console: `--list`,
+  `-c '?' -c 'k?;'`, `--listen <s>`, and `--light <s>` for the repeating light reading
+  with each sensor's range (the same check as "Watch the light sensors" on the page).
+  Globs the port, 9600 baud, every sketch here. **Never run against a real board yet.**
+  Opening the port resets the board, so the boot banner comes first.
+
+Driving a real robot from in here needs care: `b`, `?`, `k?;` and `p?;` only read, but
+`i##1;`, `m...` and `v...` move it. Ask before sending those, and ask whether the robot
+is clear of the table edge.
+
 Other facts:
 - The simulator suites call `~/.local/bin/arduino-cli` by that exact path and build
   `temp/mecanum-sim/uno-sim` from `scripts/mecanum-sim/uno-sim.c` themselves.
