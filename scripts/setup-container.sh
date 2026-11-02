@@ -28,4 +28,9 @@ fi
 (cd scripts && npx puppeteer browsers install chrome)
 
 git config core.hooksPath .githooks
+
+# A fresh container has no git identity, so the first commit fails. Set one if missing
+# (the repo's commits are the model's name with the user's address).
+git config user.email >/dev/null || git config user.email "claude.com@qlamail.com"
+git config user.name >/dev/null || git config user.name "Claude"
 echo "setup done"

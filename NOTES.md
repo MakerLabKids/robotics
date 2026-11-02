@@ -23,7 +23,9 @@ project, /srv/robotics on the host. Old notes and commit messages may still say
 - installs `~/.local/bin/arduino-cli` with the `arduino:avr@1.8.8` core (the home
   folder survives a recreate, so this happens once);
 - runs `npm install` in scripts/ (puppeteer + jsdom) and downloads puppeteer's Chrome into ~/.cache/puppeteer;
-- turns on the 20 MB commit guard (`git config core.hooksPath .githooks`).
+- turns on the 20 MB commit guard (`git config core.hooksPath .githooks`);
+- sets a git identity if the clone has none (a fresh container has none and the first
+  commit fails). It sets the name to "Claude": change it to the model you are.
 
 Then check it worked: `cd scripts && npm run test:site && npm run check:shared`.
 Tell the user about the full simulator suite (`npm run test:mecanum`, several minutes)
