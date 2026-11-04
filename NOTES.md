@@ -163,7 +163,7 @@ Wiring and firmware must match.
 | Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
 | Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
 | Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
-| Shep's bot | ir.ino (version not noted) | not noted | the light delta is too small: a flashlight on one LDR does not reach the flash start's 120, the teach-in is hard, and light spread over both sensors stays under "sees it" (40), so it never drives forward (2026-11-04) | the three `b` readings (room, covered, flashlight); see log entry 6 |
+| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | meter the resistor (4.7k?) and the LDR (10-50 k in room light?); the odd part gets replaced, or the resistor goes up to 47k; see log entry 6 |
 | Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
 
 ## Robot troubleshooting log
@@ -330,6 +330,21 @@ item for the guide, or a code fix).
    mean "a share of this bot's own flashlight"; the flash start (before any teach-in)
    would still need the raw 120, so a weak bot starts from the remote. Not built;
    needs the `b` numbers from Shep's bot first.
+   The `b` numbers (the user, 2026-11-04, bot on the bench looking at a blue soldering
+   mat): room `B,45,3,0,3`; left, medium flashlight `B,-23,13,13,5`; left, bright
+   `B,-40,39,39,3`; left, flashlight straight into the sensor from 3 inches (not a
+   real-life condition) `B,-42,63,63,3`. So it is case (b), squashed at the BOTTOM, not
+   the top: the pin sits within 3 percent of 5V, which with a 4.7k resistor to 5V means
+   the LDR is about 1.5 M in room light and still about 70 k with a flashlight 3 inches
+   away. A GL5537 is 10-50 k in room light and under 1 k under a flashlight, so this is
+   either a much higher-resistance LDR from the pack (GL5549 / GL5539 type) or a
+   resistor that is not 4.7k (a 470 ohm, yellow-violet-brown, gives exactly these
+   numbers with a normal LDR). Check: meter across the resistor (should be 4.7k,
+   bands yellow violet red) and across the LDR in room light (10-50 k is right, 100 k+
+   is the wrong type). Fix for THIS bot: a bigger resistor (47k if the LDR is the odd
+   one; 4.7k if the resistor is the odd one) so the room reads 200-500 and the
+   flashlight adds 300+. Firmware gains cannot rescue a 13-39 rise: the ADC noise is
+   2-3 counts and "sees it" needs 40.
 
 ## Troubleshooting steps for the kids (draft for the guide page)
 
