@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Programming Guide 0.1.21 - Maker Lab Kids</title>
+<title>Programming Guide 0.1.22 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -310,7 +310,7 @@
     <p class="seq"><span class="key pound">#</span><span class="key pound">#</span><span class="key">2</span> <span class="then">cockroach mode: run from the light. Shine the flashlight at it and it backs away, still watching the flashlight.</span></p>
     <p>With a third light sensor on its back, a light <b>behind</b> it works too: # # 1 backs straight toward it, # # 2 runs forward away from it. Aim the flashlight so a little light also reaches one front sensor and it turns as it goes.</p>
     <p><b>No remote? Use the flashlight:</b> flash it on the left sensor, the right, the left, the right, all within 5 seconds, then both, nothing, both. The robot <span class="answer">nods</span> and goes into moth mode, just like # # 1.</p>
-    <p>It <span class="answer">wiggles</span> when it starts: teach it the flashlight. One sensor, nothing, the other, nothing, twice; then both, nothing, both (a <span class="answer">twitch</span> for each). It <span class="answer">nods</span> and goes. With no flashlight it just waits. <b>Any key stops it.</b> Needs the two light sensors. More on the <a href="light.html">Light bot</a> page.</p>
+    <p>It <span class="answer">wiggles</span> when it starts: teach it the flashlight. One sensor, nothing, the other (a <span class="answer">twitch</span> for each). It <span class="answer">nods</span> and goes. With no flashlight it just waits. <b>Any key stops it.</b> Needs the two light sensors. More on the <a href="light.html">Light bot</a> page.</p>
   </div>
 
   <div class="card warn">
@@ -407,7 +407,7 @@
           <b>Cover a sensor with your hand: its number must drop.</b> If it rises instead, that LDR and its resistor are
           swapped (it should be 5V - resistor - pin - LDR - GND). A number that jumps on its own, or jumps when you
           wiggle the wire, is a bad joint or connector. A flashlight should lift a sensor by 150 or more; the teach-in
-          needs at least 60. Left and right should read within about 50 of each other in plain room light.</div>
+          counts a rise of 30 and says "no" when one side rises less than a quarter of the other. Left and right should read within about 50 of each other in plain room light.</div>
       </div>
       <div class="slots" id="slots"></div>
       <details class="more"><summary>Commands you can type to the robot</summary>

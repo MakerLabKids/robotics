@@ -12,7 +12,7 @@ function fail(message) { failures++; console.log("FAIL " + message); }
 function pass(message) { console.log("PASS " + message); }
 
 const root = path.resolve(__dirname, '..');   // the site root: one level up
-const skipDirectories = ["node_modules", ".git", "temp", "lafvin"];
+const skipDirectories = ["node_modules", ".git", "temp", "lafvin", "logs"];   // logs/ = gitignored session logs, never served
 
 function collectHtmlFiles(directory, found) {
   for (const entry of fs.readdirSync(directory)) {

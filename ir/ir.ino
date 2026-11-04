@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.83 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.84 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -78,7 +78,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.83"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.84"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -193,16 +193,17 @@ const bool LIGHT_FLASH_START = true;
 const int LIGHT_FLASH_MIN = 120;                // a hit: this much over the room's light
 const unsigned int LIGHT_FLASH_HOLD_MS = 60;    // ... for at least this long
 const unsigned long LIGHT_FLASH_WINDOW_MS = 5000;
-// Calibration at every start (# # 1, # # 2, or after the flash start's four
-// hits): the flashlight on one LDR, nothing, the other, nothing, again (it must
-// alternate), then both (straight ahead), nothing, both: it twitches for each
-// shine it counts and starts on the second "both". Each LDR gets a gain so the
-// two read the same straight ahead (mismatched or one-sided LDRs). No time limit;
-// OK skips it (keeps the last gains), any other key stops.
+// Calibration at every start (# # 1, # # 2): the flashlight on one LDR,
+// nothing, the other (either side first): a twitch for each shine, then a nod
+// and it drives. Each LDR gets a gain from its own shine so the two read the
+// same (mismatched or one-sided LDRs). A side much weaker than the other (its
+// gain would hit the limit) gets a slow "no" and one more shine on that side
+// only, then it goes with what it has. The flash start's four hits are the two
+// shines already. No time limit; OK skips it (keeps the last gains), any other
+// key stops. While it waits the room's light only creeps (the slow rate below),
+// so a flashlight brought in slowly still counts in full.
 const int LIGHT_CAL_HIT = 30;                   // a shine: this much over the room's light, on that LDR mostly
-const int LIGHT_CAL_MIN_SPAN = 60;              // an LDR that rises less than this on its shine: "no", start over
-const float LIGHT_CAL_BOTH_SHARE = 0.2;         // "both": each LDR at least this share of its own shine
-const float LIGHT_GAIN_LIMIT = 4.0;             // gains stay within 1/4 .. 4
+const float LIGHT_GAIN_LIMIT = 4.0;             // gains stay within 1/4 .. 4; a side under 1/4 of the other is "weak"
 // While it sees the light, the room's light still creeps toward the reading
 // over about this many ticks (8 s), so a brighter floor stops counting as the
 // flashlight. 0 = frozen while it sees the light (before 0.10.81).
@@ -1543,14 +1544,13 @@ byte flashLastSide = 0;
 unsigned long flashFirstAt = 0;
 float flashPeak[2];                        // each LDR's strongest hit in this flash start
 // The start calibration
-enum LightCalStage { CAL_DONE, CAL_SIDES, CAL_BOTH };
+enum LightCalStage { CAL_DONE, CAL_SHINES };
 byte lightCal = CAL_DONE;
-byte calCount = 0;                 // shines counted in this stage
-int8_t calLit = -1;                // the shine being watched until it goes dark: 0 left, 1 right, 2 both; -1 dark
-byte calLastSide = 2;              // the side counted last (2: none yet)
-float calSpan[2];                  // each LDR's rise on its own shine (the strongest)
-float calBoth[2];                  // each LDR's rise at the peak of the first "both"
-float calBothScore = 0;
+byte calCount = 0;                 // shines counted
+int8_t calLit = -1;                // the shine being watched until it goes dark: 0 left, 1 right; -1 dark
+byte calLastSide = 2;              // the side counted last (2: none yet); the next shine must be the other
+bool calRetried = false;           // the weak side already got its second shine
+float calSpan[2];                  // each LDR's rise on its own shine (the strongest); 0 = not shone yet
 float lightGain[2] = { 1, 1 };     // left, right: multiplies the rise over the room's light
 
 int lightRead(byte side) {
@@ -1616,7 +1616,7 @@ void lightSample(float extra[LIGHT_SENSORS]) {
   for (byte side = 0; side < LIGHT_SENSORS; side++) {
     lightLevel[side] += (lightRead(side) - lightLevel[side]) * 0.25;
     if (lightLevel[side] < lightRoom[side]) lightRoom[side] = lightLevel[side];
-    else if (!lightSeen) lightRoom[side] += (lightLevel[side] - lightRoom[side]) / 32;
+    else if (!lightSeen && lightCal == CAL_DONE) lightRoom[side] += (lightLevel[side] - lightRoom[side]) / 32;
     else if (LIGHT_ROOM_CATCHUP_TICKS) lightRoom[side] += (lightLevel[side] - lightRoom[side]) / LIGHT_ROOM_CATCHUP_TICKS;
     extra[side] = max(lightLevel[side] - lightRoom[side], 0.0f);
   }
@@ -1636,21 +1636,22 @@ void lightStop() {
   out.println(F("light: stop"));
 }
 
-// The start calibration (see LIGHT_CAL_HIT). From the flash start the four
-// side shines are already done (their peaks are in flashPeak), so it waits for
-// the last one to go dark and then for "both".
+// The start calibration (see LIGHT_CAL_HIT): a shine on each LDR, either side
+// first, nothing in between. From the flash start both shines are already
+// done (their peaks are in flashPeak), so it finishes on the spot.
 void lightCalBegin(bool fromFlash) {
-  lightCal = fromFlash ? CAL_BOTH : CAL_SIDES;
+  lightCal = CAL_SHINES;
   calCount = 0;
   calLastSide = 2;
-  calLit = fromFlash ? flashLastSide : -1;
-  lightSeen = fromFlash;             // (lit: the room's light must not learn the flashlight)
-  calBothScore = 0;
-  for (byte side = 0; side < 2; side++) {
-    calSpan[side] = fromFlash ? flashPeak[side] : 0;
-    calBoth[side] = 0;
+  calLit = -1;
+  calRetried = false;
+  lightSeen = false;
+  for (byte side = 0; side < 2; side++) calSpan[side] = fromFlash ? flashPeak[side] : 0;
+  if (fromFlash) {
+    lightCalFinish();
+    return;
   }
-  out.println(fromFlash ? F("light: calibrate, both sensors now") : F("light: calibrate, one sensor at a time"));
+  out.println(F("light: calibrate, shine on one sensor, then the other"));
   gestureWiggle();
 }
 
@@ -1663,8 +1664,8 @@ void printGains() {
 }
 
 void lightCalFinish() {
-  float mean = (calBoth[0] + calBoth[1]) / 2;
-  for (byte side = 0; side < 2; side++) lightGain[side] = constrain(mean / calBoth[side], 1 / LIGHT_GAIN_LIMIT, LIGHT_GAIN_LIMIT);
+  float mean = (calSpan[0] + calSpan[1]) / 2;
+  for (byte side = 0; side < 2; side++) lightGain[side] = constrain(mean / calSpan[side], 1 / LIGHT_GAIN_LIMIT, LIGHT_GAIN_LIMIT);
   lightCal = CAL_DONE;
   calLit = -1;
   lightSeen = false;
@@ -1674,11 +1675,7 @@ void lightCalFinish() {
   out.print((int)calSpan[0]);
   out.print(F(", right +"));
   out.print((int)calSpan[1]);
-  out.print(F("; both left +"));
-  out.print((int)calBoth[0]);
-  out.print(F(", right +"));
-  out.print((int)calBoth[1]);
-  out.println(F(")"));
+  out.println(')');
   gestureNod();
 }
 
@@ -1698,71 +1695,42 @@ void lightCalSkip() {
 void lightCalTick(const float extra[LIGHT_SENSORS]) {
   if (calLit >= 0) {
     // Watching a shine: keep its peak, wait for dark ("nothing") on both LDRs
-    if (calLit < 2) {
-      calSpan[calLit] = max(calSpan[calLit], extra[calLit]);
-    } else if (calCount == 1) {
-      float score = extra[0] / calSpan[0] + extra[1] / calSpan[1];
-      if (score > calBothScore) {
-        calBothScore = score;
-        calBoth[0] = extra[0];
-        calBoth[1] = extra[1];
-      }
-    }
+    calSpan[calLit] = max(calSpan[calLit], extra[calLit]);
     for (byte side = 0; side < 2; side++) {
       if (extra[side] >= max(LIGHT_CAL_HIT / 2.0f, calSpan[side] / 4)) return;
     }
     calLit = -1;
     lightSeen = false;
-    if (lightCal == CAL_SIDES && calCount >= 4) {
-      for (byte side = 0; side < 2; side++) {
-        if (calSpan[side] < LIGHT_CAL_MIN_SPAN) {
-          out.print(side ? F("light: the right") : F("light: the left"));
-          out.print(F(" sensor barely changes (+"));
-          out.print((int)calSpan[side]);
-          out.println(F("): check it; start over"));
-          gestureNo();
-          lightCalBegin(false);
-          return;
-        }
-      }
-      lightCal = CAL_BOTH;
-      calCount = 0;
-      out.println(F("light: now both"));
-    }
-    return;
-  }
-  if (lightCal == CAL_SIDES) {
-    // Dark: the next shine must be on the other LDR (either one to begin)
-    for (byte side = 0; side < 2; side++) {
-      if (side == calLastSide || extra[side] <= LIGHT_CAL_HIT || extra[side] <= extra[1 - side] * 1.5) continue;
-      calCount++;
-      calLastSide = side;
-      calLit = side;
-      lightSeen = true;
-      calSpan[side] = max(calSpan[side], extra[side]);
-      out.print(F("light: shine "));
-      out.print(calCount);
-      out.println(side ? F(" right") : F(" left"));
-      gestureTick();
+    if (calSpan[0] <= 0 || calSpan[1] <= 0) return;   // the other side still to come
+    // Both shone. A side much weaker than the other gets one more shine, by itself
+    byte weak = calSpan[0] < calSpan[1] ? 0 : 1;
+    if (!calRetried && calSpan[weak] * LIGHT_GAIN_LIMIT < calSpan[1 - weak]) {
+      calRetried = true;
+      calLastSide = 1 - weak;
+      out.print(weak ? F("light: the right") : F("light: the left"));
+      out.print(F(" sensor barely changes (+"));
+      out.print((int)calSpan[weak]);
+      out.println(F("): shine on it again"));
+      gestureNo();
       return;
     }
+    lightCalFinish();
     return;
   }
-  // CAL_BOTH: both LDRs up, each by a fair share of its own shine
+  // Dark: the next shine must be on the other LDR (either one to begin)
   for (byte side = 0; side < 2; side++) {
-    if (extra[side] <= max(LIGHT_CAL_HIT / 2.0f, calSpan[side] * LIGHT_CAL_BOTH_SHARE)) return;
-  }
-  if (++calCount < 2) {
-    calLit = 2;
+    if (side == calLastSide || extra[side] <= LIGHT_CAL_HIT || extra[side] <= extra[1 - side] * 1.5) continue;
+    calCount++;
+    calLastSide = side;
+    calLit = side;
     lightSeen = true;
-    calBothScore = extra[0] / calSpan[0] + extra[1] / calSpan[1];
-    calBoth[0] = extra[0];
-    calBoth[1] = extra[1];
-    out.println(F("light: both 1"));
+    calSpan[side] = max(calSpan[side], extra[side]);
+    out.print(F("light: shine "));
+    out.print(calCount);
+    out.println(side ? F(" right") : F(" left"));
     gestureTick();
     return;
   }
-  lightCalFinish();
 }
 
 // fromFlash: started by the torch itself, so keep the room's light already

@@ -88,13 +88,14 @@ in resources/).
 
 ## Where things stand
 
-- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.83
+- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.84
   and share one motion engine (`npm run check:shared`, which checks FIRMWARE_VERSION too:
   bump all three together). ir.ino is what the class runs. **0.10.83 reads the LDR divider
   the other way round** (resistor to 5V, LDR to GND, `LIGHT_BRIGHT_READS_HIGH false`): a bot
   must have the new cable build (log entry 4) before it gets 0.10.83, or it sees "light"
-  in the dark.
-- Pages: Programming Guide (mecanum/ir.html) 0.1.21, Remote Guide 0.1.19, Light bot 0.1.16,
+  in the dark. **0.10.84 is the two-shine teach-in** (log entry 5): one shine per side,
+  either order, nod, go; no "both" step; a weak side gets one more shine, not a restart.
+- Pages: Programming Guide (mecanum/ir.html) 0.1.22, Remote Guide 0.1.19, Light bot 0.1.17,
   Light sensor build 0.1.10, Wiring 0.1.11, Workshop app 0.6.38. Versions live in the page
   titles. `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
   `npm run check:versions`) fails a commit that edits a sketch or a versioned page without
@@ -162,6 +163,7 @@ Wiring and firmware must match.
 | Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
 | Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
 | Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
+| Shep's bot | ir.ino (version not noted) | not noted | the light delta is too small: a flashlight on one LDR does not reach the flash start's 120, the teach-in is hard, and light spread over both sensors stays under "sees it" (40), so it never drives forward (2026-11-04) | the three `b` readings (room, covered, flashlight); see log entry 6 |
 | Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
 
 ## Robot troubleshooting log
@@ -202,6 +204,9 @@ item for the guide, or a code fix).
    nothing, right, nothing, left, nothing, right (`light: shine 1 left` ... 4 + a tick
    each), `light: now both`, both, nothing, both (`light: both 1`, tick, then
    `light: calibrated, gains left X%, right Y% (shine left +N ...)` and a nod).
+   (From 0.10.84 step 4 is shorter: `light: calibrate, shine on one sensor, then the
+   other`, wiggle, left, nothing, right (`light: shine 1 left`, `light: shine 2 right`,
+   a tick each), then the calibrated line and the nod. No "both".)
    5) it drives: `light: sees it`, wheels follow the light, `light: lost it` and stop.
    The spans in the calibrated line are the numbers to report.
    Also note the flash start can steal the bench: shining left, right,
@@ -270,6 +275,62 @@ item for the guide, or a code fix).
    light), red-black = the sum. light-build.html describes the OLD build (resistor to
    Gnd, dupont pins) and gets rewritten to this one with the flip.
 
+5. 2026-11-04, the light modes in general (the user, after a class with 0.10.81/82):
+   (a) `# # 1` "rotates left most of the time", then a power cycle. Two candidates, the
+   console tells them apart: a lost second `#` makes the `1` a left-turn tap (`ir: #`,
+   `ir: 1`, `drive: ...`, about 250 ms of turning), or the `# #` tick / the wiggle
+   itself reads as "it turned left" (each is spin-left 70 ms then spin-right 70 ms at
+   gesture power; if the reverse half stalls the net move is a small left turn) and the
+   robot is then silently waiting for shines. (b) The teach-in's "both" step rarely
+   registers: each LDR must rise by 20% of its own shine (LIGHT_CAL_BOTH_SHARE) at the
+   same time, and with the LDRs at 45 degrees with tubes a flashlight between them
+   lights neither enough. (c) Four side shines, alternating, and any weak side starts
+   the whole thing over. Proposed (not built): two shines (one per side, either order),
+   no "both" step (gains from the side spans alone), a weak side repeats only that side,
+   OK still skips; and `1`/`2` accepted after one `#` as well as two, so a lost `#` is a
+   light start, not a turn.
+   Then the user watched again: "it looks like it shakes no after L R L R". The only "no"
+   in the light flow is the weak-side check after the fourth shine goes dark (a side
+   whose shine rose less than LIGHT_CAL_MIN_SPAN 60 on the 0..1023 scale), and it
+   restarted the whole teach-in. Two things make a real flashlight rise that little:
+   the room level chased the flashlight at 1/32 per 20 ms tick while no shine was
+   counted yet (a flashlight brought in slowly was half absorbed before it counted), and
+   aim (the LDRs look 45 degrees out, down tubes; a shine at the nose barely reaches
+   either). CLOSED 2026-11-04: code fix in ir.ino 0.10.84: two shines, one per side,
+   either order, a tick each, then the calibrated line and a nod; gains from the two
+   spans; no "both" step; the absolute 60 floor is gone, a side is "weak" only when it
+   rose less than 1/4 of the other (the gain would clamp), and then it gets a slow "no"
+   and ONE more shine on that side alone (the other is kept); still weak after that, it
+   nods and goes with the gain at its limit (the console says the spans). The room level
+   no longer learns at 1/32 during the teach-in (only the slow 1/400 creep and the
+   min-tracking), so a slow approach counts in full. The flash start (four hits) is the
+   two shines already and goes straight to the nod. Pages: Light bot 0.1.17 (teach card,
+   no-remote line, "no" row), Programming Guide 0.1.22. The remote grammar is unchanged
+   (`# # 1`): accepting `# 1` was dropped, a kid pressing `#` then `1` to turn left would
+   land in light mode. Guide items: the rewritten "Shakes no" row. Not yet tried on a
+   real bot: the user has to flash 0.10.84 and run the bench procedure.
+
+6. 2026-11-04, Shep's bot (the user): "the delta is too low to trigger a light flash, so
+   it's hard to calibrate, and because the delta is low shining into a single LDR, it has
+   no chance of driving forward when the light is spread out a little more". OPEN. What
+   the numbers mean: the flash start needs a rise of LIGHT_FLASH_MIN 120 (of 1023) on
+   one side, the teach-in counts a rise of 30, and following needs a gained rise of
+   LIGHT_SEEN 40 on the brighter side; a flashlight on one tube gives 300-500 on the
+   user's bot. Suspects, in the order to check with `b` (room light, no flashlight):
+   (a) that sensor's room reading sits near the top (800+): the LDR is a more sensitive
+   type from the pack (GL5516/5528, low resistance) or the room is bright, and with 4.7k
+   the divider is squashed against 5V, so the flashlight has nowhere left to go; the fix
+   is a smaller resistor for THAT bot (1k) so the room reads mid-scale; (b) near the
+   bottom (under 150): the opposite (a GL5549 or a dark corner), a bigger resistor
+   (10k); (c) the reading barely moves when the LDR is covered: a bad joint, the wrong
+   row, or the tube pointing at the floor so the flashlight never reaches the LDR face.
+   Firmware idea if it is (a) or (b) and we do not want per-bot resistors: make the
+   teach-in gains absolute (gain = a reference rise, say 300, divided by the side's
+   span, limit 8) instead of relative (mean / span), so LIGHT_SEEN and the steering
+   mean "a share of this bot's own flashlight"; the flash start (before any teach-in)
+   would still need the raw 120, so a weak bot starts from the remote. Not built;
+   needs the `b` numbers from Shep's bot first.
+
 ## Troubleshooting steps for the kids (draft for the guide page)
 
 Collected while fixing bots. Kid language, one check per line, in the order a kid should
@@ -285,10 +346,22 @@ Robot moves a little then stops when you hold an arrow:
   dying. Swap it (coin cell), not the robot.
 
 Robot does not see the flashlight (light bot):
-- Hold the flashlight 4 to 8 inches from one sensor, not both.
+- Teach it first: `# # 1`, wiggle, then shine on one sensor (twitch), light away, the
+  other sensor (twitch), light away, and it nods. Two shines, either side first.
+- Hold the flashlight 4 to 8 inches from one sensor, straight down its tube, not between
+  the two.
 - Nothing in between: point the flashlight at the ceiling between shines, or the robot
   thinks it was one long shine.
-- A slow "no" shake means that sensor is weak: tell a grown-up which side.
+- A slow "no" shake means one sensor barely saw it: shine on that sensor again, closer.
+  It nods and goes after that even if the sensor is still weak: tell a grown-up which
+  side shook "no".
+Light bot: it twitches for the shines but never drives, or the flashlight barely moves
+the number (check with `b` in plain room light):
+- A sensor that reads 800 or more with no flashlight is "full": the flashlight cannot
+  push it higher. A grown-up swaps that sensor's resistor for a smaller one (1k).
+- A sensor under 150 with the lights on is the other way round: a bigger resistor (10k).
+- Good is in the middle, 300 to 700, and a flashlight adds 150 or more.
+
 Light bot: the number goes DOWN when the flashlight is on it (check with `b`):
 - The LDR and its resistor are swapped (the old way round). The resistor goes from +5V
   to the A pin, the LDR from the A pin to Gnd. Or the robot has a sketch older than 0.10.83.

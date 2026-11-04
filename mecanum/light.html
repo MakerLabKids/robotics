@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Use the Light Bot 0.1.16 - Maker Lab Kids</title>
+<title>How to Use the Light Bot 0.1.17 - Maker Lab Kids</title>
 <meta name="description" content="How to use the Light Bot: follow the light (moth mode) or run from it (cockroach mode), started from the IR remote or by flashing a flashlight.">
 <link rel="stylesheet" href="../css/site.css">
 <style>
@@ -67,7 +67,7 @@
       light. Walk away with the light shining at its nose: it turns toward the brighter side
       and follows you. Take the light away and it stops.</p>
       <p><b>No remote?</b> Flash the flashlight on the left sensor, the right, the left, the
-      right, all within 5 seconds. Then shine on both, nothing, both, and it goes into moth mode.</p>
+      right, all within 5 seconds. It nods and goes into moth mode.</p>
     </section>
     <section class="card">
       <h2>Run from the light (cockroach mode)</h2>
@@ -82,20 +82,20 @@
     <h2>Teach it your flashlight (every start)</h2>
     <p>Every time a light mode starts, the robot learns how bright your flashlight looks to
     <b>each</b> sensor. Two sensors are never exactly alike, and this makes them match.
-    Take your time: there is no rush.</p>
+    Two shines, that is all. Take your time: there is no rush.</p>
     <ol>
-      <li>Shine the flashlight on <b>one</b> sensor (left or right, you pick). The robot twitches.</li>
+      <li>Shine the flashlight on <b>one</b> sensor (left or right, you pick), close and
+      straight down its tube. The robot twitches.</li>
       <li><b>Nothing</b>: turn the flashlight away (point it at the ceiling) or switch it off.</li>
-      <li>Shine on the <b>other</b> sensor. Twitch. Then nothing.</li>
-      <li>Again: the first sensor, nothing, the other sensor, nothing. That is four twitches.</li>
-      <li>Shine on <b>both</b> sensors at once, straight at the robot's nose. Twitch. Then nothing.</li>
-      <li>Shine on both again. The robot <b>nods</b> and starts driving.</li>
+      <li>Shine on the <b>other</b> sensor. Twitch. Turn the light away and the robot <b>nods</b>.
+      Now it is ready: shine at its nose and off it goes.</li>
     </ol>
-    <p>It only counts a shine after <b>nothing</b>, and the sensors must take turns: the same
-    sensor twice in a row counts once. No twitch? Turn the light away and try again.</p>
-    <p>A slow <b>"no"</b> shake means one sensor barely changed: check it, then start
-    the four shines again. Press <span class="key">OK</span> to skip the teaching and use
-    what it learned last time.</p>
+    <p>It only counts a shine after <b>nothing</b>, and the sensors take turns: the same sensor
+    twice in a row counts once. No twitch? Turn the light away and try again.</p>
+    <p>A slow <b>"no"</b> shake means one sensor barely saw the flashlight. Shine on that sensor
+    once more, closer and straight down its tube (the other one is already done). If it is still
+    weak the robot nods and goes anyway, so tell a grown-up which side. Press
+    <span class="key">OK</span> to skip the teaching and use what it learned last time.</p>
   </section>
 
   <section class="card">
@@ -125,8 +125,9 @@
       <tr><th>It does this</th><th>Try this</th></tr>
       <tr><td>Wiggles, then never twitches</td><td>It is waiting for <b>nothing</b>: turn the flashlight away
       (or off) between shines, and make the sensors take turns.</td></tr>
-      <tr><td>Shakes "no" during the teaching</td><td>One sensor barely sees the flashlight. Check that it
-      points at the floor in front of its wheel and is in the right row, or swap the sensor.</td></tr>
+      <tr><td>Shakes "no" during the teaching</td><td>One sensor barely sees the flashlight. Shine on it again,
+      closer and straight down its tube. Still "no" every time? That sensor is weak or in the wrong row:
+      check it with <code>b</code> (below) or swap the sensor.</td></tr>
       <tr><td>Nods, then ignores the flashlight</td><td>Check the sensors: type <code>b</code> in the console at the
       bottom of the <a href="/mecanum/ir#instructor">Programming page</a>. All zeros
       (<code>B,0,0,0,0</code>) means a sensor's LDR leg is not on the Gnd row; a number stuck at 0
