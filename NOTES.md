@@ -163,7 +163,7 @@ Wiring and firmware must match.
 | Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
 | Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
 | Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
-| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | resistor metered 4.694k, so the LDR is the odd part: meter it in room light, swap for a GL5537 or fit 47k; see log entry 6 |
+| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | LDR meters 1.8 M in room light (dead cell, probably cooked while soldering): replace it with a metered GL5537 (10-50 k in room light), then the three `b` readings; log entry 6 |
 | Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
 
 ## Robot troubleshooting log
@@ -349,6 +349,14 @@ item for the guide, or a code fix).
    Next: meter the LDR in room light (10-50 k = a GL5537 that has gone bad; 100 k and
    up = a higher-resistance type from the pack), then swap it for a GL5537, or keep it
    and fit a 47k resistor.
+   Metered: 1.8 M across the LDR in room light. That is a dark reading (a good GL5537
+   is 10-50 k in room light, about 2 M in the dark), and the flashlight only brought
+   it to about 70 k, so the cell is bad: most likely cooked during soldering (CdS
+   cells are heat-sensitive; keep the leads long and the iron quick) or a cracked
+   face. Fix: a new GL5537. Before soldering it, meter it: 10-50 k in room light,
+   dropping as a flashlight comes near. CLOSED 2026-11-04: troubleshooting item (a
+   sensor whose room reading sits near 0 and barely moves under a flashlight is a dead
+   LDR; meter it, replace it). The firmware idea above is not needed.
 
 ## Troubleshooting steps for the kids (draft for the guide page)
 
@@ -380,6 +388,10 @@ the number (check with `b` in plain room light):
   push it higher. A grown-up swaps that sensor's resistor for a smaller one (1k).
 - A sensor under 150 with the lights on is the other way round: a bigger resistor (10k).
 - Good is in the middle, 300 to 700, and a flashlight adds 150 or more.
+- A sensor that reads 0 to 5 in room light and only gets to 60 with the flashlight
+  touching it is a dead LDR (a meter shows 1 M or more in room light; good ones show
+  10k to 50k). A grown-up solders in a new one, quickly, with long leads: the heat kills
+  them.
 
 Light bot: the number goes DOWN when the flashlight is on it (check with `b`):
 - The LDR and its resistor are swapped (the old way round). The resistor goes from +5V
