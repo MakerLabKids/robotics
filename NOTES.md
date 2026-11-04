@@ -345,6 +345,10 @@ item for the guide, or a code fix).
    one; 4.7k if the resistor is the odd one) so the room reads 200-500 and the
    flashlight adds 300+. Firmware gains cannot rescue a 13-39 rise: the ADC noise is
    2-3 counts and "sees it" needs 40.
+   Metered (the user, 2026-11-04): the resistor is 4.694k, so the LDR is the odd part.
+   Next: meter the LDR in room light (10-50 k = a GL5537 that has gone bad; 100 k and
+   up = a higher-resistance type from the pack), then swap it for a GL5537, or keep it
+   and fit a 47k resistor.
 
 ## Troubleshooting steps for the kids (draft for the guide page)
 
