@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.82 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.83 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -78,7 +78,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.82"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.83"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -165,10 +165,13 @@ const unsigned long SONAR_TIMEOUT_US = 25000;   // round trip, ~4.3 m (the u rea
 // ===========================================================================
 // CONFIG - light sensors: two LDRs at the front corners (# # 1 / # # 2)
 // ===========================================================================
-// Each LDR makes a divider with a fixed resistor: 5V - LDR - pin - resistor - GND
-// reads HIGHER in brighter light (wired the other way round, set
-// LIGHT_BRIGHT_READS_HIGH false). A4 / A5 are free here, so the sonar stays on
-// A2 / A3 and still stops the robot short of whoever holds the torch.
+// Each LDR makes a divider with a fixed resistor (4.7k for a GL5537). The
+// class builds them on servo extension cables: 5V - resistor - pin - LDR - GND,
+// so the pin reads LOWER in brighter light and lightRead() flips it
+// (LIGHT_BRIGHT_READS_HIGH false, since 0.10.83; the other way round, LDR to
+// 5V and resistor to GND, reads higher: set it true). Everything above
+// lightRead() sees "brighter = higher". A4 / A5 are free here, so the sonar
+// stays on A2 / A3 and still stops the robot short of whoever holds the torch.
 // The robot compares each LDR with the room's own light (it keeps learning
 // that while it sees no torch), so two LDRs that read a bit differently are fine.
 const byte LIGHT_LEFT_PIN = A4;                 // front left corner, looking 45 degrees left
@@ -176,7 +179,7 @@ const byte LIGHT_RIGHT_PIN = A5;                // front right corner, looking 4
 const byte LIGHT_BACK_PIN = A3;                 // with USE_LIGHT_BACK 1: middle of the back, looking straight back
 const float LIGHT_BACK_SPIN_SHARE = 1.0;        // backing toward (or running from) a light behind: how hard the
                                                 // front LDRs' spill steers the tail at it (0 = straight back)
-const bool LIGHT_BRIGHT_READS_HIGH = true;
+const bool LIGHT_BRIGHT_READS_HIGH = false;      // resistor to 5V, LDR to GND (the fleet's cable build)
 const int LIGHT_SEEN = 40;                      // this much over the room's light = a torch
 const unsigned int LIGHT_LOST_MS = 300;         // under half of that for this long = lost it
 const float LIGHT_SPEED_MM_PER_SEC = 400.0;     // straight at it (or away)
@@ -1585,7 +1588,9 @@ void printLightReading() {
 }
 
 // Is a back LDR wired? With the pin's own pull-up on, a divider (LDR and
-// resistor) still reads its light; an empty pin reads the top.
+// resistor) still reads its light; an empty pin reads the top. With the LDR on
+// the GND side (LIGHT_BRIGHT_READS_HIGH false) a back LDR in a DARK room also
+// sits near the top and can be missed: start the light modes with the lights on.
 void lightFindBack() {
 #if USE_LIGHT_BACK
   pinMode(LIGHT_BACK_PIN, INPUT_PULLUP);

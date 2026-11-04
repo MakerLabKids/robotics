@@ -37,9 +37,15 @@ const KEY = { U: '18', D: '52', L: '08', R: '5A', O: '1C', '*': '16', '#': '0D',
 const press = (keys, holdMs) => keys.split('').map((k) => 'ir ' + KEY[k] + (holdMs ? ' ' + holdMs : '')).join('\n');
 // A marker line so the output can be cut into sections
 // The light calibration: a shine on one LDR (A4 left, A5 right), then nothing
-// (both back to the room's 2 V); both at once; and the whole start sequence
-const shine = (ch, mv) => ['adc ' + ch + ' ' + mv, 'wait 300', 'adc ' + ch + ' 2000', 'wait 400'];
-const both = (left, right, stay) => ['adc 4 ' + left, 'adc 5 ' + right, 'wait ' + (stay ? 400 : 300)].concat(stay ? [] : ['adc 4 2000', 'adc 5 2000', 'wait 400']);
+// (both back to the room's 2 V of brightness); both at once; and the whole start sequence
+// Since 0.10.83 the LDR sits on the GND side of its divider (resistor to 5V), so
+// a brighter LDR is a LOWER pin voltage. The numbers in this script are
+// brightness in millivolts on the simulator's 3.3 V ADC scale (2000 = the room,
+// 3500 = a torch, as the old wiring read them); ldr() turns them into the pin
+// voltage the sketch actually sees. 'adc' lines written out by hand are raw.
+const ldr = (ch, mv) => 'adc ' + ch + ' ' + (3300 - Math.min(mv, 3300));
+const shine = (ch, mv) => [ldr(ch, mv), 'wait 300', ldr(ch, 2000), 'wait 400'];
+const both = (left, right, stay) => [ldr(4, left), ldr(5, right), 'wait ' + (stay ? 400 : 300)].concat(stay ? [] : [ldr(4, 2000), ldr(5, 2000), 'wait 400']);
 const calibrate = (left, right, bothLeft, bothRight) => [].concat(shine(4, left), shine(5, right), shine(4, left), shine(5, right), both(bothLeft, bothRight), both(bothLeft, bothRight, true));
 let markers = 0;
 const mark = () => '[script: --- ' + (++markers) + ' ---]';
@@ -106,36 +112,36 @@ const script = [
   mark(),                            // 15 program 0: the circle
   press('*0'), 'wait 600', 'pwm', 'wait 14000',
   mark(),                            // 16 follow the light (# # 1): LDRs on A4 / A5, room light ~2 V
-  'adc 4 2000', 'adc 5 2000', 'wait 100', 'send b\\n', 'wait 100',
+  ldr(4, 2000), ldr(5, 2000), 'wait 100', 'send b\\n', 'wait 100',
   press('##1'), 'wait 800', 'pwm',
   ...shine(4, 3500), ...shine(4, 3500), ...shine(5, 3500), ...shine(4, 3500), ...shine(5, 3500),   // (left twice: counted once)
   ...both(3000, 3000), ...both(3000, 3000, true), 'pwm', 'dirs',
-  'adc 4 2000', 'adc 5 2000', 'wait 800', 'pwm',
-  'adc 5 3500', 'wait 500', 'pwm',
-  'adc 4 3500', 'wait 500', 'pwm', 'dirs',
+  ldr(4, 2000), ldr(5, 2000), 'wait 800', 'pwm',
+  ldr(5, 3500), 'wait 500', 'pwm',
+  ldr(4, 3500), 'wait 500', 'pwm', 'dirs',
   'sonar 150', 'wait 300', 'pwm', 'sonar -1',
-  'adc 4 2000', 'adc 5 2000', 'wait 800', 'pwm',
+  ldr(4, 2000), ldr(5, 2000), 'wait 800', 'pwm',
   press('O'), 'wait 300',
   mark(),                            // 17 run from the light (# # 2); x stops it
-  press('##2'), 'wait 800', press('O'), 'wait 300', 'adc 4 3500', 'adc 5 3500', 'wait 500', 'pwm', 'dirs',
-  'send x\\n', 'wait 200', 'pwm', 'adc 4 2000', 'adc 5 2000',
+  press('##2'), 'wait 800', press('O'), 'wait 300', ldr(4, 3500), ldr(5, 3500), 'wait 500', 'pwm', 'dirs',
+  'send x\\n', 'wait 200', 'pwm', ldr(4, 2000), ldr(5, 2000),
   mark(),                            // 18 not a flash start: left left (same side), then three hits and too slow
-  'wait 1500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300',
-  'wait 5500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'wait 5500', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'wait 300', 'pwm',
+  'wait 1500', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300',
+  'wait 5500', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300', ldr(5, 3500), 'wait 200', ldr(5, 2000), 'wait 300', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300', 'wait 5500', ldr(5, 3500), 'wait 200', ldr(5, 2000), 'wait 300', 'wait 300', 'pwm',
   mark(),                            // 19 the flash start: left right left right in 5 s follows, like # # 1
-  'wait 5500', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300', 'adc 4 3500', 'wait 200', 'adc 4 2000', 'wait 300', 'adc 5 3500', 'wait 200', 'adc 5 2000', 'wait 300',
-  'wait 300', ...both(3000, 3000), ...both(3000, 3000, true), 'adc 4 2000', 'adc 5 3500', 'wait 500', 'pwm', press('O'), 'wait 300', 'adc 5 2000',
+  'wait 5500', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300', ldr(5, 3500), 'wait 200', ldr(5, 2000), 'wait 300', ldr(4, 3500), 'wait 200', ldr(4, 2000), 'wait 300', ldr(5, 3500), 'wait 200', ldr(5, 2000), 'wait 300',
+  'wait 300', ...both(3000, 3000), ...both(3000, 3000, true), ldr(4, 2000), ldr(5, 3500), 'wait 500', 'pwm', press('O'), 'wait 300', ldr(5, 2000),
   mark(),                            // 20 mismatched LDRs: the left rises 3x the right (the simulator's ADC tops out at 3.3 V); after the calibration "both" drives straight; OK keeps those gains
   'wait 300', press('##1'), 'wait 800', ...calibrate(3250, 2400, 3000, 2300), 'pwm', 'dirs',
-  press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000', 'wait 300',
-  press('##1'), 'wait 800', press('O'), 'wait 300', 'adc 4 3000', 'adc 5 2300', 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000',
+  press('O'), 'wait 300', ldr(4, 2000), ldr(5, 2000), 'wait 300',
+  press('##1'), 'wait 800', press('O'), 'wait 300', ldr(4, 3000), ldr(5, 2300), 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', ldr(4, 2000), ldr(5, 2000),
   mark(),                            // 21 the other LDR lit with no "nothing" between: not counted; a sensor that barely changes: "no", start over; # stops
   'wait 300', press('##1'), 'wait 800',
-  'adc 4 3500', 'wait 300', 'adc 5 3500', 'wait 300', 'adc 4 2000', 'wait 300', 'adc 5 2000', 'wait 400',
+  ldr(4, 3500), 'wait 300', ldr(5, 3500), 'wait 300', ldr(4, 2000), 'wait 300', ldr(5, 2000), 'wait 400',
   ...shine(5, 2170), ...shine(4, 3500), ...shine(5, 2170), 'wait 1500', 'pwm', press('#'), 'wait 300',
   mark(),                            // 22 a brighter floor (no flashlight): it sees it at first, then the room's light catches up and it stops
   'wait 300', press('##1'), 'wait 800', ...calibrate(3500, 3500, 3000, 3000),
-  'adc 4 2300', 'adc 5 2300', 'wait 500', 'pwm', 'wait 11000', 'pwm', press('O'), 'wait 300', 'adc 4 2000', 'adc 5 2000',
+  ldr(4, 2300), ldr(5, 2300), 'wait 500', 'pwm', 'wait 11000', 'pwm', press('O'), 'wait 300', ldr(4, 2000), ldr(5, 2000),
   mark(),
   '',
 ].join('\n');
@@ -317,10 +323,10 @@ check(/light: calibrated/.test(s) && moving(p[0]) && p.length >= 2 && !moving(p[
 // The back LDR on A3 (USE_LIGHT_BACK 1): a light behind
 const backScript = [
   'irpin B 2', 'wait 2600',
-  'adc 3 2000', 'adc 4 2000', 'adc 5 2000', 'wait 100', 'send b\\n', 'wait 200',
-  press('##1'), 'wait 800', press('O'), 'wait 300', 'adc 3 3500', 'wait 500', 'pwm', 'dirs',
-  'adc 4 2900', 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', 'adc 3 2000', 'adc 4 2000', 'wait 300',
-  press('##2'), 'wait 800', press('O'), 'wait 300', 'adc 3 3500', 'wait 500', 'pwm', 'dirs', 'send x\\n', 'wait 300', 'adc 3 2000',
+  ldr(3, 2000), ldr(4, 2000), ldr(5, 2000), 'wait 100', 'send b\\n', 'wait 200',
+  press('##1'), 'wait 800', press('O'), 'wait 300', ldr(3, 3500), 'wait 500', 'pwm', 'dirs',
+  ldr(4, 2900), 'wait 500', 'pwm', 'dirs', press('O'), 'wait 300', ldr(3, 2000), ldr(4, 2000), 'wait 300',
+  press('##2'), 'wait 800', press('O'), 'wait 300', ldr(3, 3500), 'wait 500', 'pwm', 'dirs', 'send x\\n', 'wait 300', ldr(3, 2000),
   'adc 3 5000', 'wait 100', press('##1'), 'wait 800', 'send x\\n', 'wait 300',
   '',
 ].join('\n');

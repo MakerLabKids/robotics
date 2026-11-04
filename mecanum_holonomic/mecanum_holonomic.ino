@@ -1,4 +1,4 @@
-// mecanum_holonomic.ino   (v0.10.82 - L293D shield, Bluetooth on A0/A1 as shipped, IMU,
+// mecanum_holonomic.ino   (v0.10.83 - L293D shield, Bluetooth on A0/A1 as shipped, IMU,
 //                          ADS1115 inputs and VL53L0X laser found on I2C at boot, IR
 //                          remote on D2, HC-SR04 sonar on A2/A3, line follower and light seeker set up at
 //                          runtime, saved in EEPROM)
@@ -136,7 +136,7 @@
 
 #include <Arduino.h>
 
-#define FIRMWARE_VERSION "0.10.82"   // banner and K,fw (bump the build number on every change)
+#define FIRMWARE_VERSION "0.10.83"   // banner and K,fw (bump the build number on every change)
 
 // The robot. Calibration is its own program, ../calibration/calibration.ino:
 // it measures the motion numbers and saves them in EEPROM for this one to
@@ -476,13 +476,14 @@ const unsigned long LINE_TELEMETRY_MS = 200;
 // brighter side). Four at 0/90/180/270 (or the corners, 45/135/225/315) lets
 // the vector sum point anywhere, and the holonomic drive just goes there.
 // LDR to 5V and resistor to GND reads HIGHER in brighter light; the other
-// way round reads lower.
+// way round reads lower. The class's cables (0.10.83+) are the other way
+// round: resistor to 5V, LDR to GND, so the default is "reads lower".
 const byte  LIGHT_MAX_SENSORS = 8;
 const byte  LIGHT_DEFAULT_COUNT = 0;
 const AnalogSource LIGHT_DEFAULT_SOURCES[LIGHT_MAX_SENSORS] = {
   DIRECT(A2), DIRECT(A3), NO_SOURCE, NO_SOURCE, NO_SOURCE, NO_SOURCE, NO_SOURCE, NO_SOURCE };
 const int16_t LIGHT_DEFAULT_BEARING_DEG[LIGHT_MAX_SENSORS] = { -45, 45, 0, 0, 0, 0, 0, 0 };
-const bool  LIGHT_DEFAULT_BRIGHT_READS_HIGH = true;
+const bool  LIGHT_DEFAULT_BRIGHT_READS_HIGH = false;
 const int   LIGHT_DEFAULT_SEEN_THRESHOLD = 300;      // normalised; brightest LDR must beat this to move
 const int   LIGHT_DEFAULT_ARRIVED_THRESHOLD = 950;   // brightest LDR above this = at the torch, hold still
 const int   LIGHT_DEFAULT_SPEED_MM_PER_SEC = 150;

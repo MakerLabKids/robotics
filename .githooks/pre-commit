@@ -1,7 +1,9 @@
 #!/bin/sh
-# Refuse to commit any file over 20 MB. Big videos are served locally by the
-# Show & Tell server (or linked from YouTube); GitHub rejects files over 100 MB
-# and a single oversized commit blocks every push after it.
+# 1. Refuse to commit any file over 20 MB. Big videos are served locally by the
+#    Show & Tell server (or linked from YouTube); GitHub rejects files over 100 MB
+#    and a single oversized commit blocks every push after it.
+# 2. Every edited sketch or versioned page must carry a new build number
+#    (scripts/check-version-bump.js --staged).
 # Enable once per clone:  git config core.hooksPath .githooks
 limit=20000000
 bad=0
@@ -12,4 +14,5 @@ for f in $(git diff --cached --name-only --diff-filter=AM); do
     bad=1
   fi
 done
+node scripts/check-version-bump.js --staged >&2 || bad=1
 exit $bad
