@@ -10,3 +10,4 @@ mecanum/.cache/
 !resources/*.pdf
 __pycache__/
 .env
+logs/
