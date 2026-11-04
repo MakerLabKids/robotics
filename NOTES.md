@@ -163,7 +163,7 @@ Wiring and firmware must match.
 | Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
 | Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
 | Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
-| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | meter the resistor (4.7k?) and the LDR (10-50 k in room light?); the odd part gets replaced, or the resistor goes up to 47k; see log entry 6 |
+| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | resistor metered 4.694k, so the LDR is the odd part: meter it in room light, swap for a GL5537 or fit 47k; see log entry 6 |
 | Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
 
 ## Robot troubleshooting log
