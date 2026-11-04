@@ -14,7 +14,10 @@ XS = [X1, X1 + PITCH, X1 + 2 * PITCH]
 HOUSING_TOP = 250
 HOUSING_H = 110
 HW = 38               # housing width
-WIRES = [("#d42a2a", "1", "+5V", "red"), ("#161616", "2", "Gnd", "black"), ("#1f6fd1", "3", "A5", "blue")]
+# The resistor goes between 2 and 3, the LDR between 1 and 3: 5V - resistor - A5 - LDR - Gnd
+# (ir.ino 0.10.83 or newer reads it that way round).
+WIRES = [("#161616", "1", "Gnd", "black"), ("#d42a2a", "2", "+5V", "red"), ("#1f6fd1", "3", "A5", "blue")]
+ROW_COLOR = {name: color for color, _num, name, _w in WIRES}   # the header rows: +5V, Gnd, A
 LEAD = "#9aa3ad"
 BODY = "#e9d3a6"
 BANDS = ["#e8c200", "#7b3fb8", "#d42a2a", None, "#b8962e"]   # yellow violet red, gap, gold = 4.7k
@@ -188,7 +191,7 @@ def done_view():
     parts.append(text(x1 + 10, HOUSING_TOP + 58, "all round"))
     parts.append(text(cx + 54, cy - 6, "the right"))
     parts.append(text(cx + 54, cy + 12, "sensor (A5)"))
-    label = "Step 11, done: the right light sensor (A5). From the front, tape around all three connectors (1 red 5V, 2 black Gnd, 3 blue A5) and the LDR standing up out of the top."
+    label = "Step 11, done: the right light sensor (A5). From the front, tape around all three connectors (1 black Gnd, 2 red +5V, 3 blue A5) and the LDR standing up out of the top."
     return f'<svg viewBox="0 20 360 420" role="img" aria-label="{label}">\n' + "\n".join(parts) + "\n</svg>"
 
 
@@ -250,7 +253,7 @@ def header_closeup(columns, hints=()):
     out.append(f'<rect x="{xs[4] + 8}" y="20" width="{360 - xs[4] - 8}" height="{ys[0] - 20 - 21}" fill="#2f86d6" stroke="#174a88" stroke-width="2"/>')
     out.append(f'<text x="{(xs[4] + 368) / 2}" y="50" text-anchor="middle" font-size="13" fill="#fff">motor connector</text>')
     for col in columns:
-        for (color, *_rest), y in zip(WIRES, ys):
+        for color, y in zip((ROW_COLOR["+5V"], ROW_COLOR["Gnd"], ROW_COLOR["A5"]), ys):
             out.append(f'<rect x="{xs[col] - 20}" y="{y - 20}" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>')
             out.append(f'<circle cx="{xs[col]}" cy="{y}" r="11" fill="{color}" stroke="#fff" stroke-width="1.5"/>')
     for label, y in (("+5V", ys[0]), ("Gnd", ys[1]), ("A0-5", ys[2])):
@@ -263,7 +266,7 @@ def header_closeup(columns, hints=()):
     if columns == [5]:
         label = ("Step 12: close-up of the analog header from above, columns A0 to A5 from left to right, rows +5V on top, Gnd in the middle, "
                  "A0-5 at the board's edge, with the motor connector right above the A5 column. The three wire ends sit on the A5 column: "
-                 "+5V on +5V, Gnd on Gnd, A5 on A5.")
+                 "+5V on +5V (wire 2), Gnd on Gnd (wire 1), A5 on A5 (wire 3).")
     else:
         label = ("Step 14: the same header with both sensors plugged in: the right sensor on the A5 column and the left sensor on A4, "
                  "each with +5V on top, Gnd in the middle and the signal at the edge. A3 is marked back.")
@@ -430,11 +433,11 @@ def figure(state):
         parts.append(text(XS[2] + 26, 110, "standing well"))
         parts.append(text(XS[2] + 26, 128, "clear of the plastic"))
     labels = {
-        "ready": "Step 1: a 4.7k resistor with one lead bent back so both leads point down, above three dupont connectors: 1 +5V, 2 Gnd, 3 A5. The long bent lead lines up with connector 2, the short straight lead with connector 3.",
-        "plugged": "Step 2: the long bent lead in connector 2 (Gnd), the short straight lead in connector 3 (A5). Connector 1 (+5V) is still empty.",
+        "ready": "Step 1: a 4.7k resistor with one lead bent back so both leads point down, above three dupont connectors: 1 Gnd, 2 +5V, 3 A5. The long bent lead lines up with connector 2, the short straight lead with connector 3.",
+        "plugged": "Step 2: the long bent lead in connector 2 (+5V), the short straight lead in connector 3 (A5). Connector 1 (Gnd) is still empty.",
         "folded": "Step 3: the resistor folded down flat on the plastic of connector 3, covering the 3. The bent lead runs down the front of connector 2.",
         "taped": "Step 4: tape wrapped round connectors 2 and 3, holding the resistor against them.",
-        "ldr-ready": "Step 5: the LDR above the connectors, its two legs spread to line up with connector 1 (+5V) and connector 3 (A5), either side of the taped connector 2.",
+        "ldr-ready": "Step 5: the LDR above the connectors, its two legs spread to line up with connector 1 (Gnd) and connector 3 (A5), either side of the taped connector 2.",
         "ldr-in": "Step 6: the LDR's legs pushed into connectors 1 and 3, with the LDR still standing well clear of the connectors.",
     }
     return f'<svg viewBox="0 {y0} 360 {440 - y0}" role="img" aria-label="{labels[state]}">\n' + "\n".join(parts) + "\n</svg>"
@@ -444,7 +447,7 @@ html = f'''<!-- ldr-steps: drawn by scripts/ldr-figs.py -->
   <section class="build-steps">
     <h2>Step by step: the right sensor (A5)</h2>
     <p>Three 20 cm female-female dupont wires. Any colors will do: what matters is where each
-    one goes. In the pictures, wire <b>1 is +5V</b>, wire <b>2 is Gnd</b> and wire <b>3 is A5</b>.</p>
+    one goes. In the pictures, wire <b>1 is Gnd</b>, wire <b>2 is +5V</b> and wire <b>3 is A5</b>.</p>
     <div class="steps">
       <figure>
         <h3 class="step-title">1. Bend the resistor</h3>
@@ -455,7 +458,7 @@ html = f'''<!-- ldr-steps: drawn by scripts/ldr-figs.py -->
       <figure>
         <h3 class="step-title">2. Plug in the resistor</h3>
         {figure("plugged")}
-        <figcaption>Push the <b>long bent lead into 2</b> (Gnd) and the <b>short
+        <figcaption>Push the <b>long bent lead into 2</b> (+5V) and the <b>short
         straight lead into 3</b> (A5).</figcaption>
       </figure>
       <figure>
@@ -473,8 +476,8 @@ html = f'''<!-- ldr-steps: drawn by scripts/ldr-figs.py -->
       <figure>
         <h3 class="step-title">5. Line up the LDR</h3>
         {figure("ldr-ready")}
-        <figcaption>Spread the LDR's legs a little and line them up with <b>1</b> (+5V)
-        and <b>3</b> (A5), either side of the taped Gnd connector.</figcaption>
+        <figcaption>Spread the LDR's legs a little and line them up with <b>1</b> (Gnd)
+        and <b>3</b> (A5), either side of the taped +5V connector.</figcaption>
       </figure>
       <figure>
         <h3 class="step-title">6. Plug in the LDR</h3>
@@ -519,7 +522,7 @@ html = f'''<!-- ldr-steps: drawn by scripts/ldr-figs.py -->
         <h3 class="step-title">12. Plug into A5</h3>
         {figure("header")}
         <figcaption>Push the ends of the three wires onto the <b>A5 column</b>, tight
-        against the motor connector: <b>+5V</b> on top, <b>Gnd</b> in the middle, <b>A5</b> at the
+        against the motor connector: wire 2 (<b>+5V</b>) on top, wire 1 (<b>Gnd</b>) in the middle, wire 3 (<b>A5</b>) at the
         edge.</figcaption>
       </figure>
       <figure>

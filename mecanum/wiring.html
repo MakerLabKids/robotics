@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#ffffff">
-<title>Robot Wiring 0.1.10 - Maker Lab Kids</title>
+<title>Robot Wiring 0.1.11 - Maker Lab Kids</title>
 <style>
   :root {
     --ink: #1c1f24;
@@ -165,7 +165,7 @@
   <p>An LDR is a resistor that changes with light: high resistance in the dark, low in bright light. On its own the Uno cannot read a resistance. So each LDR gets a partner resistor, making a <b>voltage divider</b>, and the Uno reads the voltage in the middle. LDRs and resistors have no polarity, so either leg can go either way.</p>
 
   <div class="two">
-    <svg viewBox="0 0 330 250" role="img" aria-label="Schematic: 5V to LDR to A4 to 10k resistor to ground, and the same for A5">
+    <svg viewBox="0 0 330 250" role="img" aria-label="Schematic: 5V to a 4.7k resistor to A4 to the LDR to ground, and the same for A5">
       <g font-size="12" font-weight="700" fill="#1c1f24">
         <text x="20" y="22">5V</text>
         <text x="20" y="240">GND</text>
@@ -175,9 +175,9 @@
       <g id="ldrcol">
         <line x1="110" y1="18" x2="110" y2="45" stroke="#1c1f24" stroke-width="2"/>
         <rect x="96" y="45" width="28" height="55" rx="3" fill="#fff" stroke="#1c1f24" stroke-width="2"/>
-        <circle cx="110" cy="72" r="20" fill="none" stroke="#1c1f24" stroke-width="1.5"/>
-        <path d="M70 48 L90 60 M84 54 L90 60 L83 61" stroke="#e65100" stroke-width="2" fill="none"/>
-        <path d="M66 62 L86 74 M80 68 L86 74 L79 75" stroke="#e65100" stroke-width="2" fill="none"/>
+        <circle cx="110" cy="177" r="20" fill="none" stroke="#1c1f24" stroke-width="1.5"/>
+        <path d="M70 153 L90 165 M84 159 L90 165 L83 166" stroke="#e65100" stroke-width="2" fill="none"/>
+        <path d="M66 167 L86 179 M80 173 L86 179 L79 180" stroke="#e65100" stroke-width="2" fill="none"/>
         <line x1="110" y1="100" x2="110" y2="150" stroke="#1c1f24" stroke-width="2"/>
         <circle cx="110" cy="128" r="4" fill="#0b6fb3"/>
         <rect x="96" y="150" width="28" height="55" rx="3" fill="#fff" stroke="#1c1f24" stroke-width="2"/>
@@ -187,11 +187,11 @@
       <line x1="110" y1="128" x2="140" y2="128" stroke="#0b6fb3" stroke-width="2"/>
       <line x1="250" y1="128" x2="280" y2="128" stroke="#0b6fb3" stroke-width="2"/>
       <g font-size="12" font-weight="700">
-        <text x="134" y="76" fill="#1c1f24">LDR</text>
-        <text x="128" y="182" fill="#1c1f24">10k</text>
+        <text x="134" y="76" fill="#1c1f24">4.7k</text>
+        <text x="134" y="182" fill="#1c1f24">LDR</text>
         <text x="143" y="133" fill="#0b6fb3">A4</text>
-        <text x="274" y="76" fill="#1c1f24">LDR</text>
-        <text x="268" y="182" fill="#1c1f24">10k</text>
+        <text x="274" y="76" fill="#1c1f24">4.7k</text>
+        <text x="274" y="182" fill="#1c1f24">LDR</text>
         <text x="283" y="133" fill="#0b6fb3">A5</text>
       </g>
       <text x="40" y="128" font-size="11" fill="#5b6670" text-anchor="middle">LEFT</text>
@@ -200,12 +200,13 @@
     </svg>
     <div>
       <ol>
-        <li>One leg of each LDR to <b>5V</b>.</li>
-        <li>The other leg of the <b>left</b> LDR to <b>A4</b>. The other leg of the <b>right</b> LDR to <b>A5</b>.</li>
-        <li>A resistor (10k to start) from <b>A4 to GND</b>, and another from <b>A5 to GND</b>.</li>
+        <li>One end of each resistor (4.7k) to <b>5V</b>.</li>
+        <li>The other end of the <b>left</b> resistor to <b>A4</b>. The other end of the <b>right</b> resistor to <b>A5</b>.</li>
+        <li>The <b>left</b> LDR from <b>A4 to GND</b>, the <b>right</b> LDR from <b>A5 to GND</b>.</li>
       </ol>
-      <p>Wired this way, <b>brighter light gives a higher reading</b> (0 to 1023), which is what the robot expects.</p>
-      <p><b>On the shield</b>, the analog header is <b>three rows</b>, labeled on the board: <b>+5V</b>, <b>Gnd</b> and <b>A0-5</b>. Only the A0-5 row is an input. Each LDR uses all three rows of its column: LDR from +5V to the A pin, and resistor from the A pin to Gnd. A0 is the end nearest the Uno's power pins, so A4 and A5 are the two columns at the corner. On some shields the A0-5 row is bare holes: solder pins or wires there.</p>
+      <p>Wired this way, brighter light pulls the pin's voltage <b>down</b>. The robot (ir.ino 0.10.83 or newer) knows that and flips it, so the numbers it shows still <b>go up in brighter light</b> (0 to 1000). Older pages showed the LDR on the 5V side: that works only with older sketches.</p>
+      <p><b>On the shield</b>, the analog header is <b>three rows</b>, labeled on the board: <b>+5V</b>, <b>Gnd</b> and <b>A0-5</b>. Only the A0-5 row is an input. Each LDR uses all three rows of its column: resistor from +5V to the A pin, and LDR from the A pin to Gnd. A0 is the end nearest the Uno's power pins, so A4 and A5 are the two columns at the corner. On some shields the A0-5 row is bare holes: solder pins or wires there.</p>
+      <p><b>The class build</b> is a servo extension cable with one end cut off. The rows are <b>+5V, Gnd, A</b> from the top, which is not servo order (servos put the hot wire in the middle), so the plug goes on with its <b>signal wire on the A row</b> at the board's edge; then its <b>black</b> wire lands on +5V and its <b>red</b> wire on Gnd. Solder the <b>resistor to the black wire</b>, the <b>LDR to the red wire</b>, and the <b>signal wire where the resistor meets the LDR</b>. Heat shrink over the resistor side, right up to the LDR, so the only bare lead is the ground one. The header pins are spaced apart on this shield: bend them together so the plug fits.</p>
       <p class="dim">Plugged into just the +5V and Gnd rows, the robot cannot see the LDRs at all. It nods for # # 1 and then never moves.</p>
     </div>
   </div>
@@ -216,7 +217,7 @@
     <tr><th>LDR</th><th>Datasheet, dim (10 lux)</th><th>Lit classroom, roughly</th><th>Resistor</th></tr>
     <tr><td>GL5516</td><td>5k-10k</td><td>about 1k</td><td>1k-2.2k</td></tr>
     <tr><td>GL5528</td><td>10k-20k</td><td>2k-4k</td><td>4.7k</td></tr>
-    <tr><td><b>GL5537</b></td><td>20k-50k</td><td>4k-10k</td><td><b>10k (best first choice)</b></td></tr>
+    <tr><td><b>GL5537</b></td><td>20k-50k</td><td>4k-10k</td><td><b>4.7k (what the class uses)</b></td></tr>
     <tr><td>GL5539</td><td>50k-100k</td><td>10k-20k</td><td>22k</td></tr>
     <tr><td>GL5549</td><td>100k-200k</td><td>20k-50k</td><td>47k</td></tr>
   </table>
@@ -265,12 +266,13 @@
   <div class="box">
     <b>If it does not work</b>
     <ul>
-      <li><b><code>b</code> says <code>B,0,0,0,0</code></b>: the resistors are pulling the pins to 0 V but the LDRs get no 5V. The LDR's hot leg is probably on the Gnd row; the labels on these shields can sit beside a different row than you expect. Test: a jumper from A4 straight to 5V should read 1023 (and in # # 1 the wheels spin). Then measure which header row really is 5V and move the LDR legs there.</li>
+      <li><b><code>b</code> says <code>B,0,0,0,0</code></b>: the resistors hold the pins at 5 V and the LDRs have no ground. The LDR's leg is probably not on the Gnd row; the labels on these shields can sit beside a different row than you expect. Test: a jumper from A4 straight to Gnd should read 1000 (and in # # 1 the wheels spin). Then measure which header row really is Gnd and move the LDR legs there.</li>
+      <li><b>A number sits at 0 and never moves</b>: that plug is on upside down, with the signal wire on the +5V row. The signal wire goes on the A0-5 row at the board's edge.</li>
       <li><b>It never moves</b>: check with <code>b</code>. Both numbers should move when you cover the LDRs or shine the flashlight on them. If they don't, look for a loose wire or a missing resistor, or a gyro still plugged into A4/A5.</li>
       <li><b>It turns away from the light when following</b>: left and right are swapped (A4 is the left one).</li>
       <li><b>It reacts to the room, not the flashlight</b>: put the tubes on the LDRs, or use a brighter flashlight.</li>
       <li><b>It runs into you</b>: the sonar is off in this build. Turn the flashlight off to stop it, or press any key.</li>
-      <li><b>The number goes DOWN in bright light</b>: the LDR and the resistor are swapped (resistor to 5V). Swap them back.</li>
+      <li><b>The number goes DOWN in bright light</b>: the LDR and the resistor are swapped (LDR to 5V, resistor to Gnd: the old way). Swap them, or flash a sketch older than 0.10.83.</li>
     </ul>
   </div>
 

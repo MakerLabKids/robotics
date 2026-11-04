@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:,">
-<title>Mecanum Workshop 0.6.37 - Maker Lab Kids</title>
+<title>Mecanum Workshop 0.6.38 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -994,7 +994,7 @@
 <script>
 "use strict";
 
-var APP_VERSION = "0.6.37";
+var APP_VERSION = "0.6.38";
 var FIRMWARE_COMPAT = "0.10.20";
 // The header and title follow these, so they can never show an old number.
 document.getElementById("appVersionLabel").textContent = "v" + APP_VERSION;
@@ -2953,7 +2953,7 @@ var BEARING_NAMES = [
 function sensorDefaultValues() {
   var values = {
     ln: "0", lh: "0", lt: "250", lv: "150", lg: "3", lk: "0.02", ll: "600",
-    bn: "0", bh: "1", bt: "300", ba: "950", bv: "150", bf: "1", bk: "1.5", bl: "800",
+    bn: "0", bh: "0", bt: "300", ba: "950", bv: "150", bf: "1", bk: "1.5", bl: "800",
     au: "1", len: "8", ben: "2"
   };
   var adcLine = ["i00", "i01", "i02", "i03", "i10", "i11", "i12", "i13"];

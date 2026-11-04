@@ -88,11 +88,17 @@ in resources/).
 
 ## Where things stand
 
-- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.82
+- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.83
   and share one motion engine (`npm run check:shared`, which checks FIRMWARE_VERSION too:
-  bump all three together). ir.ino is what the class runs.
-- Pages: Programming Guide (mecanum/ir.html) 0.1.20, Remote Guide 0.1.19, Light bot 0.1.15,
-  Wiring 0.1.10. Versions live in the page titles.
+  bump all three together). ir.ino is what the class runs. **0.10.83 reads the LDR divider
+  the other way round** (resistor to 5V, LDR to GND, `LIGHT_BRIGHT_READS_HIGH false`): a bot
+  must have the new cable build (log entry 4) before it gets 0.10.83, or it sees "light"
+  in the dark.
+- Pages: Programming Guide (mecanum/ir.html) 0.1.21, Remote Guide 0.1.19, Light bot 0.1.16,
+  Light sensor build 0.1.10, Wiring 0.1.11, Workshop app 0.6.38. Versions live in the page
+  titles. `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
+  `npm run check:versions`) fails a commit that edits a sketch or a versioned page without
+  a new build number.
 - Hosting: Cloudflare Worker (static assets) deploys every push to main in about a minute.
   It stopped after the repo transfer and was reconnected on 2026-11-01: for a while the
   live site still served 618e9d7 (the last pre-transfer commit touching a served file),
@@ -142,6 +148,22 @@ Site and tests:
    makerlabkids.com, not here.
 10. The older 2WD pages under arduinobot/ are still in the makerlabkids repo (not this one).
 
+## Bot roster (status per bot, started 2026-11-04)
+
+One line per robot, updated whenever a bot is on the bench. "Last seen" is the date the
+status was checked. Add a bot the first time it is mentioned; never drop one.
+
+"Wiring" is the LDR cable: OLD = LDR to 5V, resistor to Gnd (sketches up to 0.10.82);
+NEW = the servo-cable build of log entry 4 (resistor to 5V, LDR to Gnd; 0.10.83 or newer).
+Wiring and firmware must match.
+
+| Bot | Firmware | Wiring | Status (last seen) | Open problem |
+|---|---|---|---|---|
+| Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
+| Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
+| Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
+| Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
+
 ## Robot troubleshooting log
 
 Each entry: date, bot, symptom, cause, fix, and how it was closed (a troubleshooting
@@ -186,6 +208,103 @@ item for the guide, or a code fix).
    left, right to TEST the sensors is itself the no-remote start, and it drops the robot
    into the "both sensors now" half of the teach-in, so the side shines the user then
    does are ignored. Watch for "light: follow" appearing by itself.
+4. 2026-11-04, Tucker's bot (ir.ino): the LDRs' hot and ground were reversed at the
+   shield. Cause: the shield's analog header is three rows in the order +5V (top),
+   Gnd (middle), A pin (bottom), and the LDRs are wired with standard servo extension
+   cables, whose plug is signal, red (hot) in the MIDDLE, black. Pushed on by the plug's
+   own order, red lands on Gnd and black on +5V (or signal on +5V, depending on which
+   way round), so the divider is upside down: the number goes DOWN with the flashlight,
+   or sits at 1000 and never moves. Nothing fries, an LDR and a resistor have no
+   polarity; it just reads wrong. Making it worse, the header pins are not butted
+   together, so the plug only fits after bending the pins. Fix (the user): re-pin the
+   servo plug to the header's order, red on +5V, black on Gnd, signal on the A pin,
+   then bend the pins to take the plug. Status: rewired; CLOSE as a troubleshooting
+   item once the `b` check passes (room: both mid-scale; cover left: left drops;
+   flashlight on left: left up 150 or more, right barely).
+   Guide item: "the shield's LDR header is NOT servo order: red goes on the top row,
+   not the middle". Candidate for the wiring page too (the header paragraph says
+   three rows, not their order).
+   Option raised by the user 2026-11-04: the servo headers (SER1 = D10, SER2 = D9) are
+   in proper servo order. They cannot take an LDR: D9/D10 are digital pins, the Uno
+   reads voltages only on A0-A5, and D10 already holds the IR receiver. What they CAN
+   do is power: one servo plug on SER2 gives 5V (middle) and Gnd for both LDRs with no
+   bending, and only the two signal wires go to A4 and A5 (single-pin jumpers on the A
+   row). Not adopted yet; if it is, wiring.html and light-build.html change to match.
+   DECIDED instead (the user, 2026-11-04, for ALL bots): keep the servo cable as it is,
+   cut the far end, solder the parts on there: the resistor on the wire that lands on
+   +5V (the cable's black, given the shield's row order), the LDR on the wire that
+   lands on Gnd (the cable's red; it stays the one bare wire past the heat shrink, so
+   bare = ground, harmless), the signal wire at the junction. That is a divider the
+   other way round, 5V - resistor - pin - LDR - Gnd: brighter reads LOWER. The code is
+   built for it: ir.ino `LIGHT_BRIGHT_READS_HIGH` (line 179) goes false, and
+   mecanum_holonomic's `LIGHT_DEFAULT_BRIGHT_READS_HIGH` (line 485) with it, so the
+   set-aside Workshop app agrees. Everything above lightRead() (b, calibration, flash
+   start, thresholds) works on the flipped value and needs no change.
+   The flip touches: both sketches (build bump), the simulator scripts (ir-e2e drives
+   the LDRs in mV with room 2000 / shine 3500: every value becomes 5000 - mV, which
+   also ends the 3.3 V ADC cap problem), wiring.html (circuit text, schematic,
+   "number goes DOWN in bright light" row inverts), light-build.html (resistor goes to
+   +5V, not Gnd), and the troubleshooting rows. Known small loss: lightFindBack()
+   detects the back LDR by the pin reading under 1015 with the pull-up on; the
+   inverted divider sits near the top in a DARK room, so a back LDR can be missed
+   with the lights off (only matters for the optional back LDR).
+   Fleet rule: wiring and firmware must flip together. A bot wired the old way on
+   the new firmware sees "light" in the dark and never gets through the teach-in.
+   Roster gets a wiring column (old / new) until every bot is done.
+   CLOSED 2026-11-04, both kinds. Code fix: 0.10.83 (commit eb0c07d) flips the reading in
+   all three sketches, ir-e2e maps its LDR voltages, versions.json 0.10.83. Troubleshooting
+   items: wiring.html 0.1.11 (the class build paragraph, the schematic and steps the new
+   way round, the GL5537 row says 4.7k, new rows: B,0,0,0,0 = the LDR has no ground, a
+   number stuck at 0 = plug upside down, goes DOWN in bright light = wired the old way),
+   light.html 0.1.16 (same two symptoms), ir.html 0.1.21 (the divider line). The
+   light-build page (0.1.10) keeps its dupont build with connectors 1 and 2 relabeled
+   (1 Gnd, 2 +5V): the same physical build is the inverted divider. A page for the
+   servo-cable build is still wanted; it needs photos of the user's cable.
+   The fleet cable build (photo 2026-11-04, the user): a servo extension cable cut at
+   one end. Red soldered straight onto one LDR leg (that wire lands on the Gnd row;
+   stays bare past the shrink). Black onto the FAR end of the 4.7k resistor (lands on
+   the +5V row). White (signal, lands on the A row) at the junction of the resistor
+   and the other LDR leg. One blue heat shrink over the resistor side, up to the LDR
+   base, so the only bare metal is the ground lead. Check with a meter at the plug
+   before shrinking: black-white 4.7k steady, red-white = the LDR (changes with
+   light), red-black = the sum. light-build.html describes the OLD build (resistor to
+   Gnd, dupont pins) and gets rewritten to this one with the flip.
+
+## Troubleshooting steps for the kids (draft for the guide page)
+
+Collected while fixing bots. Kid language, one check per line, in the order a kid should
+try them. Each line says what to look at and what "good" looks like. When the guide page
+is built, these rows move there.
+
+Robot does nothing at all:
+- Is the power switch on? The shield's light should be on.
+- Are the batteries in the right way, and charged? Dim shield light = flat batteries.
+
+Robot moves a little then stops when you hold an arrow:
+- Tap the arrow 3 times. If every tap works but holding does not, the REMOTE battery is
+  dying. Swap it (coin cell), not the robot.
+
+Robot does not see the flashlight (light bot):
+- Hold the flashlight 4 to 8 inches from one sensor, not both.
+- Nothing in between: point the flashlight at the ceiling between shines, or the robot
+  thinks it was one long shine.
+- A slow "no" shake means that sensor is weak: tell a grown-up which side.
+Light bot: the number goes DOWN when the flashlight is on it (check with `b`):
+- The LDR and its resistor are swapped (the old way round). The resistor goes from +5V
+  to the A pin, the LDR from the A pin to Gnd. Or the robot has a sketch older than 0.10.83.
+
+Light bot: one number sits at 0 and never moves:
+- That plug is on upside down. The signal wire goes on the row at the board's edge.
+
+Light bot: it turns AWAY from the flashlight:
+- Left and right are swapped. The left sensor goes on A4, the right one on A5.
+
+Light bot: plugging the sensor cable onto the shield (every bot):
+- The three-row header is +5V on TOP, Gnd in the MIDDLE, the A pin at the edge. The plug
+  goes on with its white (signal) wire on the edge row. Then black is on top and red in
+  the middle, and that is right for these cables (the resistor is on the black wire, the
+  LDR on the red one). Check with `b`: cover the sensor and its number must go DOWN.
+- The pins are spaced apart. A grown-up bends them together so the plug fits.
 
 ## How the user works (learned the hard way)
 
@@ -210,7 +329,12 @@ item for the guide, or a code fix).
 - **It is light following**, never line following, even if the user types "line".
 - **The live site shows only what the current class has covered**: nothing that reads like
   a schedule or "next week". Retire pages into archive/, never delete.
+- Shield header fact (2026-11-04): the analog header's three rows are +5V (top), Gnd
+  (middle), A pin (edge). Servo plugs have red in the middle, so a servo cable pushed on
+  signal-to-the-edge puts black on +5V and red on Gnd; the fleet build (log entry 4)
+  accepts that: resistor on black, LDR on red. The pins must be bent together to fit.
 - Robot hardware facts: Bluetooth is SoftwareSerial (HC-06 on A0/A1) and drops bytes
   while the sketch replies, so apps send one command and wait for its answer (test with
   the `bt` variants of the sim suites). The IR receiver is on D10; LDRs on A4 (left),
-  A5 (right), optional back LDR on A3; GL5537 with 4.7k worked on the user's robot.
+  A5 (right), optional back LDR on A3; GL5537 with 4.7k. Since 0.10.83 the divider is
+  5V - resistor - pin - LDR - GND (the sketch flips the reading).
