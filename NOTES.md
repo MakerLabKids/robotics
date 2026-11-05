@@ -285,7 +285,14 @@ Not done yet (next steps, in order):
    are no names to put in the roster. Connect with Bluetooth 0.1.4 says so: every robot is
    HC-06, hold the phone against your own robot and pick the strongest signal, push a
    stick a little to check it is yours, a connected robot leaves the list. Do not write
-   pages that count on names. Not asked for and not built: making the rename work on the
+   pages that count on names. Best guess at the cause (not proven): the kit module answers
+   OKlinvorV1.8 AND serves the BLE service FFE0 (found 2026-10-05), so it is a dual-mode
+   module with two names. AT+NAME (answer OKsetname, confirmed by the user on 2026-10-05)
+   sets the classic name; the BLE advertisement, which is all a new phone's Web Bluetooth
+   list reads, keeps HC-06 and needs a second, maker-specific command (AT+NAMB, AT+BNAME,
+   AT+LENAME are the usual candidates; none tried). Check that tells: on a new phone,
+   Android Settings > Bluetooth > Pair new device shows the classic name. To fix: a probe
+   over USB that tries the candidates and prints the answers, on one bot. Not asked for and not built: making the rename work on the
    kit module, or showing the robot's own name (K,name) on Sticks after connecting.
    Found while checking: BT_NAME_EEPROM_ADDRESS is 1040 in ir, programming, calibration
    and rename, but an Uno's EEPROM ends at 1023, so on the chip the flag and letters land
