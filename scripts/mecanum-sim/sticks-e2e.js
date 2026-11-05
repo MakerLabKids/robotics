@@ -1,5 +1,6 @@
 // End-to-end: the Mecanum Sticks page (mecanum/sticks.html) against the
-// real firmware in simavr. Run: node scripts/mecanum-sim/sticks-e2e.js [bt]
+// real firmware in simavr. Run: node scripts/mecanum-sim/sticks-e2e.js [bt] [programming | ir]
+// (the sketch on the robot: mecanum_holonomic unless programming or ir is given).
 // Real multi-touch goes in through the DevTools protocol, the page's link is
 // a bridge to the simulator's UART, and the motor PWM is read back from the
 // simulated timers, so this covers stick -> v command -> wheels.
@@ -8,18 +9,20 @@ const os = require('os');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-const PORT = 8194 + (process.argv[2] === 'bt' ? 10 : 0);
+const BT = process.argv.includes('bt');
+const SKETCH = process.argv.includes('programming') ? 'programming' : process.argv.includes('ir') ? 'ir' : 'mecanum_holonomic';
+const PORT = 8194 + (BT ? 10 : 0) + (SKETCH === 'programming' ? 20 : SKETCH === 'ir' ? 40 : 0);
 const root = path.resolve(__dirname, '..', '..');
-// Each suite (and its Bluetooth run) builds in its own folder, so they can all run at once.
-const build = path.join(root, 'temp', 'mecanum-sim', path.basename(__filename, '.js') + (process.argv[2] === 'bt' ? '-bt' : ''));
+// Each suite (and its Bluetooth run, and each sketch) builds in its own folder, so they can all run at once.
+const build = path.join(root, 'temp', 'mecanum-sim', path.basename(__filename, '.js') + (SKETCH === 'mecanum_holonomic' ? '' : '-' + SKETCH) + (BT ? '-bt' : ''));
 const simBinary = path.join(build, 'uno-sim');
-const sketchCopy = path.join(build, 'mecanum_holonomic');
-const elf = path.join(build, 'out', 'mecanum_holonomic.ino.elf');
+const sketchCopy = path.join(build, SKETCH);
+const elf = path.join(build, 'out', SKETCH + '.ino.elf');
 
 function buildEverything() {
   require('fs').mkdirSync(sketchCopy, { recursive: true });
   execSync(`gcc -O2 -o "${simBinary}" "${path.join(__dirname, 'uno-sim.c')}" -lsimavr -lelf -lm`, { stdio: 'inherit' });
-  require('fs').copyFileSync(path.join(root, 'mecanum_holonomic', 'mecanum_holonomic.ino'), path.join(sketchCopy, 'mecanum_holonomic.ino'));
+  require('fs').copyFileSync(path.join(root, SKETCH, SKETCH + '.ino'), path.join(sketchCopy, SKETCH + '.ino'));
   execSync(`"${path.join(os.homedir(), '.local', 'bin', 'arduino-cli')}" compile --fqbn arduino:avr:uno --output-dir "${path.join(build, 'out')}" "${sketchCopy}"`, { stdio: 'ignore' });
 }
 const failures = [];
@@ -32,7 +35,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   buildEverything();
   const server = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '0.0.0.0'], { cwd: root, stdio: 'ignore' });
-  const sim = spawn(simBinary, [elf, 'live'].concat(process.argv[2] === 'bt' ? ['bt'] : []));
+  const sim = spawn(simBinary, [elf, 'live'].concat(BT ? ['bt'] : []));
   let simLog = '';
   await sleep(800);
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-gpu'] });
@@ -97,16 +100,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   });
   control('reboot');
   await sleep(2500);
-  check(/mecanum_holonomic v\d+\.\d+\.\d+/.test(simLog), "robot booted");
+  check(new RegExp(SKETCH + ' v\\d+\\.\\d+\\.\\d+').test(simLog), 'robot booted (' + SKETCH + ')');
   check(await page.evaluate(() => document.getElementById('notice').hidden), 'no old-firmware warning for 0.10.8');
 
-  // The robot's start speeds, from its K,cal (sketch defaults: start 161.8 of
-  // 788.1 mm/s forward; strafe = the forward start x STRAFE_EFFICIENCY 0.45)
+  // The robot's start speeds, from its K,cal: the forward start as a share of
+  // full speed; strafe = its strafe start x the strafe efficiency. The numbers
+  // are the sketch's fleet defaults, which change, so they are read from the
+  // robot's own line here and every speed expected below is worked out from them.
   await page.evaluate(() => { calAsked = 0; askRobotCal(); });
   await waitFor(() => robotStart.known, 'start speeds read from K,cal', 8000);
   await sleep(1500);   // the rest of the k? readout (the robot reads nothing while it talks)
-  check(await page.evaluate(() => Math.abs(robotStart.forward - 161.8 / 788.1) < 0.002 && Math.abs(robotStart.strafe - 161.8 * 0.45 / 788.1) < 0.002),
+  const calLine = /K,cal,([^\r\n]+)/.exec(simLog);
+  const cal = calLine ? calLine[1].split(',').filter((f) => !/^[a-z]$/.test(f)).map(Number) : [];
+  const start = { forward: cal[2] / cal[5], strafe: (cal.length >= 20 && cal[18] > 0 ? cal[18] : cal[2]) * cal[7] / cal[5] };
+  check(start.forward > 0.05 && start.forward < 0.9 && await page.evaluate((s) => Math.abs(robotStart.forward - s.forward) < 0.002 && Math.abs(robotStart.strafe - s.strafe) < 0.002, start),
     'start shares from the robot: ' + await page.evaluate(() => JSON.stringify(robotStart)));
+  // A share of the usable range, as the page works it out: from the start share to the speed setting's top.
+  const usable = (from, speed, amount) => from + (from + (1 - from) * speed - from) * amount;
+  const PUSH_09 = Math.pow((0.9 - 0.08) / (1 - 0.08), 1.5);   // a stick pushed 0.9 of the way, past the dead zone, on the page's curve
 
   // ---- Analog (mode 2): right = direction, left X = turn, left Y = speed ----
   await page.evaluate(() => setMode('analog'));
@@ -118,7 +129,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await touchMove(1, await stickPoint('rightStick', 0.3, 0.7));
   await sleep(400);
   const forward = await page.evaluate(() => Number(document.getElementById('forwardReadout').textContent));
-  check(forward >= 50 && forward <= 58, 'analog: right up at speed 50 % = forward ' + forward + '% (start 21 % .. top 60 %)');
+  const halfSpeed = usable(start.forward, 0.5, PUSH_09) * 100;
+  check(Math.abs(forward - halfSpeed) <= 4, 'analog: right up at speed 50 % = forward ' + forward + '% (expected about ' + Math.round(halfSpeed) + ': start ' + Math.round(start.forward * 100) + ' % .. top ' + Math.round(usable(start.forward, 0.5, 1) * 100) + ' %)');
   check(await page.evaluate(() => /^v\d+,0,0;$/.test(sentCommands[sentCommands.length - 1])), 'analog: sends v<f>,0,0;');
   let duties = await pwm();
   check(moving(duties) && duties.every((d) => d > 0), 'robot wheels turning: ' + JSON.stringify(duties));
@@ -135,7 +147,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await touchMove(2, await stickPoint('leftStick', 0, 1.2));
   await sleep(400);
   const fast = await page.evaluate(() => Number(document.getElementById('forwardReadout').textContent));
-  check(fast >= 84 && fast <= 90 && moving(await pwm()), 'analog: left stick up = speed 100 %, forward ' + fast + '%');
+  const fullSpeed = usable(start.forward, 1, PUSH_09) * 100;
+  check(Math.abs(fast - fullSpeed) <= 3 && moving(await pwm()), 'analog: left stick up = speed 100 %, forward ' + fast + '% (expected about ' + Math.round(fullSpeed) + ')');
   await touchUp(2);
   await sleep(300);
   check(await page.evaluate(() => document.getElementById('speedReadout').textContent === '50%'), 'analog: let go of the speed stick = back to 50 %');
@@ -160,7 +173,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await touchMove(9, await stickPoint('rightStick', 0, 0.12));
   await sleep(400);
   const nudge = await page.evaluate(() => Number(document.getElementById('forwardReadout').textContent));
-  check(nudge >= 20 && moving(await pwm()), 'analog: a small push = the start speed (' + nudge + '%), wheels turning');
+  check(nudge >= Math.round(start.forward * 100) - 1 && moving(await pwm()), 'analog: a small push = the start speed (' + nudge + '%, start ' + Math.round(start.forward * 100) + ' %), wheels turning');
   await touchUp(9);
   await sleep(300);
   // left stick X alone = turn in place
@@ -184,11 +197,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // straight right = the 90 degree crab wedge
   await touchDown(5, await stickPoint('rightStick', 0.9, 0));
   await sleep(300);
-  check(await page.evaluate(() => sentCommands[sentCommands.length - 1] === 'v0,55,0;'), 'digital: right wedge 90 = pure strafe right at 50 % of its usable range (v0,55,0;)');
+  const lastSent = () => page.evaluate(() => sentCommands[sentCommands.length - 1]);
+  const strafeCommand = 'v0,' + Math.round(usable(start.strafe, 0.5, 1) * 100) + ',0;';
+  check(await lastSent() === strafeCommand, 'digital: right wedge 90 = pure strafe right at 50 % of its usable range (' + strafeCommand + '): ' + await lastSent());
   // nearly straight up lands in a 30 or 330 wedge: never straight forward
   await touchMove(5, await stickPoint('rightStick', 0.05, 0.9));
   await sleep(300);
-  check(await page.evaluate(() => sentCommands[sentCommands.length - 1] === 'v52,30,0;'), 'digital: pushing up gives the 30 degree crab (v52,30,0;)');
+  const crab = usable(start.forward, 0.5, 1);
+  const crabCommand = 'v' + Math.round(crab * Math.cos(Math.PI / 6) * 100) + ',' + Math.round(crab * Math.sin(Math.PI / 6) * 100) + ',0;';
+  check(await lastSent() === crabCommand, 'digital: pushing up gives the 30 degree crab (' + crabCommand + '): ' + await lastSent());
   check(moving(await pwm()), 'robot crabbing');
   await touchUp(5);
   await sleep(300);

@@ -253,8 +253,13 @@ Site and tests:
    challenges.html (pre-existing).
 7. `npm run test:workshop` (the archived 2WD app) crashes in jsdom: "fetch is not defined"
    inside Blockly. Pre-existing.
-8. Pre-existing simulator failures, same on code from before the move: sticks (expects a
-   161.8 mm/s start and 0.45 strafe), sensors (ADC layout), rename (answer timeout). Do not
+8. Pre-existing simulator failures, same on code from before the move: sensors (ADC
+   layout), rename (answer timeout). (sticks was a third, expecting a 161.8 mm/s start and
+   0.45 strafe: FIXED 2026-11-05, sticks-e2e now works its expected speeds out from the
+   robot's own K,cal line and takes the sketch as an argument, `node
+   scripts/mecanum-sim/sticks-e2e.js [bt] [programming | ir]`; it passes on
+   mecanum_holonomic usb/bt, programming usb/bt and ir bt, and run-all has a
+   "sticks bt programming" run.) Do not
    chase them as new regressions; fix them when asked. Confirmed again 2026-11-01 on a
    fresh container: `npm run test:mecanum` is 6 of 12 failed, and the six are exactly
    these three in both usb and bt. The other six (calpage usb/bt, program usb/bt, blocks
