@@ -209,6 +209,16 @@ item for the guide, or a code fix).
    a tick each), then the calibrated line and the nod. No "both".)
    5) it drives: `light: sees it`, wheels follow the light, `light: lost it` and stop.
    The spans in the calibrated line are the numbers to report.
+   **Which LDR is on the bot, from `b` alone** (2026-11-04; the pack mixes GL5516/28/37/39/49,
+   which look identical). With 4.7k the room reading is 1000 x 4.7 / (R + 4.7), so in the
+   user's room, same spot, same light: 800 = 1.1k = GL5516; 600-680 = 2.2-3.2k = GL5528;
+   370-460 = 5.5-8k = GL5537 (the fleet's grade); 320 = 10k = GL5539; 55-90 = 50-80k =
+   GL5549; 0-3 = megohms = a dead cell (Shep's bot). Rule: 250-700 in room light is fine,
+   leave it (the teach-in gains cover a 28 next to a 37); above 750 is a 5516 that
+   saturates in a lit classroom, swap in a 37 (or 1k on that cable); below 150 is a 5549
+   or a dead cell, swap in a 37. The user's loose stock, metered in that room: 2x 1.1k,
+   piles at 2.2k, 3.2k, 5.5-8k and 10k, 1x 50k, 1x 80k. The 5.5-8k pile is the one to
+   use with 4.7k; a bot's two LDRs should come from the same pile.
    Also note the flash start can steal the bench: shining left, right,
    left, right to TEST the sensors is itself the no-remote start, and it drops the robot
    into the "both sensors now" half of the teach-in, so the side shines the user then
