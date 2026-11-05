@@ -233,8 +233,9 @@ furiously spinning."
   the start power: the simulator shows motor power 196, 85, 255, 86 at 0.34 and 196, 196,
   255, 255 at 0. That is exactly "two barely turning, two furiously spinning". Not changed
   in the sketches (a firmware bump on four sketches, and robots with saved numbers keep
-  theirs anyway): told the user; "Even" on the Tune page is the per-robot fix. Ask before
-  changing the default to 0.
+  theirs anyway): told the user; "Even" on the Tune page is the per-robot fix. **Decided
+  2026-11-05 (the user): "leave it as is."** The sketch default stays 0.34; do not ask
+  again.
 - Each card has its own undo (back to how it was at connect); "Back to the class numbers"
   is `kd;`. Every change is saved at once (`kw;`). A fixed STOP bar sends x three times.
 - Nothing of this has run on a real robot. First things to check on hardware: the dial's
@@ -275,6 +276,17 @@ Not done yet (next steps, in order):
    "Robot not in the list? Show every Bluetooth device" (acceptAllDevices, as Calibrate
    and Rename have); the guide 0.1.1 says so. Blocks and the Programming page console
    still have no show-all.
+   **Correction, later on 2026-11-05 (the user): "when I connect these bots to new phones,
+   all of them identify as HC-06."** So whatever the naming did, the kit modules still
+   announce themselves as HC-06 to a phone that has not met them. Why is not known (the
+   HC-06 rename was never confirmed on hardware, open item 5; a name seen earlier may have
+   been the robot's own copy, K,name, or a phone's memory of it). What it means: the first
+   Bluetooth list always shows them (the HC prefix), kids cannot pick by name, and there
+   are no names to put in the roster. Connect with Bluetooth 0.1.4 says so: every robot is
+   HC-06, hold the phone against your own robot and pick the strongest signal, push a
+   stick a little to check it is yours, a connected robot leaves the list. Do not write
+   pages that count on names. Not asked for and not built: making the rename work on the
+   kit module, or showing the robot's own name (K,name) on Sticks after connecting.
    Found while checking: BT_NAME_EEPROM_ADDRESS is 1040 in ir, programming, calibration
    and rename, but an Uno's EEPROM ends at 1023, so on the chip the flag and letters land
    at 16 to 33 (the address register has 10 bits). Reads and writes agree, so it works,
