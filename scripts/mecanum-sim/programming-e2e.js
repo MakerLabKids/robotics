@@ -71,6 +71,9 @@ const script = [
   mark(),                            // 7 the light follower: two shines, then it follows
   ldr(4, 2000), ldr(5, 2000), 'wait 300', press('##1'), 'wait 800', ...shine(4, 3500), ...shine(5, 3500), 'wait 800',
   ldr(5, 3500), 'wait 500', 'pwm', ldr(5, 2000), 'wait 800', press('O'), 'wait 300',
+  mark(),                            // 8 a step that runs another program (g<slot>, * 2 <slot> on the remote); an empty slot is skipped
+  'btsend p6=g2 g9 b10;', 'wait 800', 'btsend p6;', 'wait 7000',
+  press('***'), 'wait 2500', press('*22*'), 'wait 500', press('**'), 'wait 900', press('7**'), 'wait 900', 'send p?;\\n', 'wait 1800',
   mark(),
   '',
 ].join('\n');
@@ -129,6 +132,14 @@ s = sections[7];
 p = pwms(s);
 check(/light: calibrated, gains left 100%, right 100%/.test(s) && /gesture: nod/.test(s), 'light: # # 1, a shine on each sensor: calibrated, nod');
 check(/light: sees it/.test(s) && p.length && moving(p[0]) && /light: stop/.test(s), 'light: it follows the flashlight, OK stops it: ' + p[0]);
+
+// 8 a step that runs another program
+s = sections[8];
+{
+  const lines = (s.match(/^(step \d+: [a-z ]+ \d+|run: [a-z ,]+)/gm) || []).join(' | ');
+  check(/program: slot 6 = 3 steps/.test(s) && lines.indexOf('step 1: run program 2 | step 1: forward 10 | step 2: turn right 90 | step 2: run program 9 | run: nothing in that slot, skipped | step 3: back 10 | run: done') !== -1, 'Bluetooth: p6=g2 g9 b10; runs slot 2 inside it, skips the empty slot 9, carries on: ' + lines);
+  check(/step 1: run program 2\r?\n/.test(s) && /program: saved in slot 7/.test(s) && /^P,7,g2\r?$/m.test(s), 'remote: * 2 2 is a "run program 2" step, saved in slot 7 as g2');
+}
 
 console.log(failures.length ? failures.length + ' FAILED (see ' + path.join(build, 'output.txt') + ')' : 'all passed');
 process.exit(failures.length ? 1 : 0);

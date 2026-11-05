@@ -148,6 +148,14 @@ const script = [
   'btsend p3=' + new Array(17).join('t-180 ').trim() + ';', 'wait 1500',
   'btsend p4=f10 t90 n2;p?;', 'wait 2500',
   'btsend v60,0,0;', 'wait 150', 'pwm', 'btsend x', 'wait 300', 'pwm',
+  mark(),                            // 25 a step that runs another program: typed on the remote (* 2 <slot>), in slot lines (g<slot>),
+                                     // inside a repeat, a program that runs itself, and a key during the program it runs
+  'send p1=f10 t90;\\n', 'wait 400',
+  press('***'), 'wait 2500', press('*21*'), 'wait 500', press('*D10*'), 'wait 500', press('**'), 'wait 900', press('O'), 'wait 7000', press('#'), 'wait 400',
+  'send p2=g1 n2;\\n', 'wait 400', 'send p2;\\n', 'wait 9000',
+  'send p3=f10 g3;\\n', 'wait 400', 'send p3;\\n', 'wait 9000',
+  'send p2;\\n', 'wait 700', press('0'), 'wait 800', 'pwm',
+  'send p?\\n', 'wait 1500',
   mark(),
   '',
 ].join('\n');
@@ -344,6 +352,19 @@ p = pwms(s);
 check(/program: slot 3 = 16 steps/.test(s) && /^P,3(,t-180){16}\r?$/m.test(s), 'Bluetooth: a full 16-step line (100 bytes) is stored whole');
 check(/program: slot 4 = 3 steps/.test(s) && /^P,4,f10,t90,n2\r?$/m.test(s) && /P,end/.test(s), 'Bluetooth: two commands in one burst (store, then list) both run');
 check(p.length >= 2 && moving(p[0]) && !moving(p[1]) && /stop/.test(s), 'Bluetooth: v drives, x stops: ' + p[0] + ' then ' + p[1]);
+
+// 25 a step that runs another program
+s = sections[25];
+p = pwms(s);
+{
+  // what each run did: every step, "again" and "run:" line, in order
+  const runs = s.split(/run: (?:the new program|slot \d+)\r?\n/).slice(1).map((part) => (part.match(/^(step \d+: [a-z ]+ \d+|again: \d+ more|run: [a-z ,]+)/gm) || []).join(' | '));
+  check(/step 1: run program 1\r?\n/.test(s) && runs[0] === 'step 1: run program 1 | step 1: forward 10 | step 2: turn right 90 | step 2: back 10 | run: done', 'remote: * 2 1 (run program 1), then back 10: slot 1 runs inside the new program, then it carries on: ' + runs[0]);
+  check(runs[1] === 'step 1: run program 1 | step 1: forward 10 | step 2: turn right 90 | again: 1 more | step 1: run program 1 | step 1: forward 10 | step 2: turn right 90 | run: done', 'p2=g1 n2: the program it runs is repeated like any step: ' + runs[1]);
+  check((runs[2].match(/forward 10/g) || []).length === 4 && (runs[2].match(/too many programs deep, skipped/g) || []).length === 1 && /run: done$/.test(runs[2]), 'p3=f10 g3 (runs itself): four rounds, then the step is skipped and it ends: ' + runs[2]);
+  check(runs[3] !== undefined && /run: stopped$/.test(runs[3]) && !/run: done/.test(runs[3]) && p.length && !moving(p[0]), 'a key during the program it runs stops the whole run, once: ' + runs[3]);
+  check(/^P,2,g1,n2\r?$/m.test(s) && /^P,3,f10,g3\r?$/m.test(s), 'p? lists the step as g<slot>');
+}
 
 // The back LDR on A3 (USE_LIGHT_BACK 1): a light behind
 const backScript = [

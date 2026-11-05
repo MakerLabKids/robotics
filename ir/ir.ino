@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.85 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.86 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -28,6 +28,8 @@
 //                                 BEFORE any steps (first, or right after another 8): repeat the
 //                                 steps that FOLLOW, up to the next 8 or the end
 //     * 0 <cm across>             a circle that wide, one lap, nose pointed at the middle (no digits = 1 m)
+//     * 2 <1-9>                   run the program saved in that slot here, then carry on (0.10.86);
+//                                 an empty slot is skipped. Programs can run programs, 3 deep
 //     * * *           done: the robot wiggles and waits for a slot number 1-9
 //     <1-9> * *       saved in that slot (nod)
 //     OK (after * * *)   try the program now without saving
@@ -60,6 +62,7 @@
 //   p<n>;          run slot n       p?;   list the slots (P,<n>,<steps>; ,builtin = the demo)
 //   p<n>=<steps>;  store steps in slot n: f/b/l/r<cm> t<deg> (t-90 = left) q/e<cm> diagonals
 //                  p<s> pause n<times> repeat (after its steps, or before them), e.g. p3=f50 t90 n4;
+//                  g<slot> run the program in that slot, then carry on, e.g. p9=g1 f20 g1;
 //                  p<n>=;  empties the slot
 //   u              one sonar reading (U,<mm>, -1 = nothing within ~4 m)
 //   b              one light reading: B,<direction>,<brightest>,<left>,<right>[,<back>]
@@ -79,11 +82,11 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.85"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.86"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
-enum StepDirection { S_FORWARD, S_BACK, S_LEFT, S_RIGHT, S_TURN_LEFT, S_TURN_RIGHT, S_DIAG_LEFT, S_DIAG_RIGHT, S_WAIT, S_REPEAT, S_CIRCLE };
+enum StepDirection { S_FORWARD, S_BACK, S_LEFT, S_RIGHT, S_TURN_LEFT, S_TURN_RIGHT, S_DIAG_LEFT, S_DIAG_RIGHT, S_WAIT, S_REPEAT, S_CIRCLE, S_CALL };
 struct Step {
   byte dir;          // StepDirection
   uint16_t amount;   // cm, or degrees for turns
@@ -937,7 +940,7 @@ void gestureNo() {
 // ===========================================================================
 // PROGRAMS - steps, running, EEPROM slots
 // ===========================================================================
-const char STEP_LETTERS[] PROGMEM = "fblrttqepnc";   // for the p commands: f b l r t t, q e diagonals, p pause, n repeat, c circle
+const char STEP_LETTERS[] PROGMEM = "fblrttqepncg";   // for the p commands: f b l r t t, q e diagonals, p pause, n repeat, c circle, g run a program
 
 void printDirection(byte dir) {
   switch (dir) {
@@ -951,21 +954,22 @@ void printDirection(byte dir) {
     case S_DIAG_RIGHT: out.print(F("diagonal right")); break;
     case S_WAIT: out.print(F("wait")); break;
     case S_CIRCLE: out.print(F("circle, facing in,")); break;
+    case S_CALL: out.print(F("run program")); break;
     default: out.print(F("do it all again")); break;
   }
 }
 
 bool isTurn(byte dir) { return dir == S_TURN_LEFT || dir == S_TURN_RIGHT; }
-bool isDriveStep(byte dir) { return dir != S_WAIT && dir != S_REPEAT && dir != S_CIRCLE; }   // what holding the key drives
+bool isDriveStep(byte dir) { return dir != S_WAIT && dir != S_REPEAT && dir != S_CIRCLE && dir != S_CALL; }   // what holding the key drives
 int defaultAmount(byte dir) {
-  return dir == S_WAIT ? DEFAULT_WAIT_S : dir == S_REPEAT ? DEFAULT_REPEAT_TIMES : dir == S_CIRCLE ? DEFAULT_CIRCLE_CM : isTurn(dir) ? DEFAULT_TURN_DEG : DEFAULT_STEP_CM;
+  return dir == S_CALL ? 1 : dir == S_WAIT ? DEFAULT_WAIT_S : dir == S_REPEAT ? DEFAULT_REPEAT_TIMES : dir == S_CIRCLE ? DEFAULT_CIRCLE_CM : isTurn(dir) ? DEFAULT_TURN_DEG : DEFAULT_STEP_CM;
 }
 
 void printStep(const Step &step) {
   printDirection(step.dir);
   out.print(' ');
   out.print(step.amount);
-  out.print(step.dir == S_WAIT ? F(" s") : step.dir == S_REPEAT ? F(" times") : step.dir == S_CIRCLE ? F(" cm across") : isTurn(step.dir) ? F(" deg") : F(" cm"));
+  out.print(step.dir == S_CALL ? F("") : step.dir == S_WAIT ? F(" s") : step.dir == S_REPEAT ? F(" times") : step.dir == S_CIRCLE ? F(" cm across") : isTurn(step.dir) ? F(" deg") : F(" cm"));
 }
 
 // Drive one step. False when stopped (a key, x, or the sonar).
@@ -993,19 +997,42 @@ bool runStep(const Step &step) {
       executeTimedBodyMotion(0, -DEMO_SPEED_MM_PER_SEC, omega, omega, 2 * PI * radius / DEMO_SPEED_MM_PER_SEC);
       break;
     }
-    default: break;   // S_REPEAT: runSteps handles it
+    default: break;   // S_REPEAT and S_CALL: runSteps handles them
   }
   stopAllWheels();
   movingForward = false;
   return !abortRequested;
 }
 
-// Run steps one after another; any key, x or the sonar stops the lot.
+// A "run program" step (* 2 <slot>, g<slot>): the steps saved in that slot run
+// here, then the program that asked carries on. A program may run a program
+// that runs a program, RUN_MAX_DEPTH deep (each one deep costs about 100 bytes
+// of RAM); deeper than that, or an empty slot, the step is skipped. So a
+// program that runs itself goes round RUN_MAX_DEPTH times and ends.
+// False when stopped.
+const byte RUN_MAX_DEPTH = 3;
+byte runDepth = 0;
+
+bool runCalledSlot(byte slot) {
+  Step steps[PROGRAM_MAX_STEPS];
+  byte count = (slot <= PROGRAM_SLOTS && runDepth < RUN_MAX_DEPTH) ? loadRunnable(slot, steps) : 0;
+  if (!count) {
+    out.println(runDepth < RUN_MAX_DEPTH ? F("run: nothing in that slot, skipped") : F("run: too many programs deep, skipped"));
+    abortRequested = false;
+    return true;
+  }
+  runDepth++;
+  bool finished = runSteps(steps, count);
+  runDepth--;
+  return finished;
+}
+
+// Run steps one after another; any key, x or the sonar stops the lot (false).
 // An 8 (repeat) AFTER some steps sends the run back to the step after the
 // previous 8 (or the start) until it has gone round that many times in all.
 // An 8 with no steps before it (first, or right after another 8) repeats the
 // steps that FOLLOW it instead, up to the next 8 or the end.
-void runSteps(const Step *steps, byte count) {
+bool runSteps(const Step *steps, byte count) {
   int loopStart = 0;
   int roundsLeft = -1;   // -1: not inside a repeat yet
   bool headed = false;   // this stretch's 8 came before it: the next 8 (or the end) closes it
@@ -1049,19 +1076,20 @@ void runSteps(const Step *steps, byte count) {
     out.print(F(": "));
     printStep(steps[i]);
     out.println();
-    if (!runStep(steps[i])) {
-      out.println(F("run: stopped"));
-      return;
-    }
+    if (steps[i].dir == S_CALL ? !runCalledSlot(steps[i].amount) : !runStep(steps[i])) return false;
     // A breath between steps (a key during it stops too)
     for (unsigned long t = millis(); millis() - t < STEP_PAUSE_MS;) {
-      if (checkForAbort()) {
-        out.println(F("run: stopped"));
-        return;
-      }
+      if (checkForAbort()) return false;
     }
   }
-  out.println(F("run: done"));
+  return true;
+}
+
+// A program from its first step, and how it ended
+void runProgram(const Step *steps, byte count) {
+  runDepth = 0;
+  abortRequested = false;
+  out.println(runSteps(steps, count) ? F("run: done") : F("run: stopped"));
 }
 
 int slotAddress(byte slot) {   // slot 1..PROGRAM_SLOTS
@@ -1093,13 +1121,14 @@ void saveProgram(byte slot, const Step *steps, byte count) {
 }
 
 // "f50 t90 n4" -> steps (letters f b l r, q e diagonals, t degrees with t-90 =
-// left, p pause seconds, n repeat times; no number = the step's default).
+// left, p pause seconds, n repeat times, g run the program in that slot; no
+// number = the step's default).
 byte parseStepText(const char *text, Step *steps) {
   byte count = 0;
   for (const char *c = text; *c && count < PROGRAM_MAX_STEPS;) {
     char letter = *c++;
     int dir = letter == 'f' ? S_FORWARD : letter == 'b' ? S_BACK : letter == 'l' ? S_LEFT : letter == 'r' ? S_RIGHT : letter == 't' ? S_TURN_RIGHT
-            : letter == 'q' ? S_DIAG_LEFT : letter == 'e' ? S_DIAG_RIGHT : letter == 'p' ? S_WAIT : letter == 'n' ? S_REPEAT : letter == 'c' ? S_CIRCLE : -1;
+            : letter == 'q' ? S_DIAG_LEFT : letter == 'e' ? S_DIAG_RIGHT : letter == 'p' ? S_WAIT : letter == 'n' ? S_REPEAT : letter == 'c' ? S_CIRCLE : letter == 'g' ? S_CALL : -1;
     if (dir < 0) continue;
     bool negative = *c == '-';
     if (negative) c++;
@@ -1143,11 +1172,17 @@ byte loadSlotOrDemo(byte slot, Step *steps, bool &builtIn) {
   return count;
 }
 
+// What * <slot> and a "run program" step run: the saved steps, or the built-in demo
+byte loadRunnable(byte slot, Step *steps) {
+  bool builtIn;
+  return slot ? loadSlotOrDemo(slot, steps, builtIn) : 0;
+}
+
 // * 0: program 0 is always a circle 1 m across, facing in
 void runCircle() {
   Step circle = { S_CIRCLE, DEFAULT_CIRCLE_CM };
   out.println(F("run: program 0 (circle, 1 m across, facing in)"));
-  runSteps(&circle, 1);
+  runProgram(&circle, 1);
 }
 
 void runSlot(byte slot) {
@@ -1162,7 +1197,7 @@ void runSlot(byte slot) {
     return;
   }
   out.println(builtIn ? F(" (built-in demo)") : F(""));
-  runSteps(steps, count);
+  runProgram(steps, count);
 }
 
 // ===========================================================================
@@ -1209,6 +1244,7 @@ int directionOf(char key) {
     case '9': return S_DIAG_RIGHT;
     case '5': return S_WAIT;
     case '8': return S_REPEAT;
+    case '2': return S_CALL;
     case '0': return S_CIRCLE;
     default: return -1;
   }
@@ -1949,7 +1985,7 @@ void handleKeyProgramming(char key) {
         out.println(F(" - * * saves"));
       } else if (key == 'O') {
         out.println(F("run: the new program"));
-        runSteps(draft, draftCount);
+        runProgram(draft, draftCount);
       } else if (key == '*' && programState == P_SAVE) {
         if (++stars >= 2) saveDraft();
       }

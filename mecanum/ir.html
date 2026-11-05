@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Programming Guide 0.1.23 - Maker Lab Kids</title>
+<title>Programming Guide 0.1.24 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -224,7 +224,7 @@
     <div class="remote" id="remoteDrawing">
     <div class="pad">
       <div class="btn white" data-key="1"><b>1</b><small class="cap">turn left</small></div>
-      <div class="btn white" data-key="2"><b>2</b></div>
+      <div class="btn white" data-key="2"><b>2</b><small class="cap">run a slot</small></div>
       <div class="btn white" data-key="3"><b>3</b><small class="cap">turn right</small></div>
       <div class="btn white" data-key="4"><b>4</b></div>
       <div class="btn white" data-key="5"><b>5</b><small class="cap">pause</small></div>
@@ -275,6 +275,7 @@
       <li><span class="key">5</span> <span class="then">+ seconds: pause</span></li>
       <li><span class="key">0</span> <span class="then">+ cm across: a circle, nose pointed at the middle</span></li>
       <li><span class="key">8</span> <span class="then">+ times: do everything before it again, that many times in all. Typed first, it repeats the steps after it instead.</span></li>
+      <li><span class="key">2</span> <span class="then">+ a slot number: run the program saved in that slot right here, then carry on. A program can be built out of other programs. (Robots on 0.10.86 or newer.)</span></li>
     </ul>
     <p class="seq"><b>D. Done:</b> <span class="key star">*</span><span class="key star">*</span><span class="key star">*</span>
       <span class="then">the robot</span> <span class="answer">wiggles</span> <span class="then">= "which slot?"</span></p>
@@ -416,7 +417,7 @@
           <tr><td><code>i&lt;keys&gt;;</code></td><td>press remote keys: U D L R O(k) * # 0-9. <code>i***;</code> then <code>iU50*;</code> then <code>i***;</code> ... exactly what a kid would press.</td></tr>
           <tr><td><code>p?;</code></td><td>list the slots: <code>P,3,f50,t90</code> (f b l r in cm, t in degrees, t-90 = left)</td></tr>
           <tr><td><code>p3;</code></td><td>run slot 3</td></tr>
-          <tr><td><code>p3=f50 t90 n4;</code></td><td>store a program in slot 3 from the phone: f b l r cm, q e diagonals cm, t degrees (t-90 left), p pause s, n do it all again times (<code>p3=;</code> empties it). The <a href="blocks.html">Blocks editor</a> builds these lines from block programs and can send all nine slots at once.</td></tr>
+          <tr><td><code>p3=f50 t90 n4;</code></td><td>store a program in slot 3 from the phone: f b l r cm, q e diagonals cm, t degrees (t-90 left), p pause s, n do it all again times, g run the program in that slot (<code>p9=g1 f20 g1;</code>, 0.10.86 or newer); <code>p3=;</code> empties it. The <a href="blocks.html">Blocks editor</a> builds these lines from block programs and can send all nine slots at once.</td></tr>
           <tr><td><code>u</code></td><td>one sonar reading, <code>U,&lt;mm&gt;</code> (-1 = nothing within 4 m, or the sonar is off)</td></tr>
           <tr><td><code>v40,0,0;</code></td><td>keep driving forward / right / clockwise at -100..100 % (the Blocks page's keep-driving blocks and the Sticks page); stops unless repeated within half a second; the sonar zeroes the forward part near a wall</td></tr>
           <tr><td><code>b</code></td><td>one light reading, <code>B,&lt;direction&gt;,&lt;brightest&gt;,&lt;left&gt;,&lt;right&gt;[,&lt;back&gt;]</code> (readings 0-1000, brighter = higher; direction in degrees from the nose). The same layout as mecanum_holonomic, so the Blocks page's light blocks work here too.</td></tr>

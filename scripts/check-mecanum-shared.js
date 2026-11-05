@@ -22,7 +22,7 @@ const OTHERS = [
 ];
 // What programming.ino does differently from ir.ino on purpose: an empty slot
 // is empty (no demo), and a third # does not start a calibration.
-const IR_VS_PROGRAMMING_DIFFERENT = ['runSlot', 'handleProgramText', 'handleKeyIdle', 'handleKey'];
+const IR_VS_PROGRAMMING_DIFFERENT = ['runSlot', 'loadRunnable', 'handleProgramText', 'handleKeyIdle', 'handleKey'];
 
 const FUNCTIONS = [
   'readCommandByte', 'pushShiftRegister', 'setChannelPwm', 'setChannelPower', 'initMotorPins', 'setWheelPower', 'stopAllWheels',
