@@ -119,6 +119,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const usable = (from, speed, amount) => from + (from + (1 - from) * speed - from) * amount;
   const PUSH_09 = Math.pow((0.9 - 0.08) / (1 - 0.08), 1.5);   // a stick pushed 0.9 of the way, past the dead zone, on the page's curve
 
+  // ---- Full screen: no nav, bigger sticks, an Exit button, and the connection stays ----
+  const stickRadius = () => page.evaluate(() => rightStick.geometry().radius);
+  const navShowing = () => page.evaluate(() => getComputedStyle(document.querySelector('.mlk-nav')).display !== 'none');
+  const normalRadius = await stickRadius();
+  await page.evaluate(() => { window.linkBefore = link; });
+  check(await navShowing() && await page.evaluate(() => document.getElementById('fullscreenButton').textContent === 'Full screen'), 'a Full screen button, the nav showing');
+  await page.click('#fullscreenButton');
+  await sleep(500);
+  const bigRadius = await stickRadius();
+  check(!(await navShowing()) && bigRadius > normalRadius * 1.3, 'full screen: the nav is gone and the sticks are bigger (radius ' + Math.round(normalRadius) + ' -> ' + Math.round(bigRadius) + ' px)');
+  check(await page.evaluate(() => document.getElementById('fullscreenButton').textContent === 'Exit' && link === window.linkBefore), 'full screen: the button says Exit, still connected');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth || document.documentElement.scrollHeight > window.innerHeight + 1)), 'full screen: no scroll');
+  await page.screenshot({ path: path.join(build, 'sticks-big.png') });
+  await page.click('#fullscreenButton');
+  await sleep(500);
+  check(await navShowing() && Math.abs(await stickRadius() - normalRadius) < 1 && await page.evaluate(() => link === window.linkBefore && !document.body.classList.contains('big')),
+    'Exit: the nav is back, the sticks their normal size, still connected');
+
   // ---- Analog (mode 2): right = direction, left X = turn, left Y = speed ----
   await page.evaluate(() => setMode('analog'));
   await touchDown(1, await stickPoint('rightStick', 0.3, -0.2));

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Mecanum Sticks 0.1.10 - Maker Lab Kids</title>
+<title>Mecanum Sticks 0.1.11 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -89,6 +89,10 @@
   .notice { padding: 6px 12px; font-size: 12px; color: var(--orange); text-align: center; }
   .notice[hidden] { display: none; }
   .notice button { margin-left: 8px; padding: 4px 10px; }
+  /* Full screen: no nav, no title, no readout line, so the sticks get the whole screen. */
+  #fullscreenButton { border-color: var(--orange); }
+  body.big .mlk-nav, body.big .mlk-subnav, body.big .title, body.big .readout { display: none; }
+  body.big .bar { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
 </style>
 <link rel="stylesheet" href="/css/nav.css">
 </head>
@@ -98,7 +102,8 @@
 <nav class="mlk-subnav" aria-label="Bluetooth pages"><span>Bluetooth:</span><a href="/mecanum/bluetooth">How to connect</a><a href="/mecanum/sticks" class="active" aria-current="page">Drive with Sticks</a></nav>
 <!-- /mlk-nav -->
   <div class="bar">
-    <div class="title">Mecanum Sticks <span>0.1.10</span></div>
+    <button id="fullscreenButton">Full screen</button>
+    <div class="title">Mecanum Sticks <span>0.1.11</span></div>
     <div class="status"><div class="dot" id="statusDot"></div><span id="statusText">Not connected</span></div>
     <div class="spacer"></div>
     <div class="mode" role="group" aria-label="Stick mode">
@@ -146,7 +151,7 @@
 //   turn, its corners pick the speed.
 // ---------------------------------------------------------------------------
 
-var APP_VERSION = "0.1.10";
+var APP_VERSION = "0.1.11";
 var FIRMWARE_COMPAT = "0.10.8";      // first sketch with the v command
 var SERIAL_BAUD = 9600;
 var BLE_SERVICE_UUID = 0xFFE0;
@@ -530,7 +535,8 @@ function Stick(element, side) {
 
 Stick.prototype.geometry = function () {
   var rect = this.element.getBoundingClientRect();
-  var radius = Math.max(40, Math.min(rect.width, rect.height - 30) * 0.42);
+  var share = document.body.classList.contains("big") ? 0.48 : 0.42;   // full screen: as big as fits
+  var radius = Math.max(40, Math.min(rect.width, rect.height - 30) * share);
   return { rect: rect, cx: rect.width / 2, cy: (rect.height - 20) / 2, radius: radius };
 };
 
@@ -823,6 +829,56 @@ function setMode(newMode) {
 document.getElementById("analogButton").addEventListener("click", function () { setMode("analog"); });
 document.getElementById("digitalButton").addEventListener("click", function () { setMode("digital"); });
 window.addEventListener("resize", function () { leftStick.render(); rightStick.render(); });
+
+// ---------------------------------------------------------------------------
+// Full screen: the nav, the title and the readout line go away and the sticks
+// take the whole screen. The button becomes Exit. The connection is not
+// touched either way. Where the browser cannot go full screen the page still
+// switches to the big layout.
+// ---------------------------------------------------------------------------
+
+var fullscreenButton = document.getElementById("fullscreenButton");
+var wentFullscreen = false;
+
+function inFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function setBig(on) {
+  document.body.classList.toggle("big", on);
+  fullscreenButton.textContent = on ? "Exit" : "Full screen";
+  leftStick.render();
+  rightStick.render();
+}
+
+fullscreenButton.addEventListener("click", function () {
+  var big = !document.body.classList.contains("big");
+  setBig(big);
+  var target = big ? document.documentElement : document;
+  var change = big ? (target.requestFullscreen || target.webkitRequestFullscreen) : (inFullscreen() && (target.exitFullscreen || target.webkitExitFullscreen));
+  if (change) {
+    try {
+      var asked = change.call(target);
+      if (asked && asked.catch) {
+        asked.catch(function () { /* not allowed here: the big layout is still on */ });
+      }
+    } catch (error) { /* the same */ }
+  }
+});
+
+// Left full screen some other way (the phone's back gesture): back to the normal layout.
+["fullscreenchange", "webkitfullscreenchange"].forEach(function (type) {
+  document.addEventListener(type, function () {
+    if (inFullscreen()) {
+      wentFullscreen = true;
+    } else if (wentFullscreen) {
+      wentFullscreen = false;
+      setBig(false);
+    }
+    leftStick.render();
+    rightStick.render();
+  });
+});
 
 setMode(mode);
 setConnectedState();
