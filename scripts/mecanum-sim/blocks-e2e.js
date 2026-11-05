@@ -182,8 +182,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.evaluate(() => sendToRobot('p?;'));
   await waitFor(() => /P,end/.test(simLog.slice(logBefore)), 'p? listing', 10000);
   const listing = simLog.slice(logBefore);
-  check(/program: slot 1 = 8 steps/.test(listing) && /P,1,f50,t90,f50,t90,f50,t90,f50,t90/.test(listing) && /P,8,f40,t90,f40,t90,f40,t90,f40,t90,f40,t-90,f40,t-90,f40,t-90,f40,t-90/.test(listing) && /P,9,t-30,t60,t-30,l15,r30,l15,f15,b15,t360/.test(listing),
-    'Send all nine slots: ir.ino stored and lists them back exactly');
+  check(/program: slot 1 = 3 steps/.test(listing) && /P,1,f50,t90,n4\b/.test(listing) && /P,8,f40,t90,n4,f40,t-90,n4\b/.test(listing) && /P,9,t-30,t60,t-30,l15,r30,l15,f15,b15,t360/.test(listing),
+    'Send all nine slots: ir.ino stored and lists them back exactly (repeats as n)');
   r = await backendCall("backend.readLight('level', 0)");
   check(!r.error && typeof r.value === 'number', 'light on ir.ino: bs answers in the same B, layout (light level ' + JSON.stringify(r) + ')');
   pwmBefore = (simLog.match(/\[pwm/g) || []).length;
@@ -211,7 +211,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const again = await buildAllSlotsExport();
     return { count: slots.length, firstSteps: slots[0].steps.length, lines: again.lines, tabName: programStore.programs[0].name, robot: editorSettings.robotName };
   });
-  check(readBack.count === 9 && readBack.firstSteps === 8, 'readRobotSlots: nine slots, slot 1 has 8 steps');
+  check(readBack.count === 9 && readBack.firstSteps === 3, 'readRobotSlots: nine slots, slot 1 has 3 steps (f50 t90 n4)');
   check(JSON.stringify(readBack.lines) === JSON.stringify(exported), 'slots -> blocks -> slots gives the same nine lines');
   check(readBack.robot === 'RoundTrip' && /^Slot 1 from RoundTrip/.test(readBack.tabName), 'tabs belong to robot "RoundTrip" and are named after the slots');
   check(await page.evaluate(() => { switchToRobot('', 'test'); return editorSettings.robotName === '' && document.getElementById('robotChipButton').textContent === 'Robot: shared ▾'; }), 'back to the shared tabs');

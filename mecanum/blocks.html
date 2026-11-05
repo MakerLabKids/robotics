@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.9 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.10 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -452,9 +452,9 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 <dialog id="exportDialog">
   <div class="dialog-head"><h2>Put programs in the remote's slots</h2><button type="button" data-close-dialog>Close</button></div>
   <div class="dialog-body">
-    <p>For a robot running <code>ir.ino</code> (the Remote page). Tabs 1 to 9 are the remote's slots 1 to 9. Slot programs are plain steps:
+    <p>For a robot running <code>programming.ino</code> or <code>ir.ino</code> (the Remote page), over USB or Bluetooth. Tabs 1 to 9 are the remote's slots 1 to 9. Slot programs are plain steps:
       <code>f</code> <code>b</code> <code>l</code> <code>r</code> and the diagonals <code>q</code> <code>e</code> in centimeters, <code>t</code> in degrees, <code>p</code> a pause in seconds,
-      <code>n</code> "do it all again" so many times. Loops and subroutines are unrolled into those steps (waits are kept).</p>
+      <code>n</code> "do it all again" so many times. Loops and subroutines are unrolled into those steps (waits are kept), and moves that repeat are written as one stretch and an <code>n</code>, so a long loop still fits a slot.</p>
     <h3>This tab: <span id="exportProgramName"></span></h3>
     <div class="dialog-row">
       <label>Slot
@@ -478,7 +478,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
     </div>
     <div id="exportAllNotes"></div>
     <h3>What is on the robot now</h3>
-    <p class="dialog-fine">Read the nine slots back from a connected <code>ir.ino</code> robot. Each one can open as blocks: to look at, simulate, change and send back. A slot nobody has saved to shows its built-in demo.</p>
+    <p class="dialog-fine">Read the nine slots back from a connected <code>programming.ino</code> or <code>ir.ino</code> robot. Each one can open as blocks: to look at, simulate, change and send back. A slot nobody has saved to shows its built-in demo.</p>
     <div class="dialog-row">
       <button type="button" id="readSlotsButton">Read the robot's slots</button>
       <button type="button" id="replaceTabsWithSlotsButton" hidden>Replace tabs 1-9 with these</button>
@@ -539,7 +539,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 /* ============================ CONFIG ============================ */
 
 var EDITOR_VERSION = '0.1.9';
-var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+ and ir.ino';
+var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
 
@@ -639,7 +639,7 @@ var ROBOT_SKETCHES = {
     undocumented: []
   },
   ir: {
-    label: 'ir.ino (remote)',
+    label: 'programming.ino / ir.ino (remote)',
     sensors: {
       laser: { sendCommand: 'rs', replyPrefix: 'R,' },
       sonar: { sendCommand: 'u', replyPrefix: 'U,' }
@@ -814,9 +814,11 @@ function handleIncomingBytes(bytes) {
 
 function handleRobotLine(line) {
   addConsoleLine('robot', line);
-  var banner = /^(ir|mecanum_holonomic|calibration) v(\S+)/.exec(line);
+  // The sketch says who it is in its boot line (USB) and in K,role on k? (Bluetooth has no boot line).
+  // programming.ino speaks ir.ino's commands: the same choice.
+  var banner = /^(ir|programming|mecanum_holonomic|calibration) v(\S+)/.exec(line) || /^K,role,(ir|programming|mecanum_holonomic)()$/.exec(line);
   if (banner) {
-    var sketchName = banner[1] === 'mecanum_holonomic' ? 'mecanum_holonomic' : banner[1] === 'ir' ? 'ir' : null;
+    var sketchName = banner[1] === 'mecanum_holonomic' ? 'mecanum_holonomic' : (banner[1] === 'ir' || banner[1] === 'programming') ? 'ir' : null;
     if (sketchName && sketchName !== editorSettings.sketchName) {
       editorSettings.sketchName = sketchName;
       saveEditorSettings();
@@ -871,12 +873,16 @@ function sendToRobot(text) {
   return robotLink.writeChain;
 }
 
+// Three times, a moment apart: over Bluetooth the robot cannot hear while it is
+// sending (a "step 3: ..." line of a running program), so one x can be lost.
 function sendStopToRobot() {
   if (!robotLink.isConnected) { return; }
   sendToRobot('x');
-  setTimeout(function sendSecondStop() {
-    if (robotLink.isConnected) { sendToRobot('x'); }
-  }, 60);
+  [60, 120].forEach(function (delayMs) {
+    setTimeout(function sendStopAgain() {
+      if (robotLink.isConnected) { sendToRobot('x'); }
+    }, delayMs);
+  });
 }
 
 async function connectSerial() {
@@ -3070,6 +3076,71 @@ async function refreshWillDoAndCode() {
   elementById('codeView').textContent = cleanCode === '' ? '// nothing yet' : cleanCode;
 }
 
+// What a slot's steps drive, as the robot runs them: plain steps with every n
+// (the remote's 8) carried out. An n AFTER some steps repeats everything since
+// the previous n (or the start); an n with nothing before it repeats what
+// FOLLOWS, up to the next n or the end.
+function expandSlotSteps(steps) {
+  var moves = [];
+  var index = 0;
+  while (index < steps.length) {
+    var stretch = [];
+    var times = 1;
+    if (steps[index].charAt(0) === 'n') {            // n first: it heads the stretch after it
+      times = Math.max(1, parseInt(steps[index].slice(1), 10) || 1);
+      index += 1;
+      while (index < steps.length && steps[index].charAt(0) !== 'n') { stretch.push(steps[index]); index += 1; }
+    } else {
+      while (index < steps.length && steps[index].charAt(0) !== 'n') { stretch.push(steps[index]); index += 1; }
+      if (index < steps.length) { times = Math.max(1, parseInt(steps[index].slice(1), 10) || 1); index += 1; }
+    }
+    for (var round = 0; round < times; round++) { moves = moves.concat(stretch); }
+  }
+  return moves;
+}
+
+// The fewest slot steps that drive the same moves: a stretch that repeats is
+// written once with an n after it ("f50 t90 n4"). An n only reaches back to
+// the n before it, so repeats cannot nest, and a stretch that runs once before
+// a repeat is closed with n1. With maximumSteps it packs as many moves from
+// the front as fit: used says how many. Same cost: the plain steps win.
+function compressSlotSteps(moves, maximumSteps) {
+  var count = moves.length;
+  var closed = [{ cost: 0, from: -1, length: 0, times: 0 }];   // closed[i]: moves[0..i) with every stretch ended by an n
+  for (var i = 1; i <= count; i++) { closed.push({ cost: Infinity, from: -1, length: 0, times: 0 }); }
+  for (var start = 0; start < count; start++) {
+    if (closed[start].cost === Infinity) { continue; }
+    for (var length = 1; start + length <= count; length++) {
+      for (var times = 1; start + times * length <= count && times <= 4095; times++) {
+        var matches = true;
+        for (var offset = 0; offset < length && matches; offset++) {
+          if (moves[start + (times - 1) * length + offset] !== moves[start + offset]) { matches = false; }
+        }
+        if (!matches) { break; }
+        var end = start + times * length;
+        var cost = closed[start].cost + length + 1;
+        if (cost < closed[end].cost) { closed[end] = { cost: cost, from: start, length: length, times: times }; }
+      }
+    }
+  }
+  // moves[0..i) = closed stretches up to a boundary, then plain steps to i
+  function best(i) {
+    var choice = { cost: i, boundary: 0 };
+    for (var boundary = 1; boundary <= i; boundary++) {
+      if (closed[boundary].cost + (i - boundary) < choice.cost) { choice = { cost: closed[boundary].cost + (i - boundary), boundary: boundary }; }
+    }
+    return choice;
+  }
+  var used = count;
+  if (maximumSteps) { while (used > 0 && best(used).cost > maximumSteps) { used -= 1; } }
+  var choice = best(used);
+  var steps = moves.slice(choice.boundary, used);
+  for (var at = choice.boundary; at > 0; at = closed[at].from) {
+    steps = moves.slice(closed[at].from, closed[at].from + closed[at].length).concat(['n' + closed[at].times], steps);
+  }
+  return { steps: steps, used: used };
+}
+
 function buildSlotExport(recording, firstSlotNumber, mayUseFollowingSlots) {
   var slotSteps = [];
   var notes = [];
@@ -3118,27 +3189,28 @@ function buildSlotExport(recording, firstSlotNumber, mayUseFollowingSlots) {
   if (recording.endNote !== null) { notes.push('The slot program stops where the list stops. ' + recording.endNote); }
   if (recording.problem !== null) { notes.push(recording.problem); }
 
+  // Each slot takes as many moves as fit in its 16 steps, repeats written as "<moves> n<times>"
   var lines = [];
-  if (!mayUseFollowingSlots) {
-    if (slotSteps.length > IR_SLOT_MAXIMUM_STEPS) {
-      notes.push('It has ' + slotSteps.length + ' steps and a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ': steps ' + (IR_SLOT_MAXIMUM_STEPS + 1) + ' to ' + slotSteps.length + ' are LEFT OUT.');
-    }
-    if (slotSteps.length > 0) {
-      lines.push('p' + firstSlotNumber + '=' + slotSteps.slice(0, IR_SLOT_MAXIMUM_STEPS).join(' ') + ';');
-    }
-    return { lines: lines, notes: notes, stepCount: slotSteps.length };
-  }
   var slotNumber = firstSlotNumber;
-  for (var offset = 0; offset < slotSteps.length; offset += IR_SLOT_MAXIMUM_STEPS) {
+  var offset = 0;
+  while (offset < slotSteps.length) {
     if (slotNumber > IR_SLOT_COUNT) {
-      notes.push('Steps ' + (offset + 1) + ' to ' + slotSteps.length + ' are LEFT OUT: there is no slot after ' + IR_SLOT_COUNT + '.');
+      notes.push('Moves ' + (offset + 1) + ' to ' + slotSteps.length + ' are LEFT OUT: there is no slot after ' + IR_SLOT_COUNT + '.');
       break;
     }
-    lines.push('p' + slotNumber + '=' + slotSteps.slice(offset, offset + IR_SLOT_MAXIMUM_STEPS).join(' ') + ';');
+    var packed = compressSlotSteps(slotSteps.slice(offset), IR_SLOT_MAXIMUM_STEPS);
+    lines.push('p' + slotNumber + '=' + packed.steps.join(' ') + ';');
+    offset += packed.used;
+    if (!mayUseFollowingSlots) {
+      if (offset < slotSteps.length) {
+        notes.push('It has ' + slotSteps.length + ' moves and a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ' steps (a repeat counts as one): moves ' + (offset + 1) + ' to ' + slotSteps.length + ' are LEFT OUT.');
+      }
+      break;
+    }
     slotNumber += 1;
   }
   if (lines.length > 1) {
-    notes.unshift('This program has ' + slotSteps.length + ' steps and a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ', so it is split across slots ' + firstSlotNumber + ' to ' + (firstSlotNumber + lines.length - 1) + '. Each slot runs by itself: press their numbers one after another. That overwrites what tabs ' + (firstSlotNumber + 1) + ' to ' + (firstSlotNumber + lines.length - 1) + ' would put there.');
+    notes.unshift('This program has ' + slotSteps.length + ' moves and a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ' steps (a repeat counts as one), so it is split across slots ' + firstSlotNumber + ' to ' + (firstSlotNumber + lines.length - 1) + '. Each slot runs by itself: press their numbers one after another. That overwrites what tabs ' + (firstSlotNumber + 1) + ' to ' + (firstSlotNumber + lines.length - 1) + ' would put there.');
   }
   return { lines: lines, notes: notes, stepCount: slotSteps.length };
 }
@@ -3191,7 +3263,7 @@ async function refreshExportDialog() {
   latestSlotExport = buildSlotExport(recording, firstSlotNumber, true);
   elementById('exportText').value = latestSlotExport.lines.join('\n');
   elementById('exportText').rows = Math.max(2, latestSlotExport.lines.length + 1);
-  elementById('exportStepCount').textContent = latestSlotExport.stepCount + ' step' + (latestSlotExport.stepCount === 1 ? '' : 's') + ' (a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ')';
+  elementById('exportStepCount').textContent = latestSlotExport.stepCount + ' move' + (latestSlotExport.stepCount === 1 ? '' : 's') + ' (a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ' steps; a repeat counts as one)';
   if (latestSlotExport.stepCount === 0) {
     latestSlotExport.notes.unshift('There are no plain moves to put in a slot yet.');
   }
@@ -3218,7 +3290,7 @@ var latestRobotSlots = null;
 function readRobotSlots() {
   return new Promise(function (resolve, reject) {
     var slots = [];
-    var timer = setTimeout(function giveUp() { stopListening(); reject(new Error('the robot did not list its slots (no "P,end" within 6 s). Is it running ir.ino?')); }, 6000);
+    var timer = setTimeout(function giveUp() { stopListening(); reject(new Error('the robot did not list its slots (no "P,end" within 6 s). Is it running programming.ino or ir.ino?')); }, 6000);
     function stopListening() {
       clearTimeout(timer);
       var position = robotLink.lineListeners.indexOf(takeLine);
@@ -3250,15 +3322,28 @@ function describeSlotStep(step) {
 
 // The slot's steps as a block program under a start block: drive / turn /
 // wait blocks, and an n (do it all again) wraps everything since the last n
-// in a repeat block, as the robot runs it.
+// in a repeat block, as the robot runs it. An n with nothing before it (typed
+// first on the remote, or right after another n) wraps what FOLLOWS instead,
+// up to the next n or the end.
 function slotStepsToState(steps) {
   var make = programBlockBuilders();
   var blocks = [];
   var segmentStart = 0;
+  var headTimes = 0;        // > 0: the stretch being collected is headed by an n
+  function closeHeaded() {
+    if (headTimes > 0) {
+      var headed = blocks.splice(segmentStart);
+      if (headed.length) { blocks.push(make.repeatTimes(headTimes, headed)); }
+      segmentStart = blocks.length;
+      headTimes = 0;
+    }
+  }
   steps.forEach(function (step) {
     if (step.letter === 'n') {
+      if (headTimes > 0) { closeHeaded(); headTimes = Math.max(1, step.amount); return; }
       var body = blocks.splice(segmentStart);
       if (body.length) { blocks.push(make.repeatTimes(Math.max(1, step.amount), body)); }
+      else { headTimes = Math.max(1, step.amount); }
       segmentStart = blocks.length;
     } else if (step.letter === 't') {
       blocks.push(make.turn(step.amount < 0 ? -1 : 1, Math.abs(step.amount)));
@@ -3272,6 +3357,7 @@ function slotStepsToState(steps) {
       blocks.push(make.drive({ f: 0, b: 180, l: 270, r: 90 }[step.letter], step.amount * 10));
     }
   });
+  closeHeaded();
   return workspaceStateFromTopBlocks([startBlockWith(blocks)]);
 }
 
@@ -4265,7 +4351,7 @@ function fillHelpDialog() {
     '<table class="help-table">' +
     '<tr><td>Run it live</td><td>Connect with Serial (USB or paired Bluetooth, computers) or Bluetooth (Android phones and computers), choose Robot, press RUN. This is the only way programs with sensor blocks can work, because the editor asks the robot what it sees while the program runs.</td></tr>' +
     '<tr><td>Computer to phone</td><td>Share / phone… shows a QR code. Scan it and the program opens in this editor on the phone, ready to connect and RUN.</td></tr>' +
-    '<tr><td>Remote slots</td><td>Remote slots… turns the moves into lines like <code>p3=f50 t90 f50;</code> for a robot running ir.ino, this tab alone or tabs 1 to 9 together. Moves only: no sensors, waits or diagonal drives.</td></tr>' +
+    '<tr><td>Remote slots</td><td>Remote slots… turns the moves into lines like <code>p3=f50 t90 f50;</code> for a robot running programming.ino or ir.ino, this tab alone or tabs 1 to 9 together. Moves only: no sensors, waits or diagonal drives.</td></tr>' +
     '</table>' +
     '<h3>What the blocks send</h3>' +
     '<table class="help-table">' +
@@ -4365,7 +4451,7 @@ function wireUpPage() {
   elementById('moreButton').addEventListener('click', function pressMore() {
     var entries = [
       { label: 'Share / phone…', detail: 'QR code, link, file, bring one in', action: openShareDialog },
-      { label: 'Remote slots…', detail: 'moves for a robot running ir.ino', action: openExportDialog },
+      { label: 'Remote slots…', detail: 'moves for a robot running programming.ino or ir.ino', action: openExportDialog },
       { label: 'Help', action: openHelpDialog },
       { heading: 'The robot is running' }
     ];

@@ -100,7 +100,7 @@ the rerun is reported as flaky).
 `ir/ir.ino` is the standalone sketch for running the mecanum robot from the kit's
 17-key IR remote with no phone: hold arrows / 1 3 to drive and turn, `* * *` enters
 program mode (wiggle), `* <direction> <digits>` per step (nod; 7 9 diagonals, 5 pause s,
-8 do-it-all-again times), `* * *` ends, slot digit + `* *` saves, `* <digit>` runs, `* * * * <digit>`
+8 repeat times: after its steps, or before them since 0.10.85), `* * *` ends, slot digit + `* *` saves, `* <digit>` runs, `* * * * <digit>`
 adds to a saved slot, `#` cancels, OK after `* * *` tries the draft. Slot text letters: f b l r q e t p n. `# # #` is a
 3-step calibration from the remote (start power by pulses, 1 m distance + drift, four 90s;
 saved to the shared EEPROM motion set, no strafe). HC-SR04
@@ -111,11 +111,27 @@ and Sticks drive it (no IMU, line or light). Receiver on any pin
 pin from a Timer1 tick because SoftwareSerial owns the pin-change interrupts. Bluetooth
 output is buffered and sent only while the IR line is quiet (SoftwareSerial TX blocks
 interrupts and would lose keys). It shares the motor/motion code with the other two
-sketches: `node scripts/check-mecanum-shared.js` compares all three. Test without
+sketches: `node scripts/check-mecanum-shared.js` compares all four. Test without
 hardware: `node scripts/mecanum-sim/ir-e2e.js` (script-mode simavr, in run-all). Page:
 `mecanum/ir.html` (kid instructions + instructor console, version in its title).
 Simulator note: simavr forces a pulled-up INPUT high on every PORT write, so the IR pin is
 a plain INPUT (the receiver drives its line).
+
+## Remote + Bluetooth programming robot (programming.ino)
+
+`programming/programming.ino` (2026-11-04) is ir.ino for a class whose robots are already
+calibrated: no built-in demo programs (an empty slot is empty) and no `# # #` calibration;
+remote driving and programming, the light modes and every USB/Bluetooth command are the
+same code. It reads the motion numbers saved on the robot, so uploading it keeps the
+calibration and the saved slots. Bluetooth is how the class programs it: the Sticks page
+drives it from a phone (`v`), the Blocks page runs a program live (`m` moves) or stores it
+in a slot (`p<n>=<steps>;`, repeats written as `n`). The HC-05/06 on SoftwareSerial is
+half-duplex: one command at a time, and stop is sent three times.
+`node scripts/check-mecanum-shared.js` also compares ir.ino with programming.ino: every
+function and constant both have must be identical (four functions differ on purpose), so a
+fix to one goes into the other in the same commit. Test: `node
+scripts/mecanum-sim/programming-e2e.js` (in run-all; starts on ir.ino and "uploads"
+programming.ino over it). Status and next steps: NOTES.md, "programming.ino".
 
 ## Writing Style
 

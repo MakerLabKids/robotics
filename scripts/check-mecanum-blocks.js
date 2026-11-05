@@ -62,7 +62,59 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await runTab(8, 'Dance', 60000);
 
   const exported = await page.evaluate(async () => (await buildAllSlotsExport()));
-  check(exported.lines.length === 9 && /^p1=f50 t90 f50 t90 f50 t90 f50 t90;$/.test(exported.lines[0]) && /^p8=f40 t90/.test(exported.lines[7]), 'slot export (the recorder) still builds all nine lines: ' + exported.lines[0] + ' ... ' + exported.lines[7]);
+  check(exported.lines.length === 9 && /^p1=f50 t90 n4;$/.test(exported.lines[0]) && /^p8=f40 t90 n4 f40 t-90 n4;$/.test(exported.lines[7]), 'slot export (the recorder) builds all nine lines, repeats written as n: ' + exported.lines[0] + ' ... ' + exported.lines[7]);
+
+  // Packing moves into slot steps (compressSlotSteps) and what a slot's steps drive (expandSlotSteps)
+  const packing = await page.evaluate(() => {
+    const square = ['f50', 't90', 'f50', 't90', 'f50', 't90', 'f50', 't90'];
+    const longLoop = [];
+    for (let i = 0; i < 20; i++) { longLoop.push('f50', 't90'); }
+    const distinct = [];
+    for (let i = 1; i <= 20; i++) { distinct.push('f' + i); }
+    // random lists over a small alphabet repeat a lot: packed and unpacked they must come back the same
+    let seed = 12345;
+    const random = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+    let roundTrips = 0, roundTripFailures = [], longer = 0, overfull = 0;
+    for (let round = 0; round < 400; round++) {
+      const list = [];
+      const length = random(31);
+      const letters = 1 + random(3);
+      for (let i = 0; i < length; i++) { list.push(['f10', 't90', 'b10'][random(letters)]); }
+      const whole = compressSlotSteps(list);
+      const slot = compressSlotSteps(list, 16);
+      roundTrips += 1;
+      if (JSON.stringify(expandSlotSteps(whole.steps)) !== JSON.stringify(list) || whole.used !== list.length) { roundTripFailures.push(list.join(' ') + ' -> ' + whole.steps.join(' ')); }
+      if (JSON.stringify(expandSlotSteps(slot.steps)) !== JSON.stringify(list.slice(0, slot.used))) { roundTripFailures.push('(16) ' + list.join(' ') + ' -> ' + slot.steps.join(' ')); }
+      if (whole.steps.length > list.length) { longer += 1; }
+      if (slot.steps.length > 16) { overfull += 1; }
+    }
+    const blocksOf = (steps) => JSON.stringify(slotStepsToState(steps));
+    return {
+      square: compressSlotSteps(square).steps.join(' '),
+      before: compressSlotSteps(['f10'].concat(square)).steps.join(' '),
+      after: compressSlotSteps(square.concat(['f10'])).steps.join(' '),
+      twice: compressSlotSteps(['f10', 'f10']).steps.join(' '),
+      thrice: compressSlotSteps(['f10', 'f10', 'f10']).steps.join(' '),
+      plain: compressSlotSteps(['f10', 't90', 'b10']).steps.join(' '),
+      longLoop: compressSlotSteps(longLoop, 16),
+      distinct: compressSlotSteps(distinct, 16),
+      headed: expandSlotSteps(['n2', 'f10', 'n3', 'b10']).join(' '),
+      mixed: expandSlotSteps(['f10', 'n2', 'n2', 'b10']).join(' '),
+      trailing: expandSlotSteps(['f10', 'n1', 'f50', 't90', 'n2']).join(' '),
+      roundTrips, roundTripFailures, longer, overfull,
+      headedBlocks: (blocksOf([{ letter: 'n', amount: 3 }, { letter: 'f', amount: 10 }, { letter: 't', amount: 90 }]).match(/controls_repeat_ext/g) || []).length,
+      trailingBlocks: (blocksOf([{ letter: 'f', amount: 10 }, { letter: 't', amount: 90 }, { letter: 'n', amount: 3 }]).match(/controls_repeat_ext/g) || []).length,
+      headedSame: blocksOf([{ letter: 'n', amount: 3 }, { letter: 'f', amount: 10 }, { letter: 't', amount: 90 }]) === blocksOf([{ letter: 'f', amount: 10 }, { letter: 't', amount: 90 }, { letter: 'n', amount: 3 }]),
+    };
+  });
+  check(packing.square === 'f50 t90 n4', 'a square packs into "f50 t90 n4": ' + packing.square);
+  check(packing.before === 'f10 n1 f50 t90 n4' && packing.after === 'f50 t90 n4 f10', 'a move before a repeat is closed with n1, a move after it stays plain: ' + packing.before + ' / ' + packing.after);
+  check(packing.twice === 'f10 f10' && packing.thrice === 'f10 n3' && packing.plain === 'f10 t90 b10', 'no gain, no repeat: ' + packing.twice + ' / ' + packing.thrice + ' / ' + packing.plain);
+  check(packing.longLoop.steps.join(' ') === 'f50 t90 n20' && packing.longLoop.used === 40, 'a 40-move loop fits one slot: ' + packing.longLoop.steps.join(' '));
+  check(packing.distinct.used === 16 && packing.distinct.steps.length === 16, '20 different moves: the first 16 fit a slot');
+  check(packing.headed === 'f10 f10 b10 b10 b10' && packing.mixed === 'f10 f10 b10 b10' && packing.trailing === 'f10 f50 t90 f50 t90', 'what slot steps drive, n before or after its moves: ' + packing.headed + ' / ' + packing.mixed + ' / ' + packing.trailing);
+  check(packing.roundTripFailures.length === 0 && packing.longer === 0 && packing.overfull === 0, packing.roundTrips + ' random move lists pack and unpack to the same moves, never longer, never over 16' + (packing.roundTripFailures.length ? ': ' + packing.roundTripFailures.slice(0, 3).join(' ; ') : ''));
+  check(packing.headedBlocks === 1 && packing.trailingBlocks === 1 && packing.headedSame, 'a slot read back with its n FIRST opens as the same repeat block as with its n last');
   const codeShown = await page.evaluate(() => { document.querySelectorAll('#programTabs .program-tab')[7].click(); return refreshWillDoAndCode().then(function () { return document.getElementById('codeView').textContent; }); });
   check(!/await|async/.test(codeShown) && /function /.test(codeShown), 'Code tab shows plain JavaScript with subroutines, no async');
 

@@ -22,7 +22,7 @@ const baseIndex = args.indexOf('--base');
 const base = baseIndex >= 0 ? args[baseIndex + 1] : 'HEAD';
 
 function git(argv) {
-  return execFileSync('git', argv, { cwd: root, encoding: 'utf8' });
+  return execFileSync('git', argv, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });   // (a new file: git's complaint stays quiet)
 }
 
 function committed(file, rev) {

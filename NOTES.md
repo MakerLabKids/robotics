@@ -88,15 +88,19 @@ in resources/).
 
 ## Where things stand
 
-- Firmware line 0.10.x. ir.ino, mecanum_holonomic.ino and calibration.ino are all 0.10.84
-  and share one motion engine (`npm run check:shared`, which checks FIRMWARE_VERSION too:
-  bump all three together). ir.ino is what the class runs. **0.10.83 reads the LDR divider
+- Firmware line 0.10.x. ir.ino, programming.ino, mecanum_holonomic.ino and calibration.ino
+  are all 0.10.85 and share one motion engine (`npm run check:shared`, which checks
+  FIRMWARE_VERSION too: bump all four together). ir.ino is what the class runs today;
+  **programming.ino (2026-11-04) is the next one: ir.ino for calibrated robots, with
+  remote AND Bluetooth programming** (see "programming.ino" below). **0.10.83 reads the LDR divider
   the other way round** (resistor to 5V, LDR to GND, `LIGHT_BRIGHT_READS_HIGH false`): a bot
   must have the new cable build (log entry 4) before it gets 0.10.83, or it sees "light"
   in the dark. **0.10.84 is the two-shine teach-in** (log entry 5): one shine per side,
   either order, nod, go; no "both" step; a weak side gets one more shine, not a restart.
-- Pages: Programming Guide (mecanum/ir.html) 0.1.22, Remote Guide 0.1.19, Light bot 0.1.17,
-  Light sensor build 0.1.10, Wiring 0.1.11, Workshop app 0.6.38. Versions live in the page
+  **0.10.85: the 8 (repeat) works typed before its steps as well as after, and a long
+  program line over Bluetooth arrives whole** (log entry 8).
+- Pages: Programming Guide (mecanum/ir.html) 0.1.23, Remote Guide 0.1.20, Light bot 0.1.18,
+  Light sensor build 0.1.10, Wiring 0.1.11, Blocks 0.1.10, Sticks 0.1.8, Workshop app 0.6.38. Versions live in the page
   titles. `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
   `npm run check:versions`) fails a commit that edits a sketch or a versioned page without
   a new build number.
@@ -110,6 +114,53 @@ in resources/).
   Cloudflare dashboard, Workers, the robotics worker, Settings, Build.
   Note when checking: /index.html 307s to /, so diff against `curl -sL .../` or curl
   saves an empty redirect body and the page looks like it does not match.
+
+## programming.ino (started 2026-11-04)
+
+The user: "a new program, programming.ino, where we introduce Bluetooth programming.
+Keep IR programming, but not the current demo programs. The bots are calibrated so we
+can drop all of that (just keep the offsets, which are stored on the bots anyway). Keep
+the light follower. Drive with a phone, program on a computer and send that to a bot to
+run. You make that fit."
+
+What it is: `programming/programming.ino` = ir.ino minus the nine built-in demos (an
+empty slot answers "is empty" and a "no") and minus the `# # #` remote calibration (a
+third `#` is one more `#`). Everything else is the same code, and
+`scripts/check-mecanum-shared.js` now fails if any function or constant the two both
+have differs (89 functions, 76 constants; runSlot, handleProgramText, handleKeyIdle and
+handleKey differ on purpose). It reads the motion numbers saved on the robot exactly as
+ir.ino does, so uploading it over a calibrated ir.ino keeps the calibration AND the
+saved slot programs (programming-e2e proves both with a simulated upload). 79% of
+flash, 905 bytes of RAM free (ir.ino: 91%, 887).
+
+What turned out to exist already: ir.ino has always read commands from Bluetooth as
+well as USB. Phone driving is the `v` command (the Sticks page), programs from a
+computer are `p<n>=<steps>;` (the Blocks page, Remote slots), run with `p<n>;` or
+`* <n>`. So nothing had to be added for the protocol. What was broken and is fixed in
+0.10.85 (both sketches): a slot line longer than 64 bytes lost bytes over Bluetooth
+(SoftwareSerial's buffer; a full slot is 100), and an 8 typed before its steps did
+nothing.
+
+Known limit, not fixable in firmware with this module: the HC-05/06 on SoftwareSerial is
+half-duplex. A byte that arrives while the robot is sending is lost. One command at a
+time, wait for the answer. A single `x` (stop) sent while a running program prints
+"step 3: ..." is lost about one time in twenty, so the Blocks page sends x three times
+(0, 60, 120 ms) and so does programming-e2e. Sticks sends "xx" but the robot says
+nothing while it drives by `v`, so that one is safe.
+
+Not done yet (next steps, in order):
+1. Flash programming.ino on one calibrated bot and check on hardware: it drives as
+   before (numbers kept), `* 1` on an empty slot shakes "no", `# # 1` light mode, then
+   pair the Bluetooth module and try Sticks from a phone and "Remote slots... Send" from
+   Blocks on a computer, including a 16-step slot and STOP during a run.
+2. A kid page for Bluetooth programming (pairing, Sticks, Blocks send/run). Blocks is in
+   the nav as a tease and Sticks is "set aside": both come back into the live tier when
+   the class gets there (robotics-site-scope: the site shows what the class has covered).
+3. Phones: Chrome on Android opens a paired HC-05/06 through Web Serial (the "Connect"
+   button with the Bluetooth serial service); iPhones cannot (no Web Serial, and the
+   module is classic Bluetooth, not BLE). Not yet tried with programming.ino.
+4. `torch` in ir.ino / programming.ino comments should become `flashlight` (American
+   English rule); left alone so the two files stay identical to what was tested.
 
 ## Open items
 
@@ -381,6 +432,22 @@ item for the guide, or a code fix).
    CLOSED 2026-11-04: troubleshooting item (Light bot page 0.1.18 row + teach card; kid
    step below).
 
+8. 2026-11-04, the 8 key (repeat) "does not work at all in ir.ino" (the user). Tested in
+   the simulator: an 8 AFTER its steps worked (typed on the remote, saved, with and
+   without a number, twice in one program, and in p-lines). An 8 typed BEFORE the steps
+   (the order a Blocks "repeat" reads in) was accepted, nodded at, and did nothing: the
+   steps ran once. No error. Also found: the Blocks "Remote slots" export never wrote
+   an 8 at all: it unrolled loops into plain steps, so "repeat 10: forward, turn" was 20
+   steps, split across two 16-step slots that each run alone. CLOSED 2026-11-04: code
+   fixes. Firmware 0.10.85 (commit 75ebea1): an 8 with no steps before it (first, or
+   right after another 8) repeats the steps that FOLLOW, up to the next 8 or the end; an
+   8 after its steps is unchanged. Blocks 0.1.10: the export packs repeating moves as
+   "<moves> n<times>" (always the 8-after form, so older sketches run it too; "f10 n1
+   f50 t90 n4" closes a one-time stretch with n1), a slot takes as many moves as fit in
+   16 steps, and a slot read back with its 8 first opens as the same repeat block.
+   Guide item: "8 can go after the steps or before them" (Programming Guide 0.1.23,
+   Remote Guide 0.1.20).
+
 ## Troubleshooting steps for the kids (draft for the guide page)
 
 Collected while fixing bots. Kid language, one check per line, in the order a kid should
@@ -399,6 +466,11 @@ Light bot keeps driving after the flashlight is gone:
 - Start it (and teach it) on the LIGHTEST floor it will drive on. It learns "no
   flashlight" from the floor under its nose at the start; a lighter floor later looks
   like light, and it may not stop.
+
+The 8 key (do it again) seems to do nothing:
+- The robot needs 0.10.85 or newer for an 8 typed FIRST. On older sketches the 8 goes
+  AFTER the steps it repeats: forward, turn, then 8 and how many times.
+- 8 counts "times in all": 8 then 4 runs the steps four times, not five.
 
 Robot does not see the flashlight (light bot):
 - Teach it first: `# # 1`, wiggle, then shine on one sensor (twitch), light away, the

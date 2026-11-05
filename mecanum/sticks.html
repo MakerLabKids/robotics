@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Mecanum Sticks 0.1.7 - Maker Lab Kids</title>
+<title>Mecanum Sticks 0.1.8 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -125,7 +125,8 @@
 "use strict";
 
 // ---------------------------------------------------------------------------
-// Mecanum Sticks: a two-stick (mode 2) controller for mecanum_holonomic.
+// Mecanum Sticks: a two-stick (mode 2) controller for mecanum_holonomic, programming.ino and ir.ino
+// (any sketch with the v command).
 // Every 50 ms the sticks become one body velocity, sent as
 // v<forward>,<right>,<spin>; (-100..100 % of full wheel speed). The robot
 // stops by itself if that stops arriving for 500 ms (VECTOR_TIMEOUT_MS), so
@@ -238,12 +239,12 @@ function handleRobotLine(line) {
     readRobotCal(line.slice(6).split(",").filter(function (f) { return !/^[a-z]$/.test(f); }));
     return;
   }
-  var banner = /^(?:mecanum_holonomic|mecanum_calibration|calibration) v(\d+\.\d+\.\d+)/.exec(line);
+  var banner = /^(?:mecanum_holonomic|mecanum_calibration|calibration|programming|ir) v(\d+\.\d+\.\d+)/.exec(line);
   if (banner) {
     var have = banner[1].split(".").map(Number);
     var need = FIRMWARE_COMPAT.split(".").map(Number);
     var older = have[0] !== need[0] ? have[0] < need[0] : have[1] !== need[1] ? have[1] < need[1] : have[2] < need[2];
-    showNotice(older ? "The robot runs mecanum_holonomic " + banner[1] + ". The sticks need " + FIRMWARE_COMPAT + " or newer (the v command): re-flash it." : "");
+    showNotice(older ? "The robot runs firmware " + banner[1] + ". The sticks need " + FIRMWARE_COMPAT + " or newer (the v command): re-flash it." : "");
   }
   if (/^(tof: wall|stop$|sonar|imu|ir:|demo)/.test(line)) {
     robotSays(line);
