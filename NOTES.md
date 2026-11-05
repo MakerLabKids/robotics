@@ -158,12 +158,16 @@ status was checked. Add a bot the first time it is mentioned; never drop one.
 NEW = the servo-cable build of log entry 4 (resistor to 5V, LDR to Gnd; 0.10.83 or newer).
 Wiring and firmware must match.
 
+Fleet note 2026-11-04 (the user): "the bots appear to be working now" after metering
+every LDR and every resistor on every bot (the third pass through did it). New rule: meter
+each LDR (10-50 k in room light) and resistor (4.7k) before a cable goes on a bot.
+
 | Bot | Firmware | Wiring | Status (last seen) | Open problem |
 |---|---|---|---|---|
 | Coltrane's bot | ir.ino | no light sensors? (not checked) | drives; fixed 2026-10-30 | none (was a dying remote battery, log entry 1) |
 | Light bot A (the user's) | ir.ino 0.10.81+ | OLD | calibration teach-in works (2026-11-02) | rebuild the cables the NEW way before flashing 0.10.83 |
 | Light bot B | ir.ino 0.10.82 | OLD, rewired 2026-11-02 | "sometimes sees the light", never cleanly through the teach-in (2026-11-02) | rebuild the cables the NEW way, flash 0.10.83, then the bench procedure (log entry 3) |
-| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | LDR meters 1.8 M in room light (dead cell, probably cooked while soldering): replace it with a metered GL5537 (10-50 k in room light), then the three `b` readings; log entry 6 |
+| Shep's bot | ir.ino (version not noted) | NEW (reads up with light) | the light delta is far too small: room 0-3, flashlight on the left 13-39, 63 at 3 inches straight in (2026-11-04); the pin sits at 5V, the LDR is about 1.5 M dark / 70 k lit, 10x+ the fleet's | LDR was dead (1.8 M in room light); replaced after metering every LDR and resistor; works (2026-11-04) | none |
 | Tucker's bot | ir.ino, 0.10.83 to flash | NEW (first one, 2026-11-04, resistor bands read 4.7k in the photo) | cable soldered and heat-shrunk; not yet on the bot or tested | flash 0.10.83, then the three `b` readings (room, covered, flashlight) to mark verified |
 
 ## Robot troubleshooting log
@@ -368,6 +372,15 @@ item for the guide, or a code fix).
    sensor whose room reading sits near 0 and barely moves under a flashlight is a dead
    LDR; meter it, replace it). The firmware idea above is not needed.
 
+7. 2026-11-04, every light bot (the user): teach the robot on a LIGHT floor. "If you cal
+   on a dark surface and then drive to a light surface, you may not stop." Cause: the
+   room level is learned where the robot starts; a lighter floor later reads as more
+   light (the LDRs look down at the floor), so with the flashlight gone the robot keeps
+   going until the room catch-up (about 8 s, LIGHT_ROOM_CATCHUP_TICKS) absorbs it. Taught
+   on the lightest floor it will drive on, no floor change can look like a flashlight.
+   CLOSED 2026-11-04: troubleshooting item (Light bot page 0.1.18 row + teach card; kid
+   step below).
+
 ## Troubleshooting steps for the kids (draft for the guide page)
 
 Collected while fixing bots. Kid language, one check per line, in the order a kid should
@@ -381,6 +394,11 @@ Robot does nothing at all:
 Robot moves a little then stops when you hold an arrow:
 - Tap the arrow 3 times. If every tap works but holding does not, the REMOTE battery is
   dying. Swap it (coin cell), not the robot.
+
+Light bot keeps driving after the flashlight is gone:
+- Start it (and teach it) on the LIGHTEST floor it will drive on. It learns "no
+  flashlight" from the floor under its nose at the start; a lighter floor later looks
+  like light, and it may not stop.
 
 Robot does not see the flashlight (light bot):
 - Teach it first: `# # 1`, wiggle, then shine on one sensor (twitch), light away, the
