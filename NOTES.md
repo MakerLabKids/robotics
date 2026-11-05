@@ -535,6 +535,21 @@ item for the guide, or a code fix).
    16 steps, and a slot read back with its 8 first opens as the same repeat block.
    Guide item: "8 can go after the steps or before them" (Programming Guide 0.1.23,
    Remote Guide 0.1.20).
+9. 2026-11-05, one bot (the user's bench, first Bluetooth try with an Android phone): the
+   module blinked as if waiting, but the robot was in no list: not in Android Settings
+   and not in the Sticks Bluetooth list, even with "Show every Bluetooth device" (other
+   devices were listed, none with a strong signal 3 inches from the bot). **Cause: this
+   one bot carried a replacement module scrounged from the user's basement, a classic
+   one (not the kit's module, which shows in the Bluetooth button's low-energy list).**
+   **Fix: the user swapped in a different (kit) module and it connected.** CLOSED
+   2026-11-05: troubleshooting item. Tell-tale: the phone's scan works (other devices
+   show) yet nothing strong is near the bot = the module does not send the low-energy
+   signal. A classic module can still be used by pairing in Settings (PIN 1234 / 0000)
+   and pressing Serial (the guide's "Robot not in the list?" card; Android needs Chrome
+   138 or newer), not tried on this bot. A blinking light only proves power: a module
+   needs just VCC and GND to be visible, so the sketch and the TXD/RXD wires are never
+   the reason a robot is missing from a list. Not known: which bot, and whether the swapped-in module
+   carries a name.
 
 ## Troubleshooting steps for the kids (draft for the guide page)
 
