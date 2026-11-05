@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Plug In Bluetooth 0.1.1 - Maker Lab Kids</title>
+<title>How to Plug In Bluetooth 0.1.2 - Maker Lab Kids</title>
 <meta name="description" content="How to plug the Bluetooth module into the mecanum robot, step by step, then drive it with Sticks or program it with Blocks.">
 <link rel="stylesheet" href="../css/site.css">
 <style>
@@ -65,32 +65,42 @@
   <section class="build-steps">
     <div class="steps">
       <figure>
-        <h3 class="step-title">1. Find the four wires</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 1: the front of the robot from above. Four wire ends poke up through the chassis just behind the sonar sensor bracket.">
+        <h3 class="step-title">1. Find the hole</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 1: the robot from the side, front on the left. A hole goes through the chassis between the sonar sensor bracket at the front and the Arduino tower behind it. The wires run from the Arduino down through another hole, forward under the robot, and their connectors come up into the hole from below, stopping halfway.">
           <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
-            <rect x="60" y="70" width="240" height="220" rx="16" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
-            <rect x="22" y="110" width="40" height="80" rx="8" fill="#f6c21c" stroke="#7a5c00" stroke-width="1.5"/>
-            <rect x="298" y="110" width="40" height="80" rx="8" fill="#f6c21c" stroke="#7a5c00" stroke-width="1.5"/>
-            <rect x="112" y="52" width="136" height="50" rx="5" fill="#1f62c4" stroke="#0d2c63" stroke-width="1.5"/>
-            <circle cx="146" cy="77" r="19" fill="#cdd2d8"/><circle cx="146" cy="77" r="12" fill="#2a2f36"/>
-            <circle cx="214" cy="77" r="19" fill="#cdd2d8"/><circle cx="214" cy="77" r="12" fill="#2a2f36"/>
-            <text x="180" y="40" text-anchor="middle">sonar sensor (front)</text>
-            <rect x="134" y="118" width="92" height="30" rx="4" fill="#0b0d10" stroke="#ff7a1a" stroke-width="3"/>
-            <rect x="141" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
-            <rect x="162" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
-            <rect x="183" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
-            <rect x="204" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
-            <path d="M180 212 V160 m-9 12 l9 -12 l9 12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="180" y="236" text-anchor="middle" fill="#fff">4 wire ends</text>
-            <text x="180" y="256" text-anchor="middle" fill="#fff">come up here</text>
+            <circle cx="92" cy="226" r="44" fill="#f6c21c" fill-opacity="0.3" stroke="#b98f0a" stroke-width="2"/>
+            <circle cx="272" cy="226" r="44" fill="#f6c21c" fill-opacity="0.3" stroke="#b98f0a" stroke-width="2"/>
+            <rect x="24" y="168" width="104" height="16" fill="#3a4350" stroke="#15181c" stroke-width="1.5"/>
+            <rect x="152" y="168" width="148" height="16" fill="#3a4350" stroke="#15181c" stroke-width="1.5"/>
+            <rect x="322" y="168" width="18" height="16" fill="#3a4350" stroke="#15181c" stroke-width="1.5"/>
+            <rect x="44" y="96" width="10" height="72" fill="#3a4350" stroke="#15181c" stroke-width="1.5"/>
+            <rect x="34" y="92" width="10" height="56" fill="#1f62c4" stroke="#0d2c63" stroke-width="1"/>
+            <rect x="14" y="104" width="20" height="30" rx="3" fill="#cdd2d8" stroke="#555d66" stroke-width="1.5"/>
+            <rect x="166" y="150" width="7" height="18" fill="#9aa3ad"/>
+            <rect x="278" y="150" width="7" height="18" fill="#9aa3ad"/>
+            <rect x="160" y="140" width="130" height="10" fill="#0d8a99" stroke="#075a64" stroke-width="1"/>
+            <rect x="172" y="128" width="112" height="12" fill="#0b0d10"/>
+            <rect x="166" y="118" width="124" height="10" fill="#1b4fa6" stroke="#0d2c63" stroke-width="1"/>
+            <rect x="186" y="100" width="40" height="18" fill="#0b0d10"/>
+            <rect x="240" y="104" width="30" height="14" fill="#3d8ce6"/>
+            <path d="M140 220 C140 250 170 246 200 246 L290 246 C311 246 311 230 311 200 L311 135 C311 123 300 123 290 123" fill="none" stroke="#2f7fe6" stroke-width="5" stroke-linecap="round"/>
+            <rect x="131" y="176" width="18" height="44" rx="2" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <path d="M140 104 V158 m-9 -12 l9 12 l9 -12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="140" y="92" text-anchor="middle">the hole</text>
+            <text x="34" y="78" text-anchor="middle">sonar</text>
+            <text x="230" y="88" text-anchor="middle">Arduino tower</text>
+            <text x="20" y="292" font-size="13">front</text>
+            <text x="340" y="292" font-size="13" text-anchor="end">back</text>
+            <text x="182" y="292" font-size="13" text-anchor="middle">wires run under the robot</text>
           </g>
         </svg>
-        <figcaption>Four wires come up from under the chassis, <b>just behind the sonar
-        sensor bracket</b>.</figcaption>
+        <figcaption>Look from the side. The hole is in the chassis <b>between the sonar
+        sensor bracket and the Arduino tower</b>. The four wires run under the robot from
+        the Arduino and come up into it.</figcaption>
       </figure>
       <figure>
         <h3 class="step-title">2. Wiggle and push</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 2: four dupont connectors pushed up side by side through a slot that is just big enough for them.">
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 2: four dupont connectors pushed up from below, side by side, into a hole in the chassis that is just big enough for them. Their tops stop halfway up the hole.">
           <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
             <path d="M82 290 C82 250 96 240 96 205" fill="none" stroke="#e33b2e" stroke-width="7" stroke-linecap="round"/>
             <path d="M140 290 C140 250 146 240 146 205" fill="none" stroke="#888" stroke-width="9" stroke-linecap="round"/>
@@ -105,15 +115,18 @@
             <rect x="141" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
             <rect x="203" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
             <rect x="253" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
-            <rect x="20" y="150" width="50" height="26" rx="3" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
-            <rect x="290" y="150" width="50" height="26" rx="3" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <rect x="14" y="66" width="56" height="30" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <rect x="290" y="66" width="56" height="30" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <path d="M70 66 H290 M70 96 H78 M120 96 h8 M170 96 h20 M232 96 h8 M282 96 h8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <text x="42" y="56" text-anchor="middle" font-size="13">chassis</text>
             <path d="M172 145 h16 m-6 -6 l6 6 l-6 6 M188 145 h-16 m6 -6 l-6 6 l6 6" fill="none" stroke="#ff7a1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M180 62 V28 m-9 12 l9 -12 l9 12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
             <text x="246" y="44" text-anchor="middle">push up</text>
           </g>
         </svg>
-        <figcaption>The hole is <b>just big enough for 4 connectors</b>, side by side. It
-        is a tight fit: wiggle and push. Once they are in, they stay put.</figcaption>
+        <figcaption>Push the connectors up into the hole <b>from below</b>. It is <b>just
+        big enough for 4</b>, side by side: wiggle and push. They go <b>halfway in and
+        stop</b>, and then they stay put.</figcaption>
       </figure>
       <figure>
         <h3 class="step-title">3. Which wire is which</h3>

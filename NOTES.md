@@ -207,8 +207,12 @@ Bluetooth sheet (2026-11-05). The user liked the light sensor build sheet ("nice
 and step by step") and asked for the same for Bluetooth, to print for class:
 **mecanum/bluetooth-build.html** (How to Plug In Bluetooth, one letter page, first in the
 Bluetooth subnav as "Plug in the module") and its print-ready copy
-**resources/bluetooth-sheet.pdf**. Eight steps: the four wire ends behind the sonar
-bracket, wiggle and push (the hole just fits 4 dupont connectors), which wire is which
+**resources/bluetooth-sheet.pdf**. Where the wires are (the user, 2026-11-05): a hole in
+the chassis BETWEEN the sonar bracket and the Arduino / driver tower, not under the
+sensor; the wires leave the Arduino, go down through another hole, run forward under the
+bot, and the connectors come up into the hole from below, halfway in, and stop. So
+picture 1 is a side view (0.1.2). Eight steps: find the hole,
+wiggle and push (the hole just fits 4 dupont connectors), which wire is which
 (+5V VCC, Gnd GND, A0 TXD, A1 RXD), plug in the module, switch on (blinks), connect
 ("your robot's name (it may be listed as HC-06)": the user says names are showing up now),
 Sticks and Blocks with light screenshots (img/sticks-light.png, img/blocks-light.png),
