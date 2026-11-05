@@ -1,7 +1,7 @@
 // Every edit to a versioned file bumps its build number. This checks that it did:
 // a sketch (#define FIRMWARE_VERSION "0.10.83") or a page (a version in its
 // <title>) that differs from the last commit must also carry a different
-// version, and the three sketches that share the motion engine must agree.
+// version, and the four sketches that share the motion engine must agree.
 //
 //   node scripts/check-version-bump.js            the working tree against HEAD
 //   node scripts/check-version-bump.js --staged   the index against HEAD (the pre-commit hook)
@@ -86,8 +86,8 @@ for (const file of listFiles()) {
   }
 }
 
-// the three sketches that share the motion engine move together (rename.ino has its own line)
-const shared = Object.entries(sketchVersions).filter(([f]) => /^(ir|mecanum_holonomic|calibration)\//.test(f));
+// the four sketches that share the motion engine move together (rename.ino has its own line)
+const shared = Object.entries(sketchVersions).filter(([f]) => /^(ir|programming|mecanum_holonomic|calibration)\//.test(f));
 if (new Set(shared.map(([, v]) => v)).size > 1) {
   failures.push('the shared sketches disagree: ' + shared.map(([f, v]) => f + ' ' + v).join(', '));
 }

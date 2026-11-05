@@ -1,10 +1,14 @@
 // calibration.ino measures the robot that mecanum_holonomic.ino drives, and
-// ir.ino drives it from the remote, so the code all three use must be the
-// same: the motor shield, the speed curve, the wheel math, the move timing,
-// and the motion numbers themselves (calibrating changes them in every file).
-// This compares those functions and constants (code only: comments and
-// spacing may differ) between mecanum_holonomic.ino and each of the others,
-// and fails on any difference.
+// ir.ino and programming.ino drive it from the remote, so the code all four
+// use must be the same: the motor shield, the speed curve, the wheel math,
+// the move timing, and the motion numbers themselves (calibrating changes
+// them in every file). This compares those functions and constants (code
+// only: comments and spacing may differ) between mecanum_holonomic.ino and
+// each of the others, and fails on any difference.
+// programming.ino is ir.ino without the built-in demos and the # # #
+// calibration: every function the two both have must be identical too, apart
+// from the few that differ on purpose (IR_VS_PROGRAMMING_DIFFERENT), so a fix
+// in one lands in the other.
 // Run: node scripts/check-mecanum-shared.js
 const fs = require('fs');
 const path = require('path');
@@ -14,7 +18,11 @@ const robot = fs.readFileSync(path.join(root, 'mecanum_holonomic', 'mecanum_holo
 const OTHERS = [
   { name: 'calibration.ino', text: fs.readFileSync(path.join(root, 'calibration', 'calibration.ino'), 'utf8') },
   { name: 'ir.ino', text: fs.readFileSync(path.join(root, 'ir', 'ir.ino'), 'utf8') },
+  { name: 'programming.ino', text: fs.readFileSync(path.join(root, 'programming', 'programming.ino'), 'utf8') },
 ];
+// What programming.ino does differently from ir.ino on purpose: an empty slot
+// is empty (no demo), and a third # does not start a calibration.
+const IR_VS_PROGRAMMING_DIFFERENT = ['runSlot', 'handleProgramText', 'handleKeyIdle', 'handleKey'];
 
 const FUNCTIONS = [
   'readCommandByte', 'pushShiftRegister', 'setChannelPwm', 'setChannelPower', 'initMotorPins', 'setWheelPower', 'stopAllWheels',
@@ -89,8 +97,35 @@ OTHERS.forEach((other) => {
   if (fw !== header) failures.push(sketch.name + ': first line says v' + header + ', FIRMWARE_VERSION is ' + fw);
 });
 
+// ir.ino and programming.ino: every function both define, and every one-line constant both have
+const irSketch = OTHERS.find((o) => o.name === 'ir.ino').text;
+const programmingSketch = OTHERS.find((o) => o.name === 'programming.ino').text;
+const functionNames = (source) => (source.match(/^[A-Za-z_][\w ]*[\s*&](\w+)\s*\([^;{]*\)\s*(?:override\s*)?\{/gm) || [])
+  .map((signature) => /(\w+)\s*\(/.exec(signature)[1]);
+const constantNames = (source) => (source.match(/^const [\w ]+?\b([A-Z][A-Z0-9_]+)(\[[^\]]*\])*\s*(PROGMEM\s*)?=/gm) || [])
+  .map((line) => /\b([A-Z][A-Z0-9_]+)(\[[^\]]*\])*\s*(PROGMEM\s*)?=/.exec(line)[1]);
+const inBoth = (a, b) => a.filter((name, i) => a.indexOf(name) === i && b.includes(name));
+const pairFunctions = inBoth(functionNames(irSketch), functionNames(programmingSketch)).filter((name) => !IR_VS_PROGRAMMING_DIFFERENT.includes(name));
+const pairConstants = inBoth(constantNames(irSketch), constantNames(programmingSketch));
+pairFunctions.forEach((name) => {
+  if (codeOnly(functionText(irSketch, name) || '') !== codeOnly(functionText(programmingSketch, name) || 'x')) failures.push('function ' + name + ' differs between ir.ino and programming.ino');
+});
+// (a "const ... NAME ... = ...;" line or table, PROGMEM ones included: from its line to the first ;)
+const pairConstantText = (source, name) => {
+  const start = new RegExp('^const [\\w ]+?\\b' + name + '(\\[[^\\]]*\\])*\\s*(PROGMEM\\s*)?=', 'm').exec(source);
+  return start ? source.slice(start.index, source.indexOf(';', start.index) + 1) : null;
+};
+pairConstants.forEach((name) => {
+  if (codeOnly(pairConstantText(irSketch, name) || '') !== codeOnly(pairConstantText(programmingSketch, name) || 'x')) failures.push('constant ' + name + ' differs between ir.ino and programming.ino');
+});
+IR_VS_PROGRAMMING_DIFFERENT.forEach((name) => {
+  if (!functionText(irSketch, name) || !functionText(programmingSketch, name)) failures.push('function ' + name + ' (listed as different on purpose) is missing in ir.ino or programming.ino');
+});
+if (pairFunctions.length < 60) failures.push('only ' + pairFunctions.length + ' functions found in both ir.ino and programming.ino (the function finder is broken?)');
+
 if (failures.length) {
   console.log('mecanum_holonomic.ino and the other sketches disagree:\n  ' + failures.join('\n  '));
   process.exit(1);
 }
-console.log('shared code matches in calibration.ino and ir.ino: ' + FUNCTIONS.length + ' functions, ' + CONSTANTS.length + ' constants, the move engine, the motion order');
+console.log('shared code matches in calibration.ino, ir.ino and programming.ino: ' + FUNCTIONS.length + ' functions, ' + CONSTANTS.length + ' constants, the move engine, the motion order');
+console.log('ir.ino and programming.ino: ' + pairFunctions.length + ' functions and ' + pairConstants.length + ' constants in both are identical (' + IR_VS_PROGRAMMING_DIFFERENT.length + ' functions differ on purpose)');

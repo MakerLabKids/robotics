@@ -11,13 +11,13 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // (autocal and tape test the old app-driven calibration: calibration.ino is by hand now)
-const SUITES = ['sensors', 'program', 'sticks', 'calpage', 'rename', 'ir', 'blocks'];
-const USB_ONLY = ['ir', 'blocks'];   // (ir-e2e drives the simulator from a script; blocks-e2e points the page's serial link at it)
+const SUITES = ['sensors', 'program', 'sticks', 'calpage', 'rename', 'ir', 'programming', 'blocks'];
+const USB_ONLY = ['ir', 'programming', 'blocks'];   // (ir-e2e and programming-e2e drive the simulator from a script, Bluetooth pin included; blocks-e2e points the page's serial link at it)
 const JOBS = Math.max(1, parseInt(process.argv[2] || process.env.MECANUM_JOBS || '4', 10));
 const runs = [];
 SUITES.forEach((suite) => (USB_ONLY.includes(suite) ? ['usb'] : ['usb', 'bt']).forEach((link) => runs.push({ suite, link })));
 // Longest suites first so the tail is short.
-const ORDER = { calpage: 0, autocal: 1, tape: 2, blocks: 3, program: 4, sensors: 5, sticks: 6, rename: 7, ir: 8 };
+const ORDER = { calpage: 0, autocal: 1, tape: 2, blocks: 3, program: 4, sensors: 5, sticks: 6, rename: 7, ir: 8, programming: 9 };
 runs.sort((a, b) => ORDER[a.suite] - ORDER[b.suite]);
 
 // The two sketches must share the same motion code before any suite runs.
