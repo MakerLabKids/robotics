@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.10 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.11 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -538,7 +538,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.9';
+var EDITOR_VERSION = '0.1.11';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -782,7 +782,8 @@ var robotLink = {
   writeChain: Promise.resolve(),
   lineListeners: [],
   latestHeadingDegrees: null,
-  latestHeadingTime: 0
+  latestHeadingTime: 0,
+  firmwareVersion: null   // "0.10.86" once the robot has said it (its boot line, or K,fw on k?)
 };
 
 function currentSketch() {
@@ -827,6 +828,8 @@ function handleRobotLine(line) {
     }
     robotMayBeNameless();
   }
+  var firmware = /^(?:ir|programming|mecanum_holonomic|calibration) v(\d+\.\d+\.\d+)/.exec(line) || /^K,fw,(\d+\.\d+\.\d+)/.exec(line);
+  if (firmware) { robotLink.firmwareVersion = firmware[1]; }
   var named = /^(?:ir: name |K,name,)(.+)$/.exec(line);
   if (named) { robotAnnouncedName(named[1]); }
   var headingPrefix = currentSketch().headingReplyPrefix;
@@ -1016,6 +1019,7 @@ function afterRobotConnected() {
 function afterRobotDisconnected() {
   robotLink.isConnected = false;
   robotLink.kind = null;
+  robotLink.firmwareVersion = null;
   showConnectionStatus();
   if (activeRun !== null && activeRun.targetName === 'robot') {
     addConsoleLine('error', 'The robot connection dropped while the program was running. Program stopped.');
@@ -2151,6 +2155,32 @@ function createProgramRunner(backend, control, options) {
     return backend.imu(what);
   }
 
+  // "run program <tab>": the generated code runs that tab's function when this
+  // answers true. For a slot export (options.slotOfProgram) a tab with a slot
+  // of its own becomes one "run program" step instead, and its function is skipped.
+  var programDepth = 0;
+  async function enterProgram(name) {
+    await letTheBrowserBreathe();
+    var slot = options.recording && options.slotOfProgram ? options.slotOfProgram(String(name)) : 0;
+    if (slot) {
+      if (options.recording.steps.length >= RECORDING_MAXIMUM_STEPS) {
+        throw makeRecordingEndSignal('It keeps going: only the first ' + RECORDING_MAXIMUM_STEPS + ' steps are listed.');
+      }
+      options.recording.steps.push({ kind: 'call', slot: slot, name: String(name) });
+      return false;
+    }
+    programDepth += 1;
+    if (programDepth > PROGRAM_CALL_MAXIMUM_DEPTH) {
+      throw makeProgramFault('The programs keep running each other: "' + name + '" is ' + PROGRAM_CALL_MAXIMUM_DEPTH + ' programs deep. A program that runs itself never ends.');
+    }
+    return true;
+  }
+  function leaveProgram() { programDepth -= 1; }
+  async function inCalledProgram() { await letTheBrowserBreathe(); }
+  function noSuchProgram(name) {
+    throw makeProgramFault('There is no program called "' + name + '". Pick one from the list in the "run program" block.');
+  }
+
   var notYetSaid = {};
   async function notYet(sensorName, fallback) {
     if (!notYetSaid[sensorName]) {
@@ -2202,7 +2232,8 @@ function createProgramRunner(backend, control, options) {
     keepDrivingDirection: keepDrivingDirection, stop: stop, wait: wait, headingHold: headingHold,
     distance: distance, seesCloser: seesCloser, heading: heading, askNumber: askNumber,
     readLight: readLight, readLine: readLine, followLine: followLine, followLight: followLight, imu: imu, notYet: notYet,
-    sendRaw: sendRaw, secondsSinceRun: secondsSinceRun, say: say, ask: ask
+    sendRaw: sendRaw, secondsSinceRun: secondsSinceRun, say: say, ask: ask,
+    enterProgram: enterProgram, leaveProgram: leaveProgram, inCalledProgram: inCalledProgram, noSuchProgram: noSuchProgram
   };
 }
 
@@ -2211,6 +2242,30 @@ function createProgramRunner(backend, control, options) {
 var blockWorkspace = null;
 
 function defineRobotBlocks() {
+  // "run program <tab name>": the list is the tabs. A name that is no tab
+  // (deleted, or a shared program opened on another computer) is kept and
+  // shown as missing: the block remembers the name it wants, and extraState
+  // loads before the field does, so the list can still offer it.
+  Blockly.Blocks['robot_run_program'] = {
+    init: function () {
+      var block = this;
+      var field = new Blockly.FieldDropdown(function programNameOptions() {
+        var options = programStore.programs.map(function (program) { return [program.name, program.name]; });
+        var wanted = block.wantedProgramName;
+        if (wanted && !options.some(function (option) { return option[1] === wanted; })) { options.push([wanted + ' (no such program)', wanted]); }
+        return options.length ? options : [['(no programs yet)', '']];
+      });
+      field.setValidator(function (newName) { block.wantedProgramName = newName; return newName; });
+      this.appendDummyInput().appendField('run program').appendField(field, 'PROGRAM');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setStyle('robot_start_blocks');
+      this.setTooltip('Runs another tab\'s program right here, then carries on with the next block. Pick the tab by its name. Its variables and subroutines stay its own.');
+    },
+    saveExtraState: function () { return { program: this.getFieldValue('PROGRAM') }; },
+    loadExtraState: function (state) { this.wantedProgramName = state && state.program ? String(state.program) : null; }
+  };
+
   var sensorOptions = [['laser', 'laser'], ['sonar', 'sonar']];
   var keepDrivingOptions = [];
   for (var directionName in KEEP_DRIVING_DIRECTIONS) {
@@ -2223,7 +2278,7 @@ function defineRobotBlocks() {
       message0: 'when RUN is pressed',
       nextStatement: null,
       style: 'robot_start_blocks',
-      tooltip: 'The program starts here. Blocks that are not joined under a start block (or inside a subroutine) do nothing.'
+      tooltip: 'The program starts here. Blocks that are not joined under a start block (or inside a subroutine) do nothing. With more than one start block, they run one after another, top one first.'
     },
     {
       type: 'robot_drive',
@@ -2489,6 +2544,12 @@ function defineRobotBlockGenerators() {
   }
 
   function generateStart() { return ''; }
+  function generateRunProgram(block) {
+    var name = block.getFieldValue('PROGRAM');
+    var functionName = functionNameForCalledProgram(name);
+    if (functionName === null) { return 'robot.noSuchProgram(' + generator.quote_(name) + ');\n'; }
+    return 'if (robot.enterProgram(' + generator.quote_(name) + ')) {\n  ' + functionName + '();\n  robot.leaveProgram();\n}\n';
+  }
   function generateDrive(block) {
     return 'robot.driveMove(' + block.getFieldValue('DIRECTION') + ', ' + numberInput(block, 'DISTANCE') + ', 0);\n';
   }
@@ -2516,7 +2577,7 @@ function defineRobotBlockGenerators() {
   function generateSeesCloser(block) {
     return ['robot.seesCloser(' + generator.quote_(block.getFieldValue('SENSOR')) + ', ' + numberInput(block, 'DISTANCE') + ')', Order.FUNCTION_CALL];
   }
-  function generateHeading() { return ['robot.heading())', Order.ATOMIC]; }
+  function generateHeading() { return ['robot.heading()', Order.FUNCTION_CALL]; }
   function generateSeconds() { return ['robot.secondsSinceRun()', Order.FUNCTION_CALL]; }
   function generateAskNumber(block) {
     return ['robot.askNumber(' + textInput(block, 'COMMAND') + ', ' + numberInput(block, 'POSITION') + ', ' + textInput(block, 'PREFIX') + ')', Order.FUNCTION_CALL];
@@ -2547,6 +2608,7 @@ function defineRobotBlockGenerators() {
   }
 
   generator.forBlock['robot_start'] = generateStart;
+  generator.forBlock['robot_run_program'] = generateRunProgram;
   generator.forBlock['robot_drive'] = generateDrive;
   generator.forBlock['robot_drive_toward'] = generateDriveToward;
   generator.forBlock['robot_turn'] = generateTurn;
@@ -2602,6 +2664,7 @@ function buildToolbox() {
     contents: [
       { kind: 'category', name: 'Start', categorystyle: 'robot_start_category', contents: [
         block('robot_start'),
+        block('robot_run_program'),
         block('robot_wait', { SECONDS: numberShadow(1) }),
         block('robot_stop'),
         block('robot_heading_hold'),
@@ -2797,11 +2860,61 @@ function startBlocksTopToBottom(workspace) {
   return startBlocks;
 }
 
+// While code is generated: the tabs that "run program" blocks ask for. Each
+// becomes a function of its own ($program1, ...: Blockly never puts a $ in a
+// name it makes), so its variables and subroutines stay its own.
+var calledPrograms = { functionNames: {}, order: [] };
+var PROGRAM_CALL_MAXIMUM_DEPTH = 20;
+
+function programNamed(name) {
+  for (var index = 0; index < programStore.programs.length; index++) {
+    if (programStore.programs[index].name === name) { return programStore.programs[index]; }
+  }
+  return null;
+}
+
+function functionNameForCalledProgram(name) {
+  if (programNamed(name) === null) { return null; }
+  if (!Object.prototype.hasOwnProperty.call(calledPrograms.functionNames, name)) {
+    calledPrograms.order.push(name);
+    calledPrograms.functionNames[name] = '$program' + calledPrograms.order.length;
+  }
+  return calledPrograms.functionNames[name];
+}
+
+// The program in the editor (or in workspace), then a function for every tab
+// it runs, and for every tab those run.
 function generateProgramCode(forRunning, workspace) {
-  var sourceWorkspace = workspace || blockWorkspace;
+  calledPrograms = { functionNames: {}, order: [] };
+  var loopTrap = forRunning ? 'robot.loopCheck();\n' : null;
+  var main = generateWorkspaceCode(workspace || blockWorkspace, forRunning ? 'robot.atBlock(%1);\n' : null, loopTrap);
+  var code = main.code;
+  for (var index = 0; index < calledPrograms.order.length; index++) {   // (the list grows while it is walked)
+    var name = calledPrograms.order[index];
+    var program = programNamed(name);
+    var called;
+    // Its blocks are not on screen: nothing to light up, but STOP and the long-loop check still get their turn
+    var calledPrefix = forRunning ? 'robot.inCalledProgram();\n' : null;
+    if (program.id === programStore.activeProgramId && blockWorkspace !== null) {
+      called = generateWorkspaceCode(blockWorkspace, calledPrefix, loopTrap);
+    } else {
+      var hiddenWorkspace = new Blockly.Workspace();
+      try {
+        Blockly.serialization.workspaces.load(program.state || blankProgramState(), hiddenWorkspace, { recordUndo: false });
+        called = generateWorkspaceCode(hiddenWorkspace, calledPrefix, loopTrap);
+      } finally {
+        hiddenWorkspace.dispose();
+      }
+    }
+    code += '\n// the program "' + name.replace(/[\r\n]/g, ' ') + '"\nfunction ' + calledPrograms.functionNames[name] + '() {\n' + called.code.replace(/^(?=.)/gm, '  ') + '}\n';
+  }
+  return { code: code, startBlockCount: main.startBlockCount };
+}
+
+function generateWorkspaceCode(sourceWorkspace, statementPrefix, loopTrap) {
   var generator = javascript.javascriptGenerator;
-  generator.STATEMENT_PREFIX = forRunning ? 'robot.atBlock(%1);\n' : null;
-  generator.INFINITE_LOOP_TRAP = forRunning ? 'robot.loopCheck();\n' : null;
+  generator.STATEMENT_PREFIX = statementPrefix;
+  generator.INFINITE_LOOP_TRAP = loopTrap;
   generator.init(sourceWorkspace);
   var topBlocks = sourceWorkspace.getTopBlocks(true);
   for (var index = 0; index < topBlocks.length; index++) {
@@ -2978,7 +3091,31 @@ function pressStop() {
 
 /* ============================ "THE ROBOT WILL DO" AND SLOT EXPORT ============================ */
 
-async function recordProgramInWorkspace(workspace) {
+// For a slot export: the slot the robot keeps that tab's program in (tabs 1 to
+// 9 are slots 1 to 9), so a "run program" block becomes one step. 0: its moves
+// are written out instead (the tab has no slot, or the connected robot's
+// sketch is too old to run a program from a program).
+var RUN_PROGRAM_STEP_FIRMWARE = [0, 10, 86];
+
+function robotRunsProgramSteps() {
+  if (!robotLink.isConnected || !robotLink.firmwareVersion) { return true; }
+  var have = robotLink.firmwareVersion.split('.').map(Number);
+  for (var index = 0; index < RUN_PROGRAM_STEP_FIRMWARE.length; index++) {
+    if (have[index] !== RUN_PROGRAM_STEP_FIRMWARE[index]) { return have[index] > RUN_PROGRAM_STEP_FIRMWARE[index]; }
+  }
+  return true;
+}
+
+function slotOfProgramNamed(name) {
+  if (!robotRunsProgramSteps()) { return 0; }
+  for (var index = 0; index < programStore.programs.length && index < IR_SLOT_COUNT; index++) {
+    if (programStore.programs[index].name === name) { return index + 1; }
+  }
+  return 0;
+}
+
+// forSlots: "run program" blocks are recorded as one step (see slotOfProgramNamed)
+async function recordProgramInWorkspace(workspace, forSlots) {
   var recording = { steps: [], usesLiveSensors: false, endNote: null, problem: null, startBlockCount: 0 };
   var generated;
   try {
@@ -2991,7 +3128,7 @@ async function recordProgramInWorkspace(workspace) {
   if (generated.startBlockCount === 0) { return recording; }
   var control = createRunControl();
   var backend = createRecorderBackend(recording);
-  var runner = createProgramRunner(backend, control, { highlightBlocks: false, maximumStatements: RECORDING_MAXIMUM_STATEMENTS, recording: recording });
+  var runner = createProgramRunner(backend, control, { highlightBlocks: false, maximumStatements: RECORDING_MAXIMUM_STATEMENTS, recording: recording, slotOfProgram: forSlots ? slotOfProgramNamed : null });
   try {
     await compileProgram(generated.code)(runner);
   } catch (problem) {
@@ -3001,16 +3138,16 @@ async function recordProgramInWorkspace(workspace) {
   return recording;
 }
 
-function recordActiveProgram() {
-  return recordProgramInWorkspace(blockWorkspace);
+function recordActiveProgram(forSlots) {
+  return recordProgramInWorkspace(blockWorkspace, forSlots);
 }
 
-async function recordStoredProgram(program) {
-  if (program.id === programStore.activeProgramId) { return recordActiveProgram(); }
+async function recordStoredProgram(program, forSlots) {
+  if (program.id === programStore.activeProgramId) { return recordActiveProgram(forSlots); }
   var hiddenWorkspace = new Blockly.Workspace();
   try {
     Blockly.serialization.workspaces.load(program.state || blankProgramState(), hiddenWorkspace, { recordUndo: false });
-    return await recordProgramInWorkspace(hiddenWorkspace);
+    return await recordProgramInWorkspace(hiddenWorkspace, forSlots);
   } catch (problem) {
     return { steps: [], usesLiveSensors: false, endNote: null, problem: 'Could not read this tab: ' + problem.message, startBlockCount: 0 };
   } finally {
@@ -3029,6 +3166,7 @@ function describeRecordedStep(step) {
   if (step.kind === 'wait') { return { words: 'wait ' + step.seconds + ' s', command: '' }; }
   if (step.kind === 'headingHold') { return { words: 'heading hold ' + (step.isOn ? 'on' : 'off'), command: step.isOn ? 'in' : 'if' }; }
   if (step.kind === 'raw') { return { words: 'send a command', command: step.text }; }
+  if (step.kind === 'call') { return { words: 'run program "' + step.name + '" (slot ' + step.slot + ')', command: 'g' + step.slot }; }
   return { words: 'say "' + step.text + '"', command: '' };
 }
 
@@ -3145,9 +3283,15 @@ function buildSlotExport(recording, firstSlotNumber, mayUseFollowingSlots) {
   var slotSteps = [];
   var notes = [];
   var skippedKinds = {};
+  var calledSlots = {};     // slot number -> the name of the tab a "run program" step runs
   for (var index = 0; index < recording.steps.length; index++) {
     var step = recording.steps[index];
     var stepNumber = index + 1;
+    if (step.kind === 'call') {
+      slotSteps.push('g' + step.slot);
+      calledSlots[step.slot] = step.name;
+      continue;
+    }
     if (step.kind === 'wait') {
       var wholeSeconds = Math.round(step.seconds);
       if (wholeSeconds >= 1) { slotSteps.push('p' + Math.min(wholeSeconds, 4095)); }
@@ -3212,13 +3356,15 @@ function buildSlotExport(recording, firstSlotNumber, mayUseFollowingSlots) {
   if (lines.length > 1) {
     notes.unshift('This program has ' + slotSteps.length + ' moves and a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ' steps (a repeat counts as one), so it is split across slots ' + firstSlotNumber + ' to ' + (firstSlotNumber + lines.length - 1) + '. Each slot runs by itself: press their numbers one after another. That overwrites what tabs ' + (firstSlotNumber + 1) + ' to ' + (firstSlotNumber + lines.length - 1) + ' would put there.');
   }
-  return { lines: lines, notes: notes, stepCount: slotSteps.length };
+  return { lines: lines, notes: notes, stepCount: slotSteps.length, calledSlots: calledSlots };
 }
 
 async function buildAllSlotsExport() {
   captureWorkspaceIntoActiveProgram();
   var lines = [];
   var notes = [];
+  var sentSlots = {};
+  var calls = [];
   for (var index = 0; index < IR_SLOT_COUNT; index++) {
     var slotNumber = index + 1;
     var program = programStore.programs[index];
@@ -3226,20 +3372,32 @@ async function buildAllSlotsExport() {
       notes.push('There is no tab ' + slotNumber + ': slot ' + slotNumber + ' on the robot is left as it is.');
       continue;
     }
-    var recording = await recordStoredProgram(program);
+    var recording = await recordStoredProgram(program, true);
     var slotExport = buildSlotExport(recording, slotNumber, false);
     var tabWords = 'Tab ' + slotNumber + ' "' + program.name + '": ';
     if (slotExport.lines.length === 0) {
       notes.push(tabWords + 'no plain moves to put in a slot, so slot ' + slotNumber + ' on the robot is left as it is.');
     } else {
       lines.push(slotExport.lines[0]);
+      sentSlots[slotNumber] = true;
+    }
+    for (var calledSlot in slotExport.calledSlots) {
+      calls.push({ tabWords: tabWords, slot: Number(calledSlot), name: slotExport.calledSlots[calledSlot] });
     }
     for (var noteIndex = 0; noteIndex < slotExport.notes.length; noteIndex++) {
       notes.push(tabWords + slotExport.notes[noteIndex]);
     }
   }
+  calls.forEach(function (call) {
+    if (!sentSlots[call.slot]) {
+      notes.push(call.tabWords + 'it runs "' + call.name + '" (slot ' + call.slot + '), but tab ' + call.slot + ' puts nothing in its slot: the robot will run whatever slot ' + call.slot + ' already holds.');
+    }
+  });
+  if (calls.length) { notes.push(RUN_PROGRAM_STEP_NOTE); }
   return { lines: lines, notes: notes };
 }
+
+var RUN_PROGRAM_STEP_NOTE = 'A "run program" block is sent as one step (g and the slot number). The robot needs programming.ino or ir.ino 0.10.86 or newer for it.';
 
 var latestSlotExport = { lines: [], notes: [], stepCount: 0 };
 var latestAllSlotsExport = { lines: [], notes: [] };
@@ -3258,9 +3416,13 @@ async function refreshExportDialog() {
   var program = activeProgram();
   var tabNumber = programStore.programs.indexOf(program) + 1;
   elementById('exportProgramName').textContent = 'Tab ' + tabNumber + ' "' + program.name + '"';
-  var recording = await recordActiveProgram();
+  var recording = await recordActiveProgram(true);
   var firstSlotNumber = Number(elementById('exportSlotSelect').value);
   latestSlotExport = buildSlotExport(recording, firstSlotNumber, true);
+  for (var calledSlot in latestSlotExport.calledSlots) {
+    latestSlotExport.notes.push('It runs "' + latestSlotExport.calledSlots[calledSlot] + '" from slot ' + calledSlot + ' on the robot, so tab ' + calledSlot + ' has to be sent as well (Send all does that).');
+  }
+  if (Object.keys(latestSlotExport.calledSlots).length) { latestSlotExport.notes.push(RUN_PROGRAM_STEP_NOTE); }
   elementById('exportText').value = latestSlotExport.lines.join('\n');
   elementById('exportText').rows = Math.max(2, latestSlotExport.lines.length + 1);
   elementById('exportStepCount').textContent = latestSlotExport.stepCount + ' move' + (latestSlotExport.stepCount === 1 ? '' : 's') + ' (a slot holds ' + IR_SLOT_MAXIMUM_STEPS + ' steps; a repeat counts as one)';
@@ -3302,7 +3464,7 @@ function readRobotSlots() {
       if (!match) { return; }
       var steps = [];
       (match[2] ? match[2].split(',') : []).forEach(function (code) {
-        var step = /^([fblrtqepnc])(-?\d+)$/.exec(code.trim());
+        var step = /^([fblrtqepncg])(-?\d+)$/.exec(code.trim());
         if (step) { steps.push({ letter: step[1], amount: Number(step[2]) }); }
       });
       slots.push({ slot: Number(match[1]), steps: steps, builtIn: /(^|,)builtin$/.test(match[2] || '') });
@@ -3317,6 +3479,7 @@ function describeSlotStep(step) {
   if (step.letter === 'p') { return 'wait ' + step.amount + ' s'; }
   if (step.letter === 'n') { return 'do it all again, ' + step.amount + ' times'; }
   if (step.letter === 'c') { return 'circle ' + step.amount + ' cm across, facing in'; }
+  if (step.letter === 'g') { return 'run program ' + step.amount; }
   return { f: 'forward', b: 'back', l: 'left', r: 'right', q: 'diagonal left', e: 'diagonal right' }[step.letter] + ' ' + step.amount + ' cm';
 }
 
@@ -3324,7 +3487,13 @@ function describeSlotStep(step) {
 // wait blocks, and an n (do it all again) wraps everything since the last n
 // in a repeat block, as the robot runs it. An n with nothing before it (typed
 // first on the remote, or right after another n) wraps what FOLLOWS instead,
-// up to the next n or the end.
+// up to the next n or the end. A g (run the program in that slot) becomes a
+// "run program" block naming the tab that slot belongs to.
+function tabNameOfSlot(slotNumber) {
+  var program = programStore.programs[slotNumber - 1];
+  return program ? program.name : 'Slot ' + slotNumber;
+}
+
 function slotStepsToState(steps) {
   var make = programBlockBuilders();
   var blocks = [];
@@ -3349,6 +3518,8 @@ function slotStepsToState(steps) {
       blocks.push(make.turn(step.amount < 0 ? -1 : 1, Math.abs(step.amount)));
     } else if (step.letter === 'p') {
       blocks.push(make.waitSeconds(step.amount));
+    } else if (step.letter === 'g') {
+      blocks.push(make.runProgram(tabNameOfSlot(step.amount)));
     } else if (step.letter === 'c') {   // no orbit block here: the step is kept as a note
       blocks.push({ type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'circle ' + step.amount + ' cm across, facing in (a remote-only step)' } } } } });
     } else if (step.letter === 'q' || step.letter === 'e') {
@@ -3420,10 +3591,13 @@ function replaceTabsWithRobotSlots(slots, skipConfirm) {
   while (programStore.programs.length < IR_SLOT_COUNT) {
     programStore.programs.push({ id: makeProgramId(), name: uniqueProgramName('Tab ' + (programStore.programs.length + 1)), state: blankProgramState() });
   }
-  filled.forEach(function (slot) {
+  filled.forEach(function (slot) {         // the names first: a "run program" step names its tab
     var program = programStore.programs[slot.slot - 1];
-    program.state = slotStepsToState(slot.steps);
+    program.name = '';
     program.name = uniqueProgramName(slotTabName(slot));
+  });
+  filled.forEach(function (slot) {
+    programStore.programs[slot.slot - 1].state = slotStepsToState(slot.steps);
   });
   programStore.activeProgramId = programStore.programs[filled[0].slot - 1].id;
   loadActiveProgramIntoWorkspace();
@@ -3496,6 +3670,7 @@ function programBlockBuilders() {
   function waitSeconds(seconds) { return { type: 'robot_wait', inputs: { SECONDS: numberShadow(seconds) } }; }
   function headingHold(isOn) { return { type: 'robot_heading_hold', fields: { STATE: isOn ? 'true' : 'false' } }; }
   function stop() { return { type: 'robot_stop' }; }
+  function runProgram(name) { return { type: 'robot_run_program', extraState: { program: name }, fields: { PROGRAM: name } }; }
   function callSubroutine(name) { return { type: 'procedures_callnoreturn', extraState: { name: name } }; }
   function defineSubroutine(name, blocks, x, y) { return { type: 'procedures_defnoreturn', x: x, y: y, fields: { NAME: name }, inputs: { STACK: { block: chainBlocks(blocks) } } }; }
   function keepDriving(directionName, power) { return { type: 'robot_keep_driving', fields: { DIRECTION: directionName }, inputs: { POWER: numberShadow(power) } }; }
@@ -3509,7 +3684,7 @@ function programBlockBuilders() {
     drive: drive, turn: turn, toward: toward, driveTurning: driveTurning, repeatTimes: repeatTimes, waitSeconds: waitSeconds,
     headingHold: headingHold, stop: stop, callSubroutine: callSubroutine, defineSubroutine: defineSubroutine,
     keepDriving: keepDriving, seesCloser: seesCloser, repeatUntil: repeatUntil, getVariable: getVariable,
-    times: times, driveBlockDistance: driveBlockDistance, countWith: countWith
+    times: times, driveBlockDistance: driveBlockDistance, countWith: countWith, runProgram: runProgram
   };
 }
 
@@ -3972,10 +4147,39 @@ function renameActiveProgram() {
   if (newName === null) { return; }
   newName = newName.trim();
   if (newName === '' || newName === program.name) { return; }
+  var oldName = program.name;
   program.name = '';
   program.name = uniqueProgramName(newName);
+  renameProgramCalls(oldName, program.name);
   renderProgramTabs();
   saveProgramStoreNow();
+}
+
+// Every block in a saved workspace state (blocks inside blocks included)
+function forEachBlockInState(node, visit) {
+  if (!node || typeof node !== 'object') { return; }
+  if (Array.isArray(node)) {
+    node.forEach(function (entry) { forEachBlockInState(entry, visit); });
+    return;
+  }
+  if (typeof node.type === 'string') { visit(node); }
+  for (var key in node) { forEachBlockInState(node[key], visit); }
+}
+
+// "run program" blocks name a tab: when the tab is renamed, they follow (in every tab)
+function renameProgramCalls(oldName, newName) {
+  programStore.programs.forEach(function (program) {
+    forEachBlockInState(program.state, function (block) {
+      if (block.type !== 'robot_run_program') { return; }
+      if (block.fields && block.fields.PROGRAM === oldName) { block.fields.PROGRAM = newName; }
+      if (block.extraState && block.extraState.program === oldName) { block.extraState.program = newName; }
+    });
+  });
+  if (blockWorkspace !== null) {
+    blockWorkspace.getAllBlocks(false).forEach(function (block) {
+      if (block.type === 'robot_run_program' && block.getFieldValue('PROGRAM') === oldName) { block.setFieldValue(newName, 'PROGRAM'); }
+    });
+  }
 }
 
 function duplicateActiveProgram() {
@@ -4344,6 +4548,7 @@ function fillHelpDialog() {
     '<h3>Build</h3>' +
     '<p>Drag blocks from the left and snap them under <b>when RUN is pressed</b>. Blocks that are not joined to a start block or a subroutine turn gray and do nothing.</p>' +
     '<p>Each tab is one program with its own blocks, variables and subroutines. The number on a tab is its place in the row; tabs 1 to 9 are also the remote\'s slots 1 to 9, and they start out holding nine demos (+ New can put them back). Make a subroutine in <b>Subroutines</b>, give it a name, then use its call block as often as you like. To reuse one in another tab, select it, copy (Ctrl+C), switch tabs and paste (Ctrl+V).</p>' +
+    '<p>A program can run another program: <b>run program</b> (in Start) runs the tab you pick by its name, then carries on. Give tabs names worth calling (This program…, Rename): the blocks that run a tab follow its new name. With more than one <b>when RUN is pressed</b> block in a tab, they run one after another, top one first.</p>' +
     '<h3>Try it</h3>' +
     '<p><b>Simulator</b> runs the program on a pretend robot, with pretend walls for the laser and sonar. <b>Robot</b> sends each block to the real robot as it runs and lights up the block it is doing. STOP always stops both.</p>' +
     '<p class="dialog-fine">The mat has a thin line every 100 mm and a bold one every 500 mm; the dashed line is what the laser sees. The robot is a drawing of the kit, not a measured plan; the orange arrow is its nose. The simulator draws moves at ' + PROGRAM_SPEED_MM_PER_SEC + ' mm/s. Its turn speed (' + SIMULATED_TURN_DEGREES_PER_SEC + '°/s) and keep-driving speed (' + SIMULATED_FULL_POWER_MM_PER_SEC + ' mm/s at 100%) are made up; the real robot has its own from calibration. A real robot with a laser stops by itself 120 mm from a wall; the pretend one bumps into it.</p>' +
@@ -4351,7 +4556,7 @@ function fillHelpDialog() {
     '<table class="help-table">' +
     '<tr><td>Run it live</td><td>Connect with Serial (USB or paired Bluetooth, computers) or Bluetooth (Android phones and computers), choose Robot, press RUN. This is the only way programs with sensor blocks can work, because the editor asks the robot what it sees while the program runs.</td></tr>' +
     '<tr><td>Computer to phone</td><td>Share / phone… shows a QR code. Scan it and the program opens in this editor on the phone, ready to connect and RUN.</td></tr>' +
-    '<tr><td>Remote slots</td><td>Remote slots… turns the moves into lines like <code>p3=f50 t90 f50;</code> for a robot running programming.ino or ir.ino, this tab alone or tabs 1 to 9 together. Moves only: no sensors, waits or diagonal drives.</td></tr>' +
+    '<tr><td>Remote slots</td><td>Remote slots… turns the moves into lines like <code>p3=f50 t90 f50;</code> for a robot running programming.ino or ir.ino, this tab alone or tabs 1 to 9 together. Moves only: no sensors, waits or diagonal drives. A <b>run program</b> block is sent as one step that runs that tab\'s slot (robots on 0.10.86 or newer).</td></tr>' +
     '</table>' +
     '<h3>What the blocks send</h3>' +
     '<table class="help-table">' +

@@ -118,6 +118,67 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const codeShown = await page.evaluate(() => { document.querySelectorAll('#programTabs .program-tab')[7].click(); return refreshWillDoAndCode().then(function () { return document.getElementById('codeView').textContent; }); });
   check(!/await|async/.test(codeShown) && /function /.test(codeShown), 'Code tab shows plain JavaScript with subroutines, no async');
 
+  // "run program <tab>": a program runs another tab's program by its name
+  const calls = await page.evaluate(async () => {
+    const make = programBlockBuilders();
+    const state = (blocks) => workspaceStateFromTopBlocks([startBlockWith(blocks)]);
+    const out = {};
+    addProgram('Caller', state([make.runProgram('Square'), make.drive(0, 100), make.runProgram('Square')]));   // tab 10
+    const moves = (recording) => recording.steps.map((step) => step.kind === 'move' ? (step.distanceMm ? 'f' + step.distanceMm : 't' + step.turnDegrees) : step.kind + (step.slot || '')).join(' ');
+    out.inlined = moves(await recordActiveProgram());
+    out.forSlots = moves(await recordActiveProgram(true));
+    out.line = buildSlotExport(await recordActiveProgram(true), 9, false).lines[0];
+    out.code = generateProgramCode(false).code;
+    out.saved = JSON.stringify(Blockly.serialization.workspaces.save(blockWorkspace));
+    // an older robot cannot run a program from a program: the moves are written out
+    robotLink.isConnected = true; robotLink.firmwareVersion = '0.10.85';
+    out.oldRobot = moves(await recordActiveProgram(true));
+    robotLink.firmwareVersion = '0.10.86';
+    out.newRobot = moves(await recordActiveProgram(true));
+    robotLink.isConnected = false; robotLink.firmwareVersion = null;
+    // renaming the tab it runs: the blocks follow, here and in the stored tabs
+    addProgram('Other caller', state([make.runProgram('Square')]));   // tab 11
+    switchToProgram(programStore.programs[0].id);
+    const realPrompt = window.prompt;
+    window.prompt = () => 'Box';
+    renameActiveProgram();
+    window.prompt = realPrompt;
+    out.storedAfterRename = JSON.stringify(programStore.programs[9].state).match(/"PROGRAM":"[^"]*"/g).join(' ');
+    switchToProgram(programStore.programs[9].id);
+    out.liveAfterRename = blockWorkspace.getAllBlocks(false).filter((block) => block.type === 'robot_run_program').map((block) => block.getFieldValue('PROGRAM') + '/' + block.getField('PROGRAM').getText()).join(' ');
+    out.afterRename = moves(await recordActiveProgram());
+    // a tab that is not there: the name is kept, RUN says so
+    addProgram('Lost', state([make.runProgram('Nowhere')]));   // tab 12
+    const lost = blockWorkspace.getAllBlocks(false).find((block) => block.type === 'robot_run_program');
+    out.lostValue = lost.getFieldValue('PROGRAM') + '/' + lost.getField('PROGRAM').getText();
+    out.lostProblem = (await recordActiveProgram()).problem;
+    // a program that runs itself
+    addProgram('Round', state([make.drive(0, 100), make.runProgram('Round')]));   // tab 13
+    const round = await recordActiveProgram();
+    out.roundSteps = round.steps.length;
+    out.roundProblem = round.problem;
+    // a slot read from the robot: g1 names tab 1
+    out.imported = JSON.stringify(slotStepsToState([{ letter: 'g', amount: 1 }, { letter: 'f', amount: 10 }])).match(/"PROGRAM":"[^"]*"/g).join(' ');
+    // the heading block makes code that parses
+    const hidden = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(state([{ type: 'text_print', inputs: { TEXT: { block: { type: 'robot_heading' } } } }]), hidden, { recordUndo: false });
+    try { new Interpreter(generateProgramCode(true, hidden).code); out.headingParses = true; } catch (problem) { out.headingParses = String(problem); }
+    hidden.dispose();
+    switchToProgram(programStore.programs[9].id);
+    return out;
+  });
+  const square = 'f500 t90 f500 t90 f500 t90 f500 t90';
+  check(calls.inlined === square + ' f100 ' + square, 'run program "Square", forward, run program "Square": the list shows both squares driven');
+  check(calls.forSlots === 'call1 f100 call1' && calls.line === 'p9=g1 f10 g1;', 'for a slot the tab it runs is one step: ' + calls.line);
+  check(/function \$program1\(\)/.test(calls.code) && /robot\.enterProgram\('Square'\)/.test(calls.code) && /"extraState":\{"program":"Square"\}/.test(calls.saved), 'Code tab: the tab it runs is a function of its own; the block saves the name');
+  check(calls.oldRobot === calls.inlined && calls.newRobot === 'call1 f100 call1', 'a connected robot older than 0.10.86 gets the moves written out, 0.10.86 gets the step');
+  check(calls.storedAfterRename === '"PROGRAM":"Box" "PROGRAM":"Box"' && calls.liveAfterRename === 'Box/Box Box/Box' && calls.afterRename === calls.inlined, 'renaming tab 1 to "Box": the blocks that run it follow, in the open tab and the stored ones: ' + calls.liveAfterRename);
+  check(/^Nowhere\/Nowhere \(no such program\)$/.test(calls.lostValue) && /There is no program called "Nowhere"/.test(calls.lostProblem || ''), 'a tab that is not there: the block keeps the name and says so: ' + calls.lostValue);
+  check(calls.roundSteps === 21 && /keep running each other/.test(calls.roundProblem || ''), 'a program that runs itself stops with a reason after 20 rounds: ' + calls.roundSteps + ' moves');
+  check(calls.imported === '"PROGRAM":"Box"', 'a slot step g1 read from the robot opens as "run program" naming tab 1: ' + calls.imported);
+  check(calls.headingParses === true, 'the heading block makes code that parses: ' + calls.headingParses);
+  await runTab(9, 'Caller (runs the tab "Box" twice)', 90000);
+
   // The sensor examples (light, line) and the sensor blocks in the simulator
   async function runExample(name, timeoutMs, mustSay) {
     const loaded = await page.evaluate((n) => {

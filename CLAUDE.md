@@ -100,8 +100,8 @@ the rerun is reported as flaky).
 `ir/ir.ino` is the standalone sketch for running the mecanum robot from the kit's
 17-key IR remote with no phone: hold arrows / 1 3 to drive and turn, `* * *` enters
 program mode (wiggle), `* <direction> <digits>` per step (nod; 7 9 diagonals, 5 pause s,
-8 repeat times: after its steps, or before them since 0.10.85), `* * *` ends, slot digit + `* *` saves, `* <digit>` runs, `* * * * <digit>`
-adds to a saved slot, `#` cancels, OK after `* * *` tries the draft. Slot text letters: f b l r q e t p n. `# # #` is a
+8 repeat times: after its steps, or before them since 0.10.85; 2 run the program in that slot, then carry on, since 0.10.86), `* * *` ends, slot digit + `* *` saves, `* <digit>` runs, `* * * * <digit>`
+adds to a saved slot, `#` cancels, OK after `* * *` tries the draft. Slot text letters: f b l r q e t p n g (g = run that slot). `# # #` is a
 3-step calibration from the remote (start power by pulses, 1 m distance + drift, four 90s;
 saved to the shared EEPROM motion set, no strafe). HC-SR04
 (A2/A3 as shipped) stops forward motion under 250 mm. Over USB/Bluetooth it takes m moves,
@@ -125,7 +125,7 @@ remote driving and programming, the light modes and every USB/Bluetooth command 
 same code. It reads the motion numbers saved on the robot, so uploading it keeps the
 calibration and the saved slots. Bluetooth is how the class programs it: the Sticks page
 drives it from a phone (`v`), the Blocks page runs a program live (`m` moves) or stores it
-in a slot (`p<n>=<steps>;`, repeats written as `n`). The HC-05/06 on SoftwareSerial is
+in a slot (`p<n>=<steps>;`, repeats written as `n`, a "run program <tab>" block as `g<slot>`). The HC-05/06 on SoftwareSerial is
 half-duplex: one command at a time, and stop is sent three times.
 `node scripts/check-mecanum-shared.js` also compares ir.ino with programming.ino: every
 function and constant both have must be identical (four functions differ on purpose), so a

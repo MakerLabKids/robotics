@@ -223,6 +223,32 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check(readBack.robot === 'RoundTrip' && /^Slot 1 from RoundTrip/.test(readBack.tabName), 'tabs belong to robot "RoundTrip" and are named after the slots');
   check(await page.evaluate(() => { switchToRobot('', 'test'); return editorSettings.robotName === '' && document.getElementById('robotChipButton').textContent === 'Robot: shared ▾'; }), 'back to the shared tabs');
 
+  // A program that runs another program: tab 2 becomes "forward, turn", tab 9 "run tab 2, back, run tab 2".
+  // Sent to slots 2 and 9, run on the robot from slot 9, read back as blocks.
+  const callLogStart = simLog.length;
+  const callTest = await page.evaluate(async () => {
+    const make = programBlockBuilders();
+    const state = (blocks) => workspaceStateFromTopBlocks([startBlockWith(blocks)]);
+    captureWorkspaceIntoActiveProgram();
+    switchToProgram(programStore.programs[0].id);
+    const callee = programStore.programs[1].name;
+    programStore.programs[1].state = state([make.drive(0, 100), make.turn(1, 90)]);
+    programStore.programs[8].state = state([make.runProgram(callee), make.drive(180, 100), make.runProgram(callee)]);
+    const all = await buildAllSlotsExport();
+    await sendLinesToRobot([all.lines[1], all.lines[8]], document.getElementById('exportAllFeedback'));
+    await sendToRobot('p9;');
+    return { callee: callee, lines: [all.lines[1], all.lines[8]], firmware: robotLink.firmwareVersion, notes: all.notes.join(' | ') };
+  });
+  await waitFor(() => /run: (done|stopped)/.test(simLog.slice(callLogStart)), 'slot 9 (a program that runs slot 2) to finish', 60000);
+  const callRun = (simLog.slice(callLogStart).match(/^(step \d+: [a-z ]+ \d+|run: [a-z ,]+)/gm) || []).join(' | ');
+  check(/^0\.10\.\d+$/.test(callTest.firmware || '') && callTest.lines[1] === 'p9=g2 b10 g2;' && /0\.10\.86 or newer/.test(callTest.notes), 'the page knows the robot\'s firmware (' + callTest.firmware + ') and sends "run program" as one step: ' + callTest.lines.join(' '));
+  check(callRun.indexOf('step 1: run program 2 | step 1: forward 10 | step 2: turn right 90 | step 2: back 10 | step 3: run program 2 | step 1: forward 10 | step 2: turn right 90 | run: done') !== -1, 'the robot runs slot 2 inside slot 9, twice: ' + callRun);
+  const callBack = await page.evaluate(async () => {
+    const slots = await readRobotSlots();
+    return { steps: slots[8].steps.map((step) => step.letter + step.amount).join(' '), names: (JSON.stringify(slotStepsToState(slots[8].steps)).match(/"PROGRAM":"[^"]*"/g) || []).join(' ') };
+  });
+  check(callBack.steps === 'g2 b10 g2' && callBack.names === '"PROGRAM":"' + callTest.callee + '" "PROGRAM":"' + callTest.callee + '"', 'read back from the robot, slot 9 opens with "run program" blocks naming tab 2: ' + callBack.steps);
+
   // The robot's name: kN saves it, the next boot announces it, the page switches to that robot's tabs
   await page.evaluate(() => sendToRobot('kNTesty;'));
   await sleep(500);

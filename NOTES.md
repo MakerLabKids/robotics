@@ -89,7 +89,7 @@ in resources/).
 ## Where things stand
 
 - Firmware line 0.10.x. ir.ino, programming.ino, mecanum_holonomic.ino and calibration.ino
-  are all 0.10.85 and share one motion engine (`npm run check:shared`, which checks
+  are all 0.10.86 and share one motion engine (`npm run check:shared`, which checks
   FIRMWARE_VERSION too: bump all four together). ir.ino is what the class runs today;
   **programming.ino (2026-11-04) is the next one: ir.ino for calibrated robots, with
   remote AND Bluetooth programming** (see "programming.ino" below). **0.10.83 reads the LDR divider
@@ -98,9 +98,11 @@ in resources/).
   in the dark. **0.10.84 is the two-shine teach-in** (log entry 5): one shine per side,
   either order, nod, go; no "both" step; a weak side gets one more shine, not a restart.
   **0.10.85: the 8 (repeat) works typed before its steps as well as after, and a long
-  program line over Bluetooth arrives whole** (log entry 8).
-- Pages: Programming Guide (mecanum/ir.html) 0.1.23, Remote Guide 0.1.20, Light bot 0.1.18,
-  Light sensor build 0.1.10, Wiring 0.1.11, Blocks 0.1.10, Sticks 0.1.8, Workshop app 0.6.38. Versions live in the page
+  program line over Bluetooth arrives whole** (log entry 8). **0.10.86: a step that runs
+  another saved program** (`* 2 <slot>` on the remote, `g<slot>` in a program line; see
+  "programming.ino", "Programs that run programs").
+- Pages: Programming Guide (mecanum/ir.html) 0.1.24, Remote Guide 0.1.20, Light bot 0.1.18,
+  Light sensor build 0.1.10, Wiring 0.1.11, Blocks 0.1.11, Sticks 0.1.8, Workshop app 0.6.38. Versions live in the page
   titles. `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
   `npm run check:versions`) fails a commit that edits a sketch or a versioned page without
   a new build number.
@@ -147,6 +149,55 @@ time, wait for the answer. A single `x` (stop) sent while a running program prin
 "step 3: ..." is lost about one time in twenty, so the Blocks page sends x three times
 (0, 60, 120 ms) and so does programming-e2e. Sticks sends "xx" but the robot says
 nothing while it drives by `v`, so that one is safe.
+
+Programs that run programs (2026-11-05). The user: "In Blockly have a start block that
+can attach to the top of a block of code. That block will be the one that runs if there
+are multiple blocks in the editor. And we should be able to call other programs as well
+as other functions and routines, so the programs should have names that can be called."
+- Already there: the start block ("when RUN is pressed", Start category; loose stacks do
+  nothing; several start blocks run top one first), subroutines (the Subroutines
+  category), and reading what was typed on the remote into the editor ("Remote slots...",
+  "Read the robot's slots", then "Open as a new tab" or replace tabs 1 to 9).
+- New in Blocks 0.1.11: **"run program <tab name>"** (Start category). The list is the
+  tab names; renaming a tab renames the blocks that run it, in every tab. Each called tab
+  becomes a function of its own in the generated code, so its variables and subroutines
+  stay its own. A name that is no tab is kept, shown as "(no such program)", and RUN says
+  so. A program that runs itself stops with a reason 20 deep.
+- New in firmware 0.10.86 (ir.ino and programming.ino): the step **run program** =
+  `* 2 <slot>` on the remote, `g<slot>` in a program line (`p9=g1 f20 g1;`). The called
+  slot runs right there, then the caller carries on; any key or x stops the lot. 3 calls
+  deep (RUN_MAX_DEPTH, about 100 bytes of RAM each); deeper, or an empty slot, the step is
+  skipped with a line on the console, so a program that runs itself goes four rounds and
+  ends. Repeats work around it (`g1 n4`). This is also the way past 16 steps: nine slots
+  of 16 that can run each other.
+- Slot export: a "run program" block naming one of tabs 1 to 9 is sent as one `g` step
+  (the tab has to be sent too; Send all does). If the connected robot said a firmware
+  older than 0.10.86 (boot line or K,fw), the moves are written out instead. Read back
+  from the robot, `g2` opens as "run program" naming tab 2.
+- Not changed: the printable Remote Guide (hand-placed print layout, and the class is not
+  on 0.10.86 yet). The Programming Guide 0.1.24 has the key (2 = run a slot).
+
+The user asked 2026-11-05 whether a bot can be reset (as power off and on) from either
+remote, because "some programs get truncated". Answer given: no restart exists (# and x
+only stop); a restart cannot mend a saved program (slots are in EEPROM). Offered, NOT
+built (no answer yet): `# # 0` on the remote and `kr;` on the console as a true restart,
+and an error instead of silently keeping 16 steps when a program line has more. Where a
+program can be cut short: more than 16 steps (a line: silently; the remote: "no" at step
+17), bytes lost over Bluetooth (sketches older than 0.10.85 lost the tail of a line over
+64 bytes; any version loses bytes sent while the robot is answering), or the run being
+stopped (any key from ANY remote in the room, a sagging battery restarting the board).
+`p?;` shows what is really stored. Still unknown: typed on the remote or sent from
+Blocks, and which firmware.
+
+Next class (the user, 2026-11-05: "tomorrow"): the kids play with light following; if
+everyone is good and there is time, the Bluetooth modules go on and loaner phones connect
+for the first time. Nothing Bluetooth has run on a real robot or a real phone yet, so:
+try ONE bot and ONE loaner phone before class (Android, Chrome 138 or newer, pair the module
+in the phone's Bluetooth settings with PIN 1234 or 0000, then the Sticks page,
+robotics.makerlabkids.com/mecanum/sticks, "Serial", pick the module). Every module
+arrives with the same name (HC-05 / HC-06): name them first (`kN<name>;` over USB, then
+power off and on; never confirmed on an HC-06) or pair one bot at a time with the others
+switched off. iPhones cannot connect. The light code has not changed since 0.10.84.
 
 Not done yet (next steps, in order):
 1. Flash programming.ino on one calibrated bot and check on hardware: it drives as
