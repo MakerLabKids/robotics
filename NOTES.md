@@ -203,6 +203,21 @@ arrives with the same name (HC-05 / HC-06): name them first (`kN<name>;` over US
 power off and on; never confirmed on an HC-06) or pair one bot at a time with the others
 switched off. iPhones cannot connect. The light code has not changed since 0.10.84.
 
+Bluetooth sheet (2026-11-05). The user liked the light sensor build sheet ("nice graphics
+and step by step") and asked for the same for Bluetooth, to print for class:
+**mecanum/bluetooth-build.html** (How to Plug In Bluetooth, one letter page, first in the
+Bluetooth subnav as "Plug in the module") and its print-ready copy
+**resources/bluetooth-sheet.pdf**. Eight steps: the four wire ends behind the sonar
+bracket, wiggle and push (the hole just fits 4 dupont connectors), which wire is which
+(+5V VCC, Gnd GND, A0 TXD, A1 RXD), plug in the module, switch on (blinks), connect
+("your robot's name (it may be listed as HC-06)": the user says names are showing up now),
+Sticks and Blocks with light screenshots (img/sticks-light.png, img/blocks-light.png),
+links and QR codes. Wires are drawn red 5V, black Gnd, blue and yellow data, and the text
+never names a color (the kids' wires are random colors: the user's rule). Remake:
+`node temp/shot-light.js` (screenshots), `node temp/print-bt.js` (PDF to temp/, copy it
+to resources/). Not checked against a real module: the pin order drawn in step 4
+(RXD, TXD, GND, VCC).
+
 Tune the robot (2026-11-05). The user: "how much room do we have for a little bit of
 calibration from bluetooth mode? I really need a simple rotation calibration so we can
 turn 90 degrees. Distance would be second: just a 1 meter test. And 3rd, a stretch: a way
