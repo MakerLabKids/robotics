@@ -219,6 +219,26 @@ Not done yet (next steps, in order):
    a real robot yet. Names: the Sticks Bluetooth list filters by name prefix (HC, HM, JDY,
    BT, MLT, MLK) or names saved on that phone, so the page says to name robots MLK-....
    Still to write: the Blocks send/run part for kids (Blocks stays a tease).
+   **The bots were named before** (the user, 2026-11-05: "we previously named the bots...
+   did that get blown away?"). Answer: no. The name is in the Bluetooth module's own
+   memory; a sketch upload never touches it, and only a kN / rename (pending flag, then
+   AT+NAME at the next power-on) changes it. Which names, and by which tool, is not
+   recorded here: ask, and add them to the bot roster. So ignore the "every module
+   arrives with the same name" advice above for this fleet. Names are exact (no MLK-
+   prefix since Calibrate 0.1.10), so on a loaner phone that never saved the name the
+   Sticks Bluetooth list may not show a named robot unless its module advertises the
+   FFE0 service (unknown). Sticks 0.1.10: closing the list without a pick shows
+   "Robot not in the list? Show every Bluetooth device" (acceptAllDevices, as Calibrate
+   and Rename have); the guide 0.1.1 says so. Blocks and the Programming page console
+   still have no show-all.
+   Found while checking: BT_NAME_EEPROM_ADDRESS is 1040 in ir, programming, calibration
+   and rename, but an Uno's EEPROM ends at 1023, so on the chip the flag and letters land
+   at 16 to 33 (the address register has 10 bits). Reads and writes agree, so it works,
+   and ir / programming / calibration / rename use nothing else down there; but
+   mecanum_holonomic keeps its settings from address 0, so saving settings there can
+   overwrite the robot's copy of its name (not the module's name), and in the worst case
+   leave a pending flag behind. NOT changed (it needs a firmware bump on four sketches
+   and loses the stored letters): ask first.
 3. Phones: Chrome on Android opens a paired HC-05/06 through Web Serial (the "Connect"
    button with the Bluetooth serial service); iPhones cannot (no Web Serial, and the
    module is classic Bluetooth, not BLE). Not yet tried with programming.ino.

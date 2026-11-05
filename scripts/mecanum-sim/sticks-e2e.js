@@ -240,7 +240,25 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.evaluate(() => handleRobotLine('mecanum_holonomic v0.10.7'));
   check(await page.evaluate(() => !document.getElementById('notice').hidden && /0\.10\.8/.test(document.getElementById('notice').textContent)), 'old firmware: page says to re-flash');
 
-  // ---- Layout ----
+  // ---- Bluetooth list: a robot with a name of its own may not be in it, so closing it offers every device ----
+  await page.evaluate(() => {
+    window.bleRequests = [];
+    Object.defineProperty(navigator, 'bluetooth', { configurable: true, value: { requestDevice: (options) => {
+      window.bleRequests.push(options);
+      return Promise.reject(new DOMException('User cancelled the requestDevice() chooser.', 'NotFoundError'));
+    } } });
+    setConnectedState();
+  });
+  check(await page.evaluate(() => document.getElementById('showAllRow').hidden), 'the show-every-device line is hidden to begin with');
+  await page.click('#connectBleButton');
+  await sleep(200);
+  check(await page.evaluate(() => bleRequests.length === 1 && Array.isArray(bleRequests[0].filters) && !bleRequests[0].acceptAllDevices && !document.getElementById('showAllRow').hidden),
+    'Bluetooth list closed without a pick: the page offers every device');
+  await page.click('#showAllButton');
+  await sleep(200);
+  check(await page.evaluate(() => bleRequests.length === 2 && bleRequests[1].acceptAllDevices === true && !bleRequests[1].filters), 'Show every Bluetooth device asks for all devices, no name filter');
+
+  // ---- Layout (with both notice lines showing) ----
   for (const size of [[844, 390], [390, 844], [320, 568]]) {
     await page.setViewport({ width: size[0], height: size[1], isMobile: true, hasTouch: true });
     await sleep(150);

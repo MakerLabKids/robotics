@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connect with Bluetooth 0.1.0 - Maker Lab Kids</title>
+<title>Connect with Bluetooth 0.1.1 - Maker Lab Kids</title>
 <meta name="description" content="How to connect a phone to the mecanum robot with Bluetooth and drive it with the two-stick Sticks page.">
 <link rel="stylesheet" href="../css/site.css">
 <style>
@@ -61,7 +61,7 @@
         <a class="big-link" href="/mecanum/sticks">robotics.makerlabkids.com/mecanum/sticks</a><br>
         (or point the camera at the square code). Turn the phone <b>sideways</b>.</li>
         <li>Press <span class="btn">Bluetooth</span> at the top. A list pops up. Tap
-        <b>your robot</b>, then <b>Pair</b>.</li>
+        <b>your robot's name</b>, then <b>Pair</b>.</li>
         <li>The red dot turns <b>green</b> and the button says
         <span class="btn on">Disconnect</span>. You are connected. Drive!</li>
       </ol>
@@ -75,11 +75,15 @@
   </section>
 
   <section class="card">
-    <h2>Robot not in the list? Pair it first</h2>
-    <p>Some Bluetooth modules only show up after the phone has paired with them.</p>
+    <h2>Robot not in the list?</h2>
+    <p><b>First, show every device.</b> Press <b>Cancel</b>. A new line appears under the
+    buttons: <span class="btn">Show every Bluetooth device</span>. Press it and look for
+    your robot's name. The list is longer now: it has everything nearby, not just robots.</p>
+    <p><b>Still not there? Pair it first.</b> Some Bluetooth modules only show up after
+    the phone has paired with them.</p>
     <ol>
-      <li>Open the phone's <b>Settings</b>, then <b>Bluetooth</b>. Find the robot
-      (it may be called <b>HC-05</b> or <b>HC-06</b>) and tap it.</li>
+      <li>Open the phone's <b>Settings</b>, then <b>Bluetooth</b>. Find your robot's name
+      (a robot that was never named is called <b>HC-05</b> or <b>HC-06</b>) and tap it.</li>
       <li>It asks for a PIN: <b>1234</b>. If that is wrong, try <b>0000</b>.</li>
       <li>Go back to the Sticks page and press <span class="btn">Serial</span> (not
       Bluetooth). Tap the robot, then <b>Connect</b>.</li>
@@ -142,9 +146,11 @@
       Use Chrome on an Android phone, a Chromebook or a computer. iPhones cannot.</td></tr>
       <tr><td>The robot is not in the list</td><td>Is the module's light blinking? If it is
       dark, check its four wires. If it is on without blinking, another phone is already
-      connected to it. Otherwise pair it first and use Serial (above).</td></tr>
-      <tr><td>The list is full of robots with the same name</td><td>Switch the other robots
-      off, or connect one robot at a time: a robot that is connected leaves the list.</td></tr>
+      connected to it. Otherwise press Cancel, then Show every Bluetooth device. Still
+      missing: pair it first and use Serial (above).</td></tr>
+      <tr><td>Two robots in the list have the same name</td><td>They were never named.
+      Switch the other one off, or connect one robot at a time: a robot that is connected
+      leaves the list.</td></tr>
       <tr><td>It says connected but the robot does not move</td><td>Is the left stick all
       the way down? That is stop. Is the robot's battery switch on? Still nothing: the TXD
       and RXD wires may be swapped (TXD goes to A0, RXD to A1).</td></tr>
@@ -161,12 +167,16 @@
   <section class="card">
     <h2>For the grown-up</h2>
     <ul>
-      <li><b>Every module arrives with the same name.</b> For the first connection, switch
-      on one robot at a time. To give a robot its own name: plug in USB, open the console at
-      the bottom of the <a href="/mecanum/ir#instructor">Programming page</a>, send
-      <code>kN</code> and the name (for example <code>kNMLK-Rexy;</code>, up to 16 letters,
-      digits and dashes), then switch the robot off and on. Start every name with
-      <b>MLK</b>: the Bluetooth button's list only shows names it knows the start of.</li>
+      <li><b>A robot keeps its name.</b> The name lives inside the Bluetooth module, so
+      uploading a sketch does not change it. A robot that was never named is called HC-05
+      or HC-06, like every other new module: switch those on one at a time. To name a
+      robot: plug in USB, open the console at the bottom of the
+      <a href="/mecanum/ir#instructor">Programming page</a>, send <code>kN</code> and the
+      name (for example <code>kNRexy;</code>, up to 16 letters, digits and dashes), then
+      switch the robot off and on.</li>
+      <li><b>Why a named robot can be missing from the first list.</b> That list shows
+      robots it can recognize, and a phone that has never met a robot's name may not
+      recognize it. "Show every Bluetooth device" lists everything.</li>
       <li><b>One command at a time.</b> The module cannot listen while the robot is
       answering, so the pages wait for each answer and send a stop more than once.</li>
       <li><b>From a computer</b>, the <a href="/mecanum/blocks">Blocks</a> page and the
