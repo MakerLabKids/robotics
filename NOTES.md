@@ -211,8 +211,13 @@ Bluetooth subnav as "Plug in the module") and its print-ready copy
 the chassis BETWEEN the sonar bracket and the Arduino / driver tower, not under the
 sensor; the wires leave the Arduino, go down through another hole, run forward under the
 bot, and the connectors come up into the hole from below, halfway in, and stop. So
-picture 1 is a side view (0.1.2). Eight steps: find the hole,
-wiggle and push (the hole just fits 4 dupont connectors), which wire is which
+picture 1 is a side view (0.1.2). On the shield (the user: "an important depiction") the
+four wires make an L on the analog header: +5V, Gnd and A0 down the A0 column, A1 next to
+A0 (top row all +5V, middle all Gnd, bottom A0-A5). Since 0.1.4 two panels show it, drawn
+by `python3 scripts/bluetooth-figs.py` (the light sheet's board_overview and
+header_closeup with other pins marked; keep the two scripts' board looking the same).
+Ten steps: find the hole, wiggle and push (the hole just fits 4 dupont connectors; tip:
+a quarter turn of each connector may help), find the analog header, make an L, which wire is which
 (+5V VCC, Gnd GND, A0 TXD, A1 RXD), plug in the module, switch on (blinks), connect
 ("your robot's name (it may be listed as HC-06)": the user says names are showing up now),
 Sticks and Blocks with light screenshots (img/sticks-light.png, img/blocks-light.png),

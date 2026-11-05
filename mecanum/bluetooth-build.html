@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Plug In Bluetooth 0.1.3 - Maker Lab Kids</title>
+<title>How to Plug In Bluetooth 0.1.4 - Maker Lab Kids</title>
 <meta name="description" content="How to plug the Bluetooth module into the mecanum robot, step by step, then drive it with Sticks or program it with Blocks.">
 <link rel="stylesheet" href="../css/site.css">
 <style>
@@ -29,6 +29,7 @@
     .steps { grid-template-columns: repeat(4, 1fr); gap: 8px 10px; margin-top: 10px; }
     .steps figure { padding: 6px; border-color: #999; background: none; break-inside: avoid; page-break-inside: avoid; }
     .steps svg { color: #000; }
+    .steps .fig-bg { fill: #fff; }
     .steps figcaption { font-size: 11.5px; margin-top: 4px; }
     .steps .step-title { font-size: 13px; margin-bottom: 4px; color: #000; }
     .steps figure.wide { grid-column: span 2; }
@@ -130,8 +131,104 @@
         turn (90 degrees) may help them fit.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">3. Which wire is which</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 3: each wire goes from a pin on the motor shield to a pin on the Bluetooth module: +5V to VCC, Gnd to GND, A0 to TXD, A1 to RXD.">
+        <h3 class="step-title">3. Find the analog header</h3>
+        <!-- bt:board --><svg viewBox="0 0 360 300" role="img" aria-label="The motor shield from above. The analog header is at the bottom right, under the right motor connector: three rows, +5V on top, Gnd in the middle and A0-5 along the board's edge, with A0 on the left and A5 on the right. An L is outlined at the left end: the A0 column, plus A1 on the bottom row.">
+<rect width="360" height="300" rx="10" class="fig-bg" fill="#f4f1ea"/>
+<rect x="20" y="20" width="320" height="240" rx="12" fill="#1f5fae" stroke="#174a88" stroke-width="2"/>
+<rect x="20" y="70" width="34" height="62" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<rect x="20" y="150" width="34" height="62" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<rect x="95" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="160" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="225" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="70" y="200" width="56" height="40" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<text x="98" y="256" text-anchor="middle" font-size="11" fill="#fff">power in</text>
+<rect x="227" y="206" width="81" height="42" rx="2" fill="#f2d33c"/>
+<rect x="232" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="232" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="232" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="286" y="80" width="54" height="126" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<text x="312" y="140" text-anchor="middle" font-size="11" fill="#fff">motors</text>
+<path d="M228 207 H242 V233 H255 V247 H228 Z" fill="none" stroke="#e65100" stroke-width="3" stroke-linejoin="round"/>
+<text x="312" y="218" font-size="10" fill="#fff">+5V</text>
+<text x="312" y="231" font-size="10" fill="#fff">Gnd</text>
+<text x="312" y="244" font-size="10" fill="#fff">A0-5</text>
+<path d="M168 288 Q235 290 235 252" fill="none" stroke="#e65100" stroke-width="2.5"/>
+<path d="M229 262 L235 251 L241 262" fill="none" stroke="#e65100" stroke-width="2.5"/>
+<text x="162" y="292" text-anchor="end" font-size="14" fill="#222">the A0 corner</text>
+</svg><!-- /bt:board -->
+        <figcaption>The other ends of the wires are on the motor shield, on the analog
+        header: three rows of pins at the edge. The <b>top row is all +5V</b>, the
+        <b>middle row is all Gnd</b>, the <b>bottom row is A0 to A5</b>.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">4. Make an L</h3>
+        <!-- bt:header --><svg viewBox="0 20 360 250" role="img" aria-label="Close-up of the analog header from above: columns A0 to A5 from left to right, the top row all +5V, the middle row all Gnd, the bottom row A0 to A5 at the board's edge. Four plugs make an L at the left end: +5V, Gnd and A0 down the A0 column, and A1 beside A0 on the bottom row. The light sensors are at the other end, on A4 and A5.">
+<rect y="20" width="360" height="250" rx="10" class="fig-bg" fill="#f4f1ea"/>
+<rect x="0" y="20" width="360" height="206" fill="#1f5fae"/>
+<line x1="0" y1="226" x2="360" y2="226" stroke="#174a88" stroke-width="3"/>
+<rect x="7" y="69" width="276" height="138" rx="3" fill="#f2d33c"/>
+<rect x="23" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="23" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="23" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="222" y="20" width="138" height="51" fill="#2f86d6" stroke="#174a88" stroke-width="2"/>
+<text x="291.0" y="50" text-anchor="middle" font-size="13" fill="#fff">motor connector</text>
+<rect x="10" y="72" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="30" cy="92" r="11" fill="#d42a2a" stroke="#fff" stroke-width="1.5"/>
+<rect x="10" y="118" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="30" cy="138" r="11" fill="#161616" stroke="#fff" stroke-width="1.5"/>
+<rect x="10" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="30" cy="184" r="11" fill="#1f6fd1" stroke="#fff" stroke-width="1.5"/>
+<rect x="56" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="76" cy="184" r="11" fill="#f6c21c" stroke="#fff" stroke-width="1.5"/>
+<path d="M5 67 H55 V159 H101 V209 H5 Z" fill="none" stroke="#e65100" stroke-width="3.5" stroke-linejoin="round"/>
+<text x="288" y="97" font-size="13" font-weight="700" fill="#fff">+5V</text>
+<text x="288" y="143" font-size="13" font-weight="700" fill="#fff">Gnd</text>
+<text x="288" y="189" font-size="13" font-weight="700" fill="#fff">A0-5</text>
+<text x="30" y="246" text-anchor="middle" font-size="14" font-weight="700" fill="#c24400">A0</text>
+<text x="76" y="246" text-anchor="middle" font-size="14" font-weight="700" fill="#c24400">A1</text>
+<text x="122" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A2</text>
+<text x="168" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A3</text>
+<text x="214" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A4</text>
+<text x="260" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A5</text>
+<text x="237.0" y="263" text-anchor="middle" font-size="12" fill="#555">light sensors</text>
+</svg><!-- /bt:header -->
+        <figcaption>The four wires make an <b>L</b>: <b>+5V</b>, <b>Gnd</b> and
+        <b>A0</b> straight down the A0 column, and <b>A1</b> next to A0. Check yours
+        looks like this.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">5. Which wire is which</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 5: each wire goes from a pin on the motor shield to a pin on the Bluetooth module: +5V to VCC, Gnd to GND, A0 to TXD, A1 to RXD.">
           <g font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="currentColor">
             <text x="60" y="30" text-anchor="middle" font-size="14">on the shield</text>
             <text x="298" y="30" text-anchor="middle" font-size="14">on the module</text>
@@ -150,13 +247,13 @@
             <path d="M100 254 H258" fill="none" stroke="#f6c21c" stroke-width="7" stroke-linecap="round"/>
           </g>
         </svg>
-        <figcaption>Follow each wire back to the motor shield. <b>+5V</b> goes to
+        <figcaption>Follow each wire from the shield to the hole. <b>+5V</b> goes to
         <b>VCC</b>, <b>Gnd</b> to <b>GND</b>, <b>A0</b> to <b>TXD</b>, <b>A1</b> to
         <b>RXD</b>. Your wires can be any colors.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">4. Plug in the module</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 4: the Bluetooth module pushed down onto the four connectors, each pin into the connector of its own wire. The pin names are printed on the module.">
+        <h3 class="step-title">6. Plug in the module</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 6: the Bluetooth module pushed down onto the four connectors, each pin into the connector of its own wire. The pin names are printed on the module.">
           <g font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="currentColor">
             <rect x="96" y="14" width="168" height="110" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
             <path d="M112 30 h28 v14 h-18 v14 h18 v14 h-18 v14 h28" fill="none" stroke="#e3ad12" stroke-width="4" stroke-linejoin="round"/>
@@ -183,11 +280,11 @@
           </g>
         </svg>
         <figcaption>Push the module's pins into the connectors. <b>Read the names printed
-        on the module</b>: each pin goes into the wire from step 3.</figcaption>
+        on the module</b>: each pin goes into the wire from step 5.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">5. Switch on</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 5: the robot is switched on and the light on the Bluetooth module blinks.">
+        <h3 class="step-title">7. Switch on</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 7: the robot is switched on and the light on the Bluetooth module blinks.">
           <g font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="currentColor">
             <rect x="96" y="96" width="168" height="110" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
             <path d="M112 112 h28 v14 h-18 v14 h18 v14 h-18 v14 h28" fill="none" stroke="#e3ad12" stroke-width="4" stroke-linejoin="round"/>
@@ -203,8 +300,8 @@
         waiting for you. No light? Check VCC and GND.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">6. Connect</h3>
-        <svg viewBox="0 0 360 300" role="img" aria-label="Step 6: on the page, press Bluetooth, tap your robot in the list, then Pair. The dot turns green.">
+        <h3 class="step-title">8. Connect</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 8: on the page, press Bluetooth, tap your robot in the list, then Pair. The dot turns green.">
           <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
             <rect x="24" y="16" width="130" height="40" rx="8" fill="none" stroke="currentColor" stroke-width="2.5"/>
             <text x="89" y="42" text-anchor="middle">Bluetooth</text>
@@ -225,7 +322,7 @@
         iPhones.</figcaption>
       </figure>
       <figure class="wide">
-        <h3 class="step-title">7. Drive it: Sticks</h3>
+        <h3 class="step-title">9. Drive it: Sticks</h3>
         <div class="use">
           <img class="shot" src="../img/sticks-light.png" alt="The Sticks page: two round sticks side by side with Bluetooth, Serial and STOP buttons above them" width="1688" height="780">
           <div class="use-qr"><svg class="qr" viewBox="0 0 41 41" role="img" aria-label="QR code for https://robotics.makerlabkids.com/mecanum/sticks" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM13 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM20 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM14 7h1v1h-1zM15 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM5 14h1v1h-1zM7 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM33 14h1v1h-1zM5 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM35 15h1v1h-1zM6 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM27 16h1v1h-1zM30 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM5 17h1v1h-1zM6 17h1v1h-1zM8 17h1v1h-1zM9 17h1v1h-1zM13 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM7 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM15 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM28 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM32 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM7 19h1v1h-1zM11 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM4 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM8 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM5 22h1v1h-1zM7 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM9 23h1v1h-1zM12 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM35 23h1v1h-1zM36 23h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM30 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM9 25h1v1h-1zM12 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM6 26h1v1h-1zM7 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM15 26h1v1h-1zM16 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM35 26h1v1h-1zM6 27h1v1h-1zM7 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM15 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM12 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM35 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM13 31h1v1h-1zM14 31h1v1h-1zM15 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM25 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM13 32h1v1h-1zM14 32h1v1h-1zM15 32h1v1h-1zM16 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM13 33h1v1h-1zM14 33h1v1h-1zM15 33h1v1h-1zM16 33h1v1h-1zM20 33h1v1h-1zM23 33h1v1h-1zM25 33h1v1h-1zM27 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM17 34h1v1h-1zM18 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM24 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM27 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM15 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM19 36h1v1h-1zM21 36h1v1h-1zM24 36h1v1h-1zM25 36h1v1h-1zM26 36h1v1h-1zM28 36h1v1h-1zM30 36h1v1h-1zM36 36h1v1h-1z" fill="#000"/></svg>
@@ -237,7 +334,7 @@
         thumbs to stop.</figcaption>
       </figure>
       <figure class="wide">
-        <h3 class="step-title">8. Program it: Blocks</h3>
+        <h3 class="step-title">10. Program it: Blocks</h3>
         <div class="use">
           <img class="shot" src="../img/blocks-light.png" alt="The Blocks page: a list of blocks on the left, a program in the middle and a picture of the robot on the right" width="1650" height="830">
           <div class="use-qr"><svg class="qr" viewBox="0 0 41 41" role="img" aria-label="QR code for https://robotics.makerlabkids.com/mecanum/blocks" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM25 5h1v1h-1zM26 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM20 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM15 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM4 13h1v1h-1zM8 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM4 14h1v1h-1zM5 14h1v1h-1zM7 14h1v1h-1zM10 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM33 14h1v1h-1zM4 15h1v1h-1zM9 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM35 15h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM27 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM7 17h1v1h-1zM8 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM16 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM32 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM7 19h1v1h-1zM12 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM4 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM17 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM5 22h1v1h-1zM7 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM12 23h1v1h-1zM13 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM35 23h1v1h-1zM36 23h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM17 24h1v1h-1zM18 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM11 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM6 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM35 26h1v1h-1zM7 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM17 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM35 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM15 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM25 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM13 33h1v1h-1zM15 33h1v1h-1zM20 33h1v1h-1zM23 33h1v1h-1zM25 33h1v1h-1zM27 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM17 34h1v1h-1zM18 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM24 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM27 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM15 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM19 36h1v1h-1zM21 36h1v1h-1zM24 36h1v1h-1zM25 36h1v1h-1zM26 36h1v1h-1zM28 36h1v1h-1zM30 36h1v1h-1zM36 36h1v1h-1z" fill="#000"/></svg>
