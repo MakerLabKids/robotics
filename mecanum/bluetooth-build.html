@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Plug In Bluetooth 0.1.0 - Maker Lab Kids</title>
+<meta name="description" content="How to plug the Bluetooth module into the mecanum robot, step by step, then drive it with Sticks or program it with Blocks.">
+<link rel="stylesheet" href="../css/site.css">
+<style>
+  .doc-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
+  .doc-head h1 { margin: 0; }
+  .doc-head .subtitle { margin: 4px 0 0; }
+  .page-lockup { height: 64px; width: auto; background: #fff; border-radius: 8px; padding: 6px 10px; }
+  .build-steps h2 { margin-top: 28px; }
+  .steps { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .steps figure { margin: 0; padding: 10px; border: 1px solid var(--panel-edge); border-radius: 10px; background: var(--panel);
+                  display: flex; flex-direction: column; }
+  .steps svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  .steps figcaption { margin-top: 8px; font-size: 14px; }
+  .steps .step-title { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: 0; text-transform: none; }
+  .steps figure.wide { grid-column: 1 / -1; }
+  .use { display: flex; gap: 14px; align-items: flex-start; }
+  .use .shot { flex: 1 1 auto; min-width: 0; width: 60%; height: auto; border: 1px solid #999; border-radius: 8px; background: #fff; }
+  .use .use-qr { flex: 0 0 150px; text-align: center; font-size: 12px; }
+  .use .use-qr svg { width: 150px; height: 150px; border-radius: 6px; }
+  .use-link { font-weight: 700; overflow-wrap: anywhere; }
+  @media print {
+    .page-lockup { background: none; padding: 0; height: 50px; }
+    .steps { grid-template-columns: repeat(4, 1fr); gap: 8px 10px; margin-top: 10px; }
+    .steps figure { padding: 6px; border-color: #999; background: none; break-inside: avoid; page-break-inside: avoid; }
+    .steps svg { color: #000; }
+    .steps figcaption { font-size: 11.5px; margin-top: 4px; }
+    .steps .step-title { font-size: 13px; margin-bottom: 4px; color: #000; }
+    .steps figure.wide { grid-column: span 2; }
+    .use { gap: 8px; }
+    .use .shot { width: auto; max-width: 64%; max-height: 1.35in; flex: 0 1 auto; }
+    .doc-head { margin-bottom: 0; }
+    .doc-head h1 { font-size: 22px; }
+    .use .use-qr { flex-basis: 96px; font-size: 9px; }
+    .use .use-qr svg { width: 96px; height: 96px; }
+    .build-steps h2 { margin-top: 8px; }
+    .card { padding: 8px 12px; }
+  }
+  @page {
+    margin: 0.4in 0.45in 0.6in;
+    @bottom-center { content: "Maker Lab Kids \00B7  robotics.makerlabkids.com"; font: 10px system-ui, sans-serif; color: #555; }
+  }
+</style>
+<link rel="stylesheet" href="/css/nav.css">
+</head>
+<body>
+<!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">Remote guide</a><a href="/mecanum/ir">Programming</a><a href="/mecanum/challenges">Challenges</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth" class="active" aria-current="page">Bluetooth</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks">Blocks</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<nav class="mlk-subnav" aria-label="Bluetooth pages"><span>Bluetooth:</span><a href="/mecanum/bluetooth-build" class="active" aria-current="page">Plug in the module</a><a href="/mecanum/bluetooth">How to connect</a><a href="/mecanum/sticks">Drive with Sticks</a><a href="/mecanum/tune">Tune the robot</a></nav>
+<!-- /mlk-nav -->
+<main class="page">
+  <header class="doc-head">
+    <img class="page-lockup" src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div>
+      <h1>How to plug in Bluetooth</h1>
+      <p class="subtitle">Then drive with Sticks, or program with Blocks</p>
+    </div>
+  </header>
+
+  <section class="build-steps">
+    <div class="steps">
+      <figure>
+        <h3 class="step-title">1. Find the four wires</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 1: the front of the robot from above. Four wire ends poke up through the chassis just behind the sonar sensor bracket.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <rect x="60" y="70" width="240" height="220" rx="16" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <rect x="22" y="110" width="40" height="80" rx="8" fill="#f6c21c" stroke="#7a5c00" stroke-width="1.5"/>
+            <rect x="298" y="110" width="40" height="80" rx="8" fill="#f6c21c" stroke="#7a5c00" stroke-width="1.5"/>
+            <rect x="112" y="52" width="136" height="50" rx="5" fill="#1f62c4" stroke="#0d2c63" stroke-width="1.5"/>
+            <circle cx="146" cy="77" r="19" fill="#cdd2d8"/><circle cx="146" cy="77" r="12" fill="#2a2f36"/>
+            <circle cx="214" cy="77" r="19" fill="#cdd2d8"/><circle cx="214" cy="77" r="12" fill="#2a2f36"/>
+            <text x="180" y="40" text-anchor="middle">sonar sensor (front)</text>
+            <rect x="134" y="118" width="92" height="30" rx="4" fill="#0b0d10" stroke="#ff7a1a" stroke-width="3"/>
+            <rect x="141" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
+            <rect x="162" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
+            <rect x="183" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
+            <rect x="204" y="124" width="16" height="18" rx="2" fill="#2b323b" stroke="#888" stroke-width="1"/>
+            <path d="M180 212 V160 m-9 12 l9 -12 l9 12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="180" y="236" text-anchor="middle" fill="#fff">4 wire ends</text>
+            <text x="180" y="256" text-anchor="middle" fill="#fff">come up here</text>
+          </g>
+        </svg>
+        <figcaption>Four wires come up from under the chassis, <b>just behind the sonar
+        sensor bracket</b>.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">2. Wiggle and push</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 2: four dupont connectors pushed up side by side through a slot that is just big enough for them.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <path d="M82 290 C82 250 96 240 96 205" fill="none" stroke="#e33b2e" stroke-width="7" stroke-linecap="round"/>
+            <path d="M140 290 C140 250 146 240 146 205" fill="none" stroke="#888" stroke-width="9" stroke-linecap="round"/>
+            <path d="M140 290 C140 250 146 240 146 205" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+            <path d="M220 290 C220 250 214 240 214 205" fill="none" stroke="#2f7fe6" stroke-width="7" stroke-linecap="round"/>
+            <path d="M278 290 C278 250 264 240 264 205" fill="none" stroke="#f6c21c" stroke-width="7" stroke-linecap="round"/>
+            <rect x="78" y="80" width="42" height="130" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="128" y="80" width="42" height="130" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="190" y="80" width="42" height="130" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="240" y="80" width="42" height="130" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="91" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
+            <rect x="141" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
+            <rect x="203" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
+            <rect x="253" y="86" width="16" height="16" fill="#0b0d10" stroke="#cdd2d8" stroke-width="1"/>
+            <rect x="20" y="150" width="50" height="26" rx="3" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <rect x="290" y="150" width="50" height="26" rx="3" fill="#3a4350" stroke="#15181c" stroke-width="2"/>
+            <path d="M172 145 h16 m-6 -6 l6 6 l-6 6 M188 145 h-16 m6 -6 l-6 6 l6 6" fill="none" stroke="#ff7a1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M180 62 V28 m-9 12 l9 -12 l9 12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="246" y="44" text-anchor="middle">push up</text>
+          </g>
+        </svg>
+        <figcaption>The hole is <b>just big enough for 4 connectors</b>, side by side. It
+        is a tight fit: wiggle and push. Once they are in, they stay put.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">3. Which wire is which</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 3: each wire goes from a pin on the motor shield to a pin on the Bluetooth module: +5V to VCC, Gnd to GND, A0 to TXD, A1 to RXD.">
+          <g font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="currentColor">
+            <text x="60" y="30" text-anchor="middle" font-size="14">on the shield</text>
+            <text x="298" y="30" text-anchor="middle" font-size="14">on the module</text>
+            <rect x="20" y="46" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="74" text-anchor="middle">+5V</text>
+            <rect x="20" y="108" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="136" text-anchor="middle">Gnd</text>
+            <rect x="20" y="170" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="198" text-anchor="middle">A0</text>
+            <rect x="20" y="232" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="260" text-anchor="middle">A1</text>
+            <rect x="258" y="46" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="74" text-anchor="middle">VCC</text>
+            <rect x="258" y="108" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="136" text-anchor="middle">GND</text>
+            <rect x="258" y="170" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="198" text-anchor="middle">TXD</text>
+            <rect x="258" y="232" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="260" text-anchor="middle">RXD</text>
+            <path d="M100 68 H258" fill="none" stroke="#e33b2e" stroke-width="7" stroke-linecap="round"/>
+            <path d="M100 130 H258" fill="none" stroke="#888" stroke-width="9" stroke-linecap="round"/>
+            <path d="M100 130 H258" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+            <path d="M100 192 H258" fill="none" stroke="#2f7fe6" stroke-width="7" stroke-linecap="round"/>
+            <path d="M100 254 H258" fill="none" stroke="#f6c21c" stroke-width="7" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <figcaption>Follow each wire back to the motor shield. <b>+5V</b> goes to
+        <b>VCC</b>, <b>Gnd</b> to <b>GND</b>, <b>A0</b> to <b>TXD</b>, <b>A1</b> to
+        <b>RXD</b>. Your wires can be any colors.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">4. Plug in the module</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 4: the Bluetooth module pushed down onto the four connectors, each pin into the connector of its own wire. The pin names are printed on the module.">
+          <g font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="currentColor">
+            <rect x="96" y="14" width="168" height="110" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
+            <path d="M112 30 h28 v14 h-18 v14 h18 v14 h-18 v14 h28" fill="none" stroke="#e3ad12" stroke-width="4" stroke-linejoin="round"/>
+            <rect x="160" y="30" width="86" height="56" rx="3" fill="#cdd2d8" stroke="#555d66" stroke-width="1.5"/>
+            <text x="121" y="116" text-anchor="middle" fill="#fff" font-size="11">RXD</text>
+            <text x="161" y="116" text-anchor="middle" fill="#fff" font-size="11">TXD</text>
+            <text x="201" y="116" text-anchor="middle" fill="#fff" font-size="11">GND</text>
+            <text x="241" y="116" text-anchor="middle" fill="#fff" font-size="11">VCC</text>
+            <path d="M121 124 v34 M161 124 v34 M201 124 v34 M241 124 v34" fill="none" stroke="#9aa3ad" stroke-width="5" stroke-linecap="round"/>
+            <path d="M300 96 v40 m-8 -11 l8 11 l8 -11" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="104" y="170" width="34" height="78" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="144" y="170" width="34" height="78" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="184" y="170" width="34" height="78" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <rect x="224" y="170" width="34" height="78" rx="4" fill="#2b323b" stroke="#888" stroke-width="1.5"/>
+            <path d="M121 248 C121 270 112 280 112 298" fill="none" stroke="#f6c21c" stroke-width="7" stroke-linecap="round"/>
+            <path d="M161 248 C161 270 156 280 156 298" fill="none" stroke="#2f7fe6" stroke-width="7" stroke-linecap="round"/>
+            <path d="M201 248 C201 270 206 280 206 298" fill="none" stroke="#888" stroke-width="9" stroke-linecap="round"/>
+            <path d="M201 248 C201 270 206 280 206 298" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+            <path d="M241 248 C241 270 250 280 250 298" fill="none" stroke="#e33b2e" stroke-width="7" stroke-linecap="round"/>
+            <text x="121" y="214" text-anchor="middle" fill="#fff" font-size="12">A1</text>
+            <text x="161" y="214" text-anchor="middle" fill="#fff" font-size="12">A0</text>
+            <text x="201" y="214" text-anchor="middle" fill="#fff" font-size="12">Gnd</text>
+            <text x="241" y="214" text-anchor="middle" fill="#fff" font-size="12">+5V</text>
+          </g>
+        </svg>
+        <figcaption>Push the module's pins into the connectors. <b>Read the names printed
+        on the module</b>: each pin goes into the wire from step 3.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">5. Switch on</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 5: the robot is switched on and the light on the Bluetooth module blinks.">
+          <g font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="currentColor">
+            <rect x="96" y="96" width="168" height="110" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
+            <path d="M112 112 h28 v14 h-18 v14 h18 v14 h-18 v14 h28" fill="none" stroke="#e3ad12" stroke-width="4" stroke-linejoin="round"/>
+            <rect x="160" y="124" width="86" height="56" rx="3" fill="#cdd2d8" stroke="#555d66" stroke-width="1.5"/>
+            <circle cx="234" cy="108" r="8" fill="#ff3b30" stroke="#fff" stroke-width="2"/>
+            <path d="M234 88 V66 M250 94 L266 78 M218 94 L202 78 M256 108 H278" fill="none" stroke="#ff3b30" stroke-width="4" stroke-linecap="round"/>
+            <text x="180" y="44" text-anchor="middle">blink ... blink ... blink</text>
+            <text x="180" y="246" text-anchor="middle">blinking = waiting for a phone</text>
+            <text x="180" y="270" text-anchor="middle">steady = a phone is connected</text>
+          </g>
+        </svg>
+        <figcaption>Switch the robot on. The light on the module <b>blinks</b>: it is
+        waiting for you. No light? Check VCC and GND.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">6. Connect</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 6: on the page, press Bluetooth, tap your robot in the list, then Pair. The dot turns green.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <rect x="24" y="16" width="130" height="40" rx="8" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <text x="89" y="42" text-anchor="middle">Bluetooth</text>
+            <path d="M166 36 h26 m-9 -7 l9 7 l-9 7" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="60" y="76" width="276" height="150" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <text x="76" y="102" font-size="13">wants to pair</text>
+            <rect x="72" y="112" width="252" height="34" rx="5" fill="#ff7a1a" opacity="0.35"/>
+            <text x="84" y="135">your robot's name</text>
+            <text x="84" y="170" font-weight="400">(or HC-06)</text>
+            <rect x="256" y="186" width="64" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+            <text x="288" y="207" text-anchor="middle" font-size="14">Pair</text>
+            <circle cx="40" cy="262" r="11" fill="#2fbf6b"/>
+            <text x="62" y="268">green dot = connected</text>
+          </g>
+        </svg>
+        <figcaption>Press <b>Bluetooth</b>. Tap <b>your robot's name</b> (it may be
+        listed as <b>HC-06</b>), then <b>Pair</b>. Android or a computer, in Chrome. Not
+        iPhones.</figcaption>
+      </figure>
+      <figure class="wide">
+        <h3 class="step-title">7. Drive it: Sticks</h3>
+        <div class="use">
+          <img class="shot" src="../img/sticks-light.png" alt="The Sticks page: two round sticks side by side with Bluetooth, Serial and STOP buttons above them" width="1688" height="780">
+          <div class="use-qr"><svg class="qr" viewBox="0 0 41 41" role="img" aria-label="QR code for https://robotics.makerlabkids.com/mecanum/sticks" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM13 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM20 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM14 7h1v1h-1zM15 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM5 14h1v1h-1zM7 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM33 14h1v1h-1zM5 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM35 15h1v1h-1zM6 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM27 16h1v1h-1zM30 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM5 17h1v1h-1zM6 17h1v1h-1zM8 17h1v1h-1zM9 17h1v1h-1zM13 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM7 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM15 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM28 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM32 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM7 19h1v1h-1zM11 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM4 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM8 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM5 22h1v1h-1zM7 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM9 23h1v1h-1zM12 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM35 23h1v1h-1zM36 23h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM30 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM9 25h1v1h-1zM12 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM6 26h1v1h-1zM7 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM15 26h1v1h-1zM16 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM35 26h1v1h-1zM6 27h1v1h-1zM7 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM15 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM12 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM35 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM13 31h1v1h-1zM14 31h1v1h-1zM15 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM25 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM13 32h1v1h-1zM14 32h1v1h-1zM15 32h1v1h-1zM16 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM13 33h1v1h-1zM14 33h1v1h-1zM15 33h1v1h-1zM16 33h1v1h-1zM20 33h1v1h-1zM23 33h1v1h-1zM25 33h1v1h-1zM27 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM17 34h1v1h-1zM18 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM24 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM27 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM15 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM19 36h1v1h-1zM21 36h1v1h-1zM24 36h1v1h-1zM25 36h1v1h-1zM26 36h1v1h-1zM28 36h1v1h-1zM30 36h1v1h-1zM36 36h1v1h-1z" fill="#000"/></svg>
+          <div>Sticks</div></div>
+        </div>
+        <figcaption><a class="use-link" href="/mecanum/sticks">robotics.makerlabkids.com/mecanum/sticks</a><br>
+        Turn the phone sideways and press Full screen. <b>Right stick:</b> which way to go.
+        <b>Left stick:</b> up is faster, down is slower, left and right turn. Lift your
+        thumbs to stop.</figcaption>
+      </figure>
+      <figure class="wide">
+        <h3 class="step-title">8. Program it: Blocks</h3>
+        <div class="use">
+          <img class="shot" src="../img/blocks-light.png" alt="The Blocks page: a list of blocks on the left, a program in the middle and a picture of the robot on the right" width="1650" height="960">
+          <div class="use-qr"><svg class="qr" viewBox="0 0 41 41" role="img" aria-label="QR code for https://robotics.makerlabkids.com/mecanum/blocks" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM25 5h1v1h-1zM26 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM20 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM15 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM4 13h1v1h-1zM8 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM4 14h1v1h-1zM5 14h1v1h-1zM7 14h1v1h-1zM10 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM33 14h1v1h-1zM4 15h1v1h-1zM9 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM35 15h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM27 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM7 17h1v1h-1zM8 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM16 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM32 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM7 19h1v1h-1zM12 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM4 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM17 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM5 22h1v1h-1zM7 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM12 23h1v1h-1zM13 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM35 23h1v1h-1zM36 23h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM17 24h1v1h-1zM18 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM11 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM6 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM35 26h1v1h-1zM7 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM17 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM35 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM15 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM25 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM13 33h1v1h-1zM15 33h1v1h-1zM20 33h1v1h-1zM23 33h1v1h-1zM25 33h1v1h-1zM27 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM17 34h1v1h-1zM18 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM24 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM27 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM15 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM19 36h1v1h-1zM21 36h1v1h-1zM24 36h1v1h-1zM25 36h1v1h-1zM26 36h1v1h-1zM28 36h1v1h-1zM30 36h1v1h-1zM36 36h1v1h-1z" fill="#000"/></svg>
+          <div>Blocks</div></div>
+        </div>
+        <figcaption><a class="use-link" href="/mecanum/blocks">robotics.makerlabkids.com/mecanum/blocks</a><br>
+        Snap blocks together under <b>when RUN is pressed</b>. Press <b>Bluetooth</b>, pick
+        your robot, choose <b>Robot</b>, then press <b>RUN</b>. Best on a computer or a
+        tablet.</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+<!-- mlk-foot -->
+<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a><span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a><span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>
+<!-- /mlk-foot -->
+</body>
+</html>

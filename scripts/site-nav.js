@@ -40,6 +40,7 @@ const SECTIONS = {
     ["/mecanum/light-build", "How to build a light sensor"]
   ] },
   bluetooth: { title: "Bluetooth", pages: [
+    ["/mecanum/bluetooth-build", "Plug in the module"],
     ["/mecanum/bluetooth", "How to connect"],
     ["/mecanum/sticks", "Drive with Sticks"],
     ["/mecanum/tune", "Tune the robot"]
@@ -56,6 +57,7 @@ const PAGES = {
   "mecanum/challenges.html": { active: "/mecanum/challenges" },
   "mecanum/light.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light" },
   "mecanum/light-build.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light-build" },
+  "mecanum/bluetooth-build.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth-build" },
   "mecanum/bluetooth.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth" },
   "mecanum/sticks.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/sticks", tool: true, back: "/mecanum/bluetooth", noFoot: true },
   "mecanum/tune.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/tune" },
