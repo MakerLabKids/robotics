@@ -140,6 +140,14 @@ const script = [
   mark(),                            // 22 a brighter floor (no flashlight): it sees it at first, then the room's light catches up and it stops
   'wait 300', press('##1'), 'wait 800', ...calibrate(3500, 3500), 'wait 800',
   ldr(4, 2300), ldr(5, 2300), 'wait 500', 'pwm', 'wait 11000', 'pwm', press('O'), 'wait 300', ldr(4, 2000), ldr(5, 2000),
+  mark(),                            // 23 the 8 (repeat) BEFORE its steps: typed on the remote, and in slot lines (alone and mixed with an 8 after)
+  'wait 300', press('***'), 'wait 2500', press('*82*'), 'wait 500', press('*U10*'), 'wait 500', press('*390*'), 'wait 500', press('**'), 'wait 900', press('O'), 'wait 7000', press('#'), 'wait 400',
+  'send p8=n2 f10 n3 b10;\\n', 'wait 400', 'send p8;\\n', 'wait 9000',
+  'send p8=f10 n2 n2 b10;\\n', 'wait 400', 'send p8;\\n', 'wait 7000',
+  mark(),                            // 24 Bluetooth: a full 16-step slot line (100 bytes, more than SoftwareSerial's 64) arrives whole; two commands in one burst; drive and stop
+  'btsend p3=' + new Array(17).join('t-180 ').trim() + ';', 'wait 1500',
+  'btsend p4=f10 t90 n2;p?;', 'wait 2500',
+  'btsend v60,0,0;', 'wait 150', 'pwm', 'btsend x', 'wait 300', 'pwm',
   mark(),
   '',
 ].join('\n');
@@ -319,6 +327,23 @@ check(p.length && !moving(p[0]) && /light: stop/.test(s), 'it never drove (no fl
 s = sections[22];
 p = pwms(s);
 check(/light: calibrated/.test(s) && moving(p[0]) && p.length >= 2 && !moving(p[1]) && /light: lost it/.test(s), 'floor a bit brighter, no flashlight: drives at first, then the room catches up and it stops: ' + p[0] + ' then ' + p[1]);
+
+// 23 the 8 before its steps
+s = sections[23];
+{
+  // what each run did: the steps it drove and the "again" lines, in order
+  const runs = s.split(/run: (?:the new program|slot \d+)/).slice(1).map((part) => (part.match(/^(step \d+|again: \d+ more|run: done)/gm) || []).join(' | '));
+  check(/step 1: do it all again 2 times/.test(s) && runs[0] === 'step 2 | step 3 | again: 1 more | step 2 | step 3 | run: done', 'remote: 8 x2 typed FIRST, then forward and turn: both steps run twice: ' + runs[0]);
+  check(runs[1] === 'step 2 | again: 1 more | step 2 | step 4 | again: 2 more | step 4 | again: 1 more | step 4 | run: done', 'p8=n2 f10 n3 b10: each 8 repeats the steps after it: ' + runs[1]);
+  check(runs[2] === 'step 1 | again: 1 more | step 1 | step 4 | again: 1 more | step 4 | run: done', 'p8=f10 n2 n2 b10: the first 8 repeats what came before, the second what follows: ' + runs[2]);
+}
+
+// 24 Bluetooth
+s = sections[24];
+p = pwms(s);
+check(/program: slot 3 = 16 steps/.test(s) && /^P,3(,t-180){16}\r?$/m.test(s), 'Bluetooth: a full 16-step line (100 bytes) is stored whole');
+check(/program: slot 4 = 3 steps/.test(s) && /^P,4,f10,t90,n2\r?$/m.test(s) && /P,end/.test(s), 'Bluetooth: two commands in one burst (store, then list) both run');
+check(p.length >= 2 && moving(p[0]) && !moving(p[1]) && /stop/.test(s), 'Bluetooth: v drives, x stops: ' + p[0] + ' then ' + p[1]);
 
 // The back LDR on A3 (USE_LIGHT_BACK 1): a light behind
 const backScript = [

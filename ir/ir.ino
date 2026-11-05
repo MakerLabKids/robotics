@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.84 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.85 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -23,8 +23,10 @@
 //                                 no digits = 25 cm / 90 degrees. The next * ends it.
 //     * 7 <cm>  * 9 <cm>          diagonal forward-left / forward-right
 //     * 5 <seconds>               pause (no digits = 1 s)
-//     * 8 <times>                 do everything before it again, that many times in all
-//                                 (no digits = 2; a second 8 repeats only what came after the first)
+//     * 8 <times>                 repeat, that many times in all (no digits = 2). AFTER some steps:
+//                                 do them again (a second 8 repeats only what came after the first).
+//                                 BEFORE any steps (first, or right after another 8): repeat the
+//                                 steps that FOLLOW, up to the next 8 or the end
 //     * 0 <cm across>             a circle that wide, one lap, nose pointed at the middle (no digits = 1 m)
 //     * * *           done: the robot wiggles and waits for a slot number 1-9
 //     <1-9> * *       saved in that slot (nod)
@@ -40,12 +42,11 @@
 //                     back straight at it (follow) or run forward (run away), steering by
 //                     whatever spill the front LDRs catch
 //                     Both start with a calibration (no time limit): the flashlight on one LDR,
-//                     nothing, the other, nothing, again (left right left right or right left
-//                     right left, nothing between), then both (straight ahead), nothing, both:
-//                     a tick for each shine counted, a nod and it goes on the second "both".
-//                     An LDR that barely changes: "no", start over. OK skips (last gains).
+//                     nothing, the other (either side first): a tick for each shine, then a nod
+//                     and it goes. An LDR that barely changes next to the other: "no", shine
+//                     on that one again. OK skips (last gains).
 //   flashlight flashed on the left LDR, right, left, right within 5 s: the same as # # 1 with
-//                     the side shines done (both, nothing, both to go)
+//                     the shines done (it nods and goes)
 //   # # #             calibrate (three steps; a test runs when you press OK, * runs it
 //                     again, OK confirms a number, # cancels and puts the saved numbers back):
 //     1 start power   a short forward pulse; DOWN = a bit less, UP = a bit more, OK keeps it
@@ -58,7 +59,7 @@
 //   i<keys>;       press remote keys: U D L R O(k) * # 0-9, e.g. i***;  iU50*;  i*5;
 //   p<n>;          run slot n       p?;   list the slots (P,<n>,<steps>; ,builtin = the demo)
 //   p<n>=<steps>;  store steps in slot n: f/b/l/r<cm> t<deg> (t-90 = left) q/e<cm> diagonals
-//                  p<s> pause n<times> repeat, e.g. p3=f50 t90 n4;
+//                  p<s> pause n<times> repeat (after its steps, or before them), e.g. p3=f50 t90 n4;
 //                  p<n>=;  empties the slot
 //   u              one sonar reading (U,<mm>, -1 = nothing within ~4 m)
 //   b              one light reading: B,<direction>,<brightest>,<left>,<right>[,<back>]
@@ -78,7 +79,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.84"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.85"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -1000,13 +1001,36 @@ bool runStep(const Step &step) {
 }
 
 // Run steps one after another; any key, x or the sonar stops the lot.
-// An 8 (do it all again) sends the run back to the step after the previous 8
-// (or the start) until it has gone round that many times in all.
+// An 8 (repeat) AFTER some steps sends the run back to the step after the
+// previous 8 (or the start) until it has gone round that many times in all.
+// An 8 with no steps before it (first, or right after another 8) repeats the
+// steps that FOLLOW it instead, up to the next 8 or the end.
 void runSteps(const Step *steps, byte count) {
   int loopStart = 0;
   int roundsLeft = -1;   // -1: not inside a repeat yet
-  for (int i = 0; i < count; i++) {
-    if (steps[i].dir == S_REPEAT) {
+  bool headed = false;   // this stretch's 8 came before it: the next 8 (or the end) closes it
+  for (int i = 0; i <= count; i++) {
+    if (i == count || steps[i].dir == S_REPEAT) {
+      if (headed) {
+        if (roundsLeft > 0 && i > loopStart) {
+          roundsLeft--;
+          out.print(F("again: "));
+          out.print(roundsLeft + 1);
+          out.println(F(" more"));
+          i = loopStart - 1;
+          continue;
+        }
+        headed = false;
+        roundsLeft = -1;
+        loopStart = i;     // the 8 here has nothing before it now: it heads what follows
+      }
+      if (i == count) break;
+      if (i == loopStart && roundsLeft < 0) {
+        headed = true;
+        roundsLeft = (int)steps[i].amount - 1;
+        loopStart = i + 1;
+        continue;
+      }
       if (roundsLeft < 0) roundsLeft = (int)steps[i].amount - 1;
       if (roundsLeft > 0) {
         roundsLeft--;
@@ -2167,35 +2191,46 @@ void setup() {
   printHelp();
 }
 
+// One byte from USB or Bluetooth, on its way to handleCommand
+void handleIncoming(char incoming) {
+  // Upper case is read as lower case, except right after k (kN, the name) or i (the keys)
+  if (incoming >= 'A' && incoming <= 'Z' && !(awaitingConfigText && (textCommand == 'k' || textCommand == 'i'))) incoming = incoming - 'A' + 'a';
+  if (incoming == '\r' || incoming == '\n') {
+    handleCommand(';');
+    return;
+  }
+  if (incoming == ' ' && !(awaitingConfigText && textCommand == 'p')) return;
+  handleCommand(incoming);
+}
+
 void loop() {
   int incomingByte;
 #if USE_BLUETOOTH_SOFTSERIAL
   // SoftwareSerial cannot receive while it transmits, and every reply goes
   // out on it. Let a burst from the module finish arriving (3 ms of quiet)
-  // before handling any of it, or the reply to its first command cuts off
-  // the rest.
+  // before handling anything in it that could answer or take time, or the
+  // reply to its first command cuts off the rest. SoftwareSerial keeps only
+  // 64 bytes and a full slot line from the Blocks page is 100, so the text of
+  // a command (which only gets stored) goes straight in as it arrives; from
+  // the first byte that ends or runs something, the rest is held for the quiet.
   if (bluetoothSerial.available()) {
-    int waiting = bluetoothSerial.available();
+    static char btHeld[24];
+    byte held = 0;
     unsigned long quietSince = micros();
     while (micros() - quietSince < 3000) {
-      if (bluetoothSerial.available() != waiting) {
-        waiting = bluetoothSerial.available();
+      while (bluetoothSerial.available()) {
+        char c = bluetoothSerial.read();
         quietSince = micros();
+        bool onlyStored = awaitingConfigText ? (c != ';' && c != '\r' && c != '\n' && c != 'x' && c != 'X')
+                                             : (c == ' ' || strchr("kmpviKMPVI", c) != NULL);
+        if (!held && c && onlyStored) handleIncoming(c);
+        else if (held < sizeof(btHeld)) btHeld[held++] = c;
       }
     }
+    for (byte i = 0; i < held; i++) handleIncoming(btHeld[i]);
   }
 #endif
-  while ((incomingByte = readCommandByte()) >= 0) {
-    char incoming = (char)incomingByte;
-    // Upper case is read as lower case, except right after k (kN, the name) or i (the keys)
-    if (incoming >= 'A' && incoming <= 'Z' && !(awaitingConfigText && (textCommand == 'k' || textCommand == 'i'))) incoming = incoming - 'A' + 'a';
-    if (incoming == '\r' || incoming == '\n') {
-      handleCommand(';');
-      continue;
-    }
-    if (incoming == ' ' && !(awaitingConfigText && textCommand == 'p')) continue;
-    handleCommand(incoming);
-  }
+  while ((incomingByte = readCommandByte()) >= 0) handleIncoming((char)incomingByte);
   irPoll();
   lightTick();
   btFlush();
