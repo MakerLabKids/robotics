@@ -48,6 +48,35 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check(/bt name: Rexy_7x - saved: switch the robot off and on/.test(simLog), 'robot: no module in the simulator, so the name is saved for the next power-on (x sent as *)');
   check(/Saved: switch the robot off and on/.test(result) && /Rexy_7x/.test(result), 'page says saved, switch off and on: ' + result.slice(0, 80));
   check(await page.evaluate(() => (storageGet('mlk-robot-names') || []).indexOf('Rexy_7x') >= 0), 'the name joins this phone\'s robot list');
+  // The other name (the one a web page's list shows): every command tried, no module to answer.
+  let mark = simLog.length;
+  await page.click('#tryButton');
+  await waitFor(() => pending === null && !document.getElementById('tryResult').hidden, 'the tries to finish', 40000);
+  let tried = simLog.slice(mark);
+  check(/bt try: AT\+HELP -> nothing/.test(tried) && /bt try: AT\+NAMBRexy_7x -> nothing/.test(tried) && /bt try: AT\+NAMBRexy_7x \+ line end -> nothing/.test(tried) &&
+    /bt try: AT\+LENAME=Rexy_7x -> nothing/.test(tried) && /bt try: AT\+BNAME=Rexy_7x -> nothing/.test(tried) && /bt try: AT\+BNAMERexy_7x \+ line end -> nothing/.test(tried),
+    'robot: tries each command for the other name, without and with a line end');
+  check(/bt try: done - the module took none of them/.test(tried), 'robot: says the module took none');
+  let tryText = await page.evaluate(() => document.getElementById('tryResult').textContent);
+  check(/took none/.test(tryText) && /AT\+NAMBRexy_7x -> nothing/.test(tryText), 'page shows every answer and that none was taken');
+  // Again, and this time a module answers the first name command: the robot stops there.
+  mark = simLog.length;
+  await page.click('#tryButton');
+  const helpDone = Date.now();
+  while (!/bt try: AT\+HELP \+ line end ->/.test(simLog.slice(mark)) && Date.now() - helpDone < 15000) await sleep(50);
+  await sleep(400);   // (the robot is sending the command now: the answer comes after it)
+  control('btsend OKsetnamb');
+  await waitFor(() => pending === null && !document.getElementById('tryResult').hidden, 'the tries to finish (answered)', 40000);
+  tried = simLog.slice(mark);
+  check(/bt try: AT\+NAMBRexy_7x -> OKsetnamb/.test(tried) && !/LENAME/.test(tried), 'robot: a module that answers OK to a command ends the tries there');
+  check(/bt try: done - the module took one/.test(tried), 'robot: says the module took one');
+  tryText = await page.evaluate(() => document.getElementById('tryResult').textContent);
+  check(/took one/.test(tryText) && /Switch the robot off and on/.test(tryText), 'page says it was taken: switch off and on, look at the list');
+  // A<text>: anything to the module, as it is.
+  mark = simLog.length;
+  await page.evaluate(() => sendCommand('AAT+VERSION\n'));
+  await sleep(4000);
+  check(/bt try: AT\+VERSION -> nothing/.test(simLog.slice(mark)) && /bt try: AT\+VERSION \+ line end -> nothing/.test(simLog.slice(mark)), 'A<text> sends text to the module and prints the answer');
   const n = simLog.length;
   control('reboot');
   await sleep(14000);

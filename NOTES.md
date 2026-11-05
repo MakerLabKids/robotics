@@ -291,8 +291,25 @@ Not done yet (next steps, in order):
    sets the classic name; the BLE advertisement, which is all a new phone's Web Bluetooth
    list reads, keeps HC-06 and needs a second, maker-specific command (AT+NAMB, AT+BNAME,
    AT+LENAME are the usual candidates; none tried). Check that tells: on a new phone,
-   Android Settings > Bluetooth > Pair new device shows the classic name. To fix: a probe
-   over USB that tries the candidates and prints the answers, on one bot. Not asked for and not built: making the rename work on the
+   Android Settings > Bluetooth > Pair new device shows the classic name. **Confirmed by
+   the user the same day: "it shows up in the pairing menu, but not the webpage connect"**
+   (the given name is in Android's pairing list; the web page's list says HC-06). Looking
+   it up did not settle the command: the FFE0 / FFE1 notify / FFE2 write layout matches
+   DX-BT04-E-style modules, whose datasheet lists one AT+NAME only (with a line end, answer
+   +NAME=...), and ours answers the linvor way, so it is some other firmware.
+   **The probe is built: rename.ino 0.2.4, `B<name>`** (USB only) sends AT+HELP, then
+   AT+NAMB<name>, AT+LENAME=<name>, AT+LENAME<name>, AT+BNAME=<name>, AT+BNAME<name>, each
+   first as it is (1.5 s for an answer) and then a line end (1.5 s more), prints
+   "bt try: <command> -> <answer>" per try to USB, stops at the first OK (or the name said
+   back), ends with "bt try: done - the module took one / none of them". `A<text>` and
+   `L<text>` send anything to the module (as it is, or with a line end) for trying more by
+   hand. Rename Robot 0.1.7 has a "Try the web list name" button that runs B and shows the
+   answers. rename-e2e covers it (the simulator's live mode got a `btsend <text>` control
+   line to play the module's answer). NOT yet run on a real module. When the user reports
+   the answers: put the command that works into rename.ino's renameModule (set both
+   names) and into the kN start-up rename of ir / programming / calibration (a four-sketch
+   build bump), and take the "every robot is HC-06" wording back out of the Bluetooth
+   guide once the fleet is renamed. Not asked for and not built: making the rename work on the
    kit module, or showing the robot's own name (K,name) on Sticks after connecting.
    Found while checking: BT_NAME_EEPROM_ADDRESS is 1040 in ir, programming, calibration
    and rename, but an Uno's EEPROM ends at 1023, so on the chip the flag and letters land

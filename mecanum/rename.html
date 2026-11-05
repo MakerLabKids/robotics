@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Rename Robot 0.1.6 - Maker Lab Kids</title>
+<title>Rename Robot 0.1.7 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -188,6 +188,10 @@
       </div>
       <div class="working" id="nameWorking"></div>
       <div class="result" id="nameResult" hidden></div>
+      <p class="say"><b>Still HC-06 in a web page's Bluetooth list?</b> The kit's module has two names. Rename sets the one a phone's Bluetooth settings show. The list on the Sticks page shows the other one. This button tries the commands that set it, with the name above, and shows what the module answers (USB cable only, about 20 seconds, needs rename.ino 0.2.4).</p>
+      <button class="big quiet" id="tryButton">Try the web list name</button>
+      <div class="working" id="tryWorking"></div>
+      <div class="result" id="tryResult" hidden></div>
       <details class="more"><summary>What, why and how</summary><div class="more-text">
         <h4>What</h4><p>The robot's Bluetooth module gets the robot's name. Every kit module comes called HC-06, so without this a room of robots is a list of identical names.</p>
         <h4>How</h4><p>The kit's HC-06 only takes a new name while nothing is connected to it over Bluetooth, so over the USB cable it is renamed on the spot and confirms (OKsetname). Connected over Bluetooth, the robot saves the name and renames the module when it is next switched on. Phones remember the old name for a while: forget HC-06 in the phone's Bluetooth settings, scan again.</p>
@@ -203,7 +207,7 @@
 <script>
 "use strict";
 
-var APP_VERSION = "0.1.6";
+var APP_VERSION = "0.1.7";
 var SERIAL_BAUD = 9600;
 var BLE_SERVICE_UUID = 0xFFE0;
 var BLE_NUS_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
@@ -456,8 +460,50 @@ function handleRobotLine(line) {
     robot.fw = match[2];
   } else if ((match = /^bt module: (.*)$/.exec(line))) {
     robot.module = match[1];
+  } else if (/^bt try: /.test(line)) {
+    tryLines.push(line.slice(8));
   }
   render();
+}
+
+// The other name (rename.ino 0.2.4, B<name>): the robot tries each command
+// and says "bt try: <command> -> <answer>", then "bt try: done - ...".
+var tryLines = [];
+function tryOtherName() {
+  var name = document.getElementById("nameInput").value.trim();
+  var working = document.getElementById("tryWorking");
+  var box = document.getElementById("tryResult");
+  if (!NAME_PATTERN.test(name)) {
+    working.textContent = "Type the robot's name above first: letters, numbers, - and _ (up to 20), no spaces.";
+    return;
+  }
+  if (!link || pending) {
+    return;
+  }
+  if (link.kind !== "usb") {
+    working.textContent = "This needs the USB cable: the module takes commands only while nothing is connected to it over Bluetooth.";
+    return;
+  }
+  pending = name;
+  tryLines = [];
+  render();
+  working.textContent = "Trying (about 20 seconds)...";
+  box.hidden = true;
+  sendAndAwait("B" + name.replace(/x/g, "*").replace(/X/g, "#") + "\n", /^bt try: done/, 40000).then(function (line) {
+    var took = /took one/.test(line);
+    box.hidden = false;
+    box.className = "result " + (took ? "done" : "bad");
+    box.innerHTML = '<div class="headline">' + (took ? "The module took one ✓" : "The module took none of them") + "</div>" +
+      tryLines.slice(0, -1).map(function (text) { return "<div><code>" + escapeHtml(text) + "</code></div>"; }).join("") +
+      "<div>" + (took ? "Switch the robot off and on. Then open the Sticks page on a phone that has never met this robot, press Bluetooth and look for " + escapeHtml(name) + " in the list." :
+        "Copy these lines to whoever looks after the robot code: they say what this module understands.") + "</div>";
+    working.textContent = "";
+  }).catch(function (error) {
+    working.textContent = "That did not work: " + error.message + ". Is rename.ino 0.2.4 or newer on the robot?";
+  }).then(function () {
+    pending = null;
+    render();
+  });
 }
 
 function linked(waitMs) {
@@ -485,6 +531,7 @@ function render() {
   document.querySelector('.step[data-step="connect"] .step-state').textContent = connected && robot.role === "rename" ? "DONE \u2713" : "";
   document.getElementById("renameButton").disabled = !(connected && robot.role === "rename") || !!pending;
   document.getElementById("askButton").disabled = !(connected && robot.role === "rename") || !!pending;
+  document.getElementById("tryButton").disabled = !(connected && robot.role === "rename") || !!pending;
 }
 
 function rename() {
@@ -540,6 +587,7 @@ document.getElementById("connectUsbButton").addEventListener("click", function (
   if (link && link.kind === "usb") { setTimeout(function () { if (link) { link.close(); } }, 100); } else { connectUsb(); }
 });
 document.getElementById("renameButton").addEventListener("click", rename);
+document.getElementById("tryButton").addEventListener("click", tryOtherName);
 document.getElementById("askButton").addEventListener("click", function () {
   if (!link || pending) { return; }
   robot.module = null;

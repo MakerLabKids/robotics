@@ -467,7 +467,7 @@ static double nowMs(void) {
 }
 
 // live mode: stdin bytes go to UART0 in real time; a line starting with
-// byte 0x01 is a control line instead ("adc <ch> <mv>" or "reboot").
+// byte 0x01 is a control line instead ("adc <ch> <mv>", "reboot", "btsend <text>").
 static int liveBluetooth = 0;
 
 static int runLive(void) {
@@ -498,6 +498,12 @@ static int runLive(void) {
             printPwm();
           } else if (strcmp(control, "dirs") == 0) {
             printDirs();
+          } else if (strncmp(control, "btsend ", 7) == 0) {
+            // the Bluetooth module answers: these bytes into A0 (as in script mode)
+            for (const char *c = control + 7; *c; c++) {
+              sendSoftSerialByte((unsigned char)*c);
+              simulatedMs += 10000.0 / 9600.0;
+            }
           } else if (handleDeviceCommand(control)) {
             // handled
           } else if (strcmp(control, "reboot") == 0 || strncmp(control, "flash ", 6) == 0) {

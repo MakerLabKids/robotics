@@ -1,4 +1,4 @@
-// rename.ino   (v0.2.3 - names the robot: its Bluetooth module (the kit's HC-06, or an HC-05) gets the
+// rename.ino   (v0.2.4 - names the robot: its Bluetooth module (the kit's HC-06, or an HC-05) gets the
 //               robot's name, so a room full of robots is not a list of ten "HC-06"s)
 //
 // Flash this, open mecanum/rename.html, connect with the USB cable, type
@@ -18,8 +18,19 @@
 //     at 9600 while the button is held. Power-cycle to leave AT mode.
 // At start-up this asks all three ways and remembers which one answered.
 //
+// The kit's module has TWO names (found on the class robots, 2026-11-05). It
+// answers like a linvor HC-06 and AT+NAME renames what a phone's Bluetooth
+// settings show (the classic name). But it is a BLE device as well (service
+// FFE0), and the list a web page gets shows the BLE name, which AT+NAME
+// leaves at HC-06. Which command sets that one depends on who made the chip,
+// so B<name> tries the usual ones and prints every answer (USB only).
+//
 // COMMANDS (9600 baud, USB or Bluetooth; a newline or ; ends them)
 //   N<name>   rename now (USB), or save for the next power-on (Bluetooth)
+//   B<name>   try the commands for the name a web page's list shows (USB)
+//   A<text>   send <text> to the module as it is and print its answer, then a
+//             line end and that answer (USB)
+//   L<text>   send <text> and a line end in one go, print the answer (USB)
 //   v         ask the module what it is (bt module: ...)
 //   ?         this list
 // ---------------------------------------------------------------------------
@@ -28,7 +39,7 @@
 #include <avr/eeprom.h>
 #include <SoftwareSerial.h>
 
-#define FIRMWARE_VERSION "0.2.3"
+#define FIRMWARE_VERSION "0.2.4"
 #define SKETCH_NAME "rename"
 
 const byte BLUETOOTH_RX_PIN = A0;   // module TXD -> this pin
@@ -186,6 +197,57 @@ bool renameModule(const char *name, bool quiet) {
   return ok;
 }
 
+// --- The other name: the one a web page's Bluetooth list shows ---------------
+// One try: the command as it is and what the module says within 1.5 s (the
+// linvor way: no line end, acted on after a second of quiet), then a line end
+// and what it says to that (the way of modules that wait for one). The line
+// end also empties the module's line, so the next try starts clean. Answers go
+// to USB only: anything sent to the module now would be a command to it.
+// Took it: an OK, or the name said back (+NAMB=Rexy) without an error.
+const char TRY_HELP[] PROGMEM = "AT+HELP";
+const char TRY_NAMB[] PROGMEM = "AT+NAMB";         // HM-style dual-mode modules
+const char TRY_LENAME_EQ[] PROGMEM = "AT+LENAME=";   // Feasycom-style
+const char TRY_LENAME[] PROGMEM = "AT+LENAME";
+const char TRY_BNAME_EQ[] PROGMEM = "AT+BNAME=";     // HC-04-style
+const char TRY_BNAME[] PROGMEM = "AT+BNAME";
+
+bool btTry(const char *command, const char *argument, bool commandInFlash, bool lineEndOnly) {
+  char reply[96];
+  bool took = false;
+  for (byte lineEnd = lineEndOnly ? 1 : 0; lineEnd < 2 && !took; lineEnd++) {
+    while (bluetoothSerial.read() >= 0) {}
+    if (!lineEnd || lineEndOnly) {
+      btSend(command, commandInFlash);
+      if (argument) btSend(argument, false);
+    }
+    if (lineEnd) btSend(PSTR("\r\n"), true);
+    byte length = 0;
+    for (unsigned long t = millis(); millis() - t < 1500;) {
+      int c = bluetoothSerial.read();
+      if (c >= ' ' && c <= '~' && length < sizeof(reply) - 1) reply[length++] = c;
+    }
+    reply[length] = 0;
+    took = strstr(reply, "OK") || (argument && strstr(reply, argument) && !strstr(reply, "ERR"));
+    Serial.print(F("bt try: "));
+    if (commandInFlash) Serial.print((const __FlashStringHelper *)command); else Serial.print(command);
+    if (argument) Serial.print(argument);
+    Serial.print(lineEnd ? F(" + line end -> ") : F(" -> "));
+    Serial.println(length ? reply : "nothing");
+    if (lineEndOnly) break;
+  }
+  return took;
+}
+
+void tryOtherName(const char *name) {
+  if (moduleKind == MODULE_HC05) bluetoothSerial.begin(moduleBaud);
+  btTry(TRY_HELP, NULL, true, false);   // some modules list their commands
+  bool took = btTry(TRY_NAMB, name, true, false) || btTry(TRY_LENAME_EQ, name, true, false) || btTry(TRY_LENAME, name, true, false) ||
+    btTry(TRY_BNAME_EQ, name, true, false) || btTry(TRY_BNAME, name, true, false);
+  bluetoothSerial.begin(9600);
+  Serial.println(took ? F("bt try: done - the module took one: switch the robot off and on, then look at the web page's Bluetooth list") :
+    F("bt try: done - the module took none of them"));
+}
+
 void savePending(const char *name) {
   for (byte i = 0; i <= NAME_MAX; i++) {
     eeprom_update_byte((uint8_t *)(BT_NAME_EEPROM_ADDRESS + 1 + i), name[i]);
@@ -219,11 +281,11 @@ void cleanName(char *name) {
 }
 
 void printHelp() {
-  out.println(F("N<name> (rename), v (module), ?"));
+  out.println(F("N<name> (rename), B<name> (try the web list name), A<text> / L<text> (to the module), v (module), ?"));
   out.println(F("ready"));
 }
 
-char lineText[32];
+char lineText[48];
 byte lineLength = 0;
 bool lineFromUsb = true;
 
@@ -239,6 +301,23 @@ void handleLine(char *text, bool fromUsb) {
       if (!renameModule(name, true)) savePending(name);   // no answer now: at the next power-on
     } else {
       savePending(name);   // the module is busy talking to us: at the next power-on
+    }
+    return;
+  }
+  if (text[0] == 'B' || text[0] == 'A' || text[0] == 'L') {
+    if (!fromUsb) {
+      out.println(F("bt try: plug in the USB cable for this (the module takes commands only while nothing is connected to it)"));
+      return;
+    }
+    if (text[0] == 'B') {
+      cleanName(text + 1);
+      if (!text[1]) {
+        Serial.println(F("bt try: no name (letters, digits, - and _ only)"));
+        return;
+      }
+      tryOtherName(text + 1);
+    } else if (text[1]) {
+      btTry(text + 1, NULL, false, text[0] == 'L');
     }
     return;
   }
