@@ -26,9 +26,10 @@ The live site is for the ONE current class, at where it is now: nothing that rea
 like a schedule. Three tiers:
 
 - **Live (in the nav):** Home, Remote guide, Programming (ir.html), Challenges, Light bot
-  (moth mode `# # 1`, cockroach mode `# # 2`), Wiring, Blocks (a tease, not taught yet),
-  Lessons (talking points: no numbers, no order, no "next week").
-- **Set aside (comes back later):** the Workshop app (mecanum/index.html), Sticks,
+  (moth mode `# # 1`, cockroach mode `# # 2`), Bluetooth (since 2026-11-05: How to connect,
+  mecanum/bluetooth.html, and Drive with Sticks, mecanum/sticks.html), Wiring, Blocks (a
+  tease, not taught yet), Lessons (talking points: no numbers, no order, no "next week").
+- **Set aside (comes back later):** the Workshop app (mecanum/index.html),
   Calibrate, Rename, Holonomic notes. They stay where they are, out of the nav, with a
   "Set aside for now" subnav and a row on /archive/.
 - **Retired:** the 2WD robot in archive/2wd/, its flyers in archive/flyers/. `_redirects`

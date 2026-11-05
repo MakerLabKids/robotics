@@ -162,7 +162,7 @@ page = f'''<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Program a Square 0.1.0 - Maker Lab Kids</title>
+<title>Program a Square 0.1.1 - Maker Lab Kids</title>
 <meta name="description" content="Program the mecanum robot to drive a square with the IR remote, one key press at a time, with a picture of what each step does.">
 <!-- written by scripts/square-figs.py: edit that, then run it and node scripts/site-nav.js -->
 <style>

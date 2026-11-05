@@ -101,9 +101,13 @@ in resources/).
   program line over Bluetooth arrives whole** (log entry 8). **0.10.86: a step that runs
   another saved program** (`* 2 <slot>` on the remote, `g<slot>` in a program line; see
   "programming.ino", "Programs that run programs").
-- Pages: Programming Guide (mecanum/ir.html) 0.1.24, Remote Guide 0.1.20, Light bot 0.1.18,
-  Light sensor build 0.1.10, Wiring 0.1.11, Blocks 0.1.11, Sticks 0.1.8, Workshop app 0.6.38. Versions live in the page
-  titles. `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
+- Pages: Programming Guide (mecanum/ir.html) 0.1.25, Remote Guide 0.1.21, Light bot 0.1.19,
+  Light sensor build 0.1.11, Wiring 0.1.12, Blocks 0.1.12, Connect with Bluetooth 0.1.0,
+  Sticks 0.1.9, Workshop app 0.6.39. Versions live in the page
+  titles. A nav change (scripts/site-nav.js) rewrites every page, so every versioned page
+  needs its build number raised in the same commit (title, plus APP_VERSION / EDITOR_VERSION
+  where a page has one, the title in scripts/square-figs.py, then
+  `node scripts/snapshot-mecanum-app.js --list` for the Workshop app). `scripts/check-version-bump.js` (pre-commit hook, `npm run test:site`,
   `npm run check:versions`) fails a commit that edits a sketch or a versioned page without
   a new build number.
 - Hosting: Cloudflare Worker (static assets) deploys every push to main in about a minute.
@@ -204,9 +208,17 @@ Not done yet (next steps, in order):
    before (numbers kept), `* 1` on an empty slot shakes "no", `# # 1` light mode, then
    pair the Bluetooth module and try Sticks from a phone and "Remote slots... Send" from
    Blocks on a computer, including a 16-step slot and STOP during a run.
-2. A kid page for Bluetooth programming (pairing, Sticks, Blocks send/run). Blocks is in
-   the nav as a tease and Sticks is "set aside": both come back into the live tier when
-   the class gets there (robotics-site-scope: the site shows what the class has covered).
+2. DONE 2026-11-05 for phone driving (the user: "how do we connect with bluetooth or
+   drive with sticks... that needs to be enabled now"): "Bluetooth" is in the nav, with
+   a kid page mecanum/bluetooth.html (How to connect: the Bluetooth button first, no PIN;
+   robot not in the list = pair in Settings with 1234 / 0000, then Serial; how the sticks
+   work; troubleshooting; a QR code to Sticks) and Sticks itself (out of "set aside", its
+   narrow-screen Back link goes to the guide). The connect steps come from what the user
+   found on their own phone on 2026-10-05 (both buttons worked on the kit's module; the
+   Bluetooth button needed no PIN); nothing has been tried with ir.ino / programming.ino on
+   a real robot yet. Names: the Sticks Bluetooth list filters by name prefix (HC, HM, JDY,
+   BT, MLT, MLK) or names saved on that phone, so the page says to name robots MLK-....
+   Still to write: the Blocks send/run part for kids (Blocks stays a tease).
 3. Phones: Chrome on Android opens a paired HC-05/06 through Web Serial (the "Connect"
    button with the Bluetooth serial service); iPhones cannot (no Web Serial, and the
    module is classic Bluetooth, not BLE). Not yet tried with programming.ino.

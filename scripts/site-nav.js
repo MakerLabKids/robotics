@@ -14,6 +14,7 @@ const NAV = [
   ["/mecanum/ir", "Programming"],
   ["/mecanum/challenges", "Challenges"],
   ["/mecanum/light", "Light bot"],
+  ["/mecanum/bluetooth", "Bluetooth"],
   ["/mecanum/wiring", "Wiring"],
   ["/mecanum/blocks", "Blocks"],
   ["/mecanum/lessons/", "Lessons"]
@@ -22,7 +23,6 @@ const NAV = [
 // Set aside until the class gets there: reachable from /archive/, not the nav.
 const SET_ASIDE = [
   ["/mecanum/", "Workshop app"],
-  ["/mecanum/sticks", "Sticks"],
   ["/mecanum/calibration", "Calibrate"],
   ["/mecanum/rename", "Rename"],
   ["/mecanum/holonomic", "Holonomic notes"],
@@ -38,11 +38,15 @@ const SECTIONS = {
   light: { title: "Light bot", pages: [
     ["/mecanum/light", "How to use the Light Bot"],
     ["/mecanum/light-build", "How to build a light sensor"]
+  ] },
+  bluetooth: { title: "Bluetooth", pages: [
+    ["/mecanum/bluetooth", "How to connect"],
+    ["/mecanum/sticks", "Drive with Sticks"]
   ] }
 };
 
 // page -> { active: nav href, setAside: subnav href, section + here: a section subnav,
-//           tool: narrow screens get a Back link only, noFoot }
+//           tool: narrow screens get a Back link only (to back, or the archive), noFoot }
 const PAGES = {
   "index.html": { active: "/" },
   "mecanum/remote-guide.html": { active: "/mecanum/remote-guide" },
@@ -51,10 +55,11 @@ const PAGES = {
   "mecanum/challenges.html": { active: "/mecanum/challenges" },
   "mecanum/light.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light" },
   "mecanum/light-build.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light-build" },
+  "mecanum/bluetooth.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth" },
+  "mecanum/sticks.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/sticks", tool: true, back: "/mecanum/bluetooth", noFoot: true },
   "mecanum/wiring.html": { active: "/mecanum/wiring" },
   "mecanum/blocks.html": { active: "/mecanum/blocks", noFoot: true },
   "mecanum/index.html": { setAside: "/mecanum/" },
-  "mecanum/sticks.html": { setAside: "/mecanum/sticks", tool: true, noFoot: true },
   "mecanum/calibration.html": { setAside: "/mecanum/calibration", tool: true },
   "mecanum/rename.html": { setAside: "/mecanum/rename" },
   "mecanum/holonomic.html": { setAside: "/mecanum/holonomic" },
@@ -73,7 +78,7 @@ function navFor(page) {
     '<nav class="mlk-nav' + (page.tool ? " mlk-nav-tool" : "") + '" aria-label="Robotics pages">' +
     '<a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a>' +
     NAV.map(function (item) { return link(item[0], item[1], page.active); }).join("") +
-    (page.tool ? '<a class="mlk-nav-back" href="/archive/" onclick="if (document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">&larr; Back</a>' : "") +
+    (page.tool ? '<a class="mlk-nav-back" href="' + (page.back || "/archive/") + '" onclick="if (document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">&larr; Back</a>' : "") +
     "</nav>\n";
   if (page.section) {
     const section = SECTIONS[page.section];
