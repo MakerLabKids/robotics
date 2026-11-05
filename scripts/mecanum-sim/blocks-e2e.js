@@ -9,9 +9,12 @@ const os = require('os');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-const PORT = 8199;
+// The remote sketch the second half runs on: ir.ino, or programming.ino with
+//   node scripts/mecanum-sim/blocks-e2e.js programming
+const REMOTE_SKETCH = process.argv.includes('programming') ? 'programming' : 'ir';
+const PORT = REMOTE_SKETCH === 'programming' ? 8197 : 8199;
 const root = path.resolve(__dirname, '..', '..');
-const build = path.join(root, 'temp', 'mecanum-sim', 'blocks-e2e');
+const build = path.join(root, 'temp', 'mecanum-sim', 'blocks-e2e' + (REMOTE_SKETCH === 'programming' ? '-programming' : ''));
 const simBinary = path.join(build, 'uno-sim');
 const arduinoCli = path.join(os.homedir(), '.local', 'bin', 'arduino-cli');
 
@@ -29,7 +32,7 @@ function buildEverything() {
   execSync(`gcc -O2 -o "${simBinary}" "${path.join(__dirname, 'uno-sim.c')}" -lsimavr -lelf -lm`, { stdio: 'inherit' });
   return {
     robot: compileSketch('mecanum_holonomic', path.join(root, 'mecanum_holonomic')),
-    ir: compileSketch('ir', path.join(root, 'ir')),
+    ir: compileSketch(REMOTE_SKETCH, path.join(root, REMOTE_SKETCH)),
   };
 }
 const failures = [];
@@ -164,7 +167,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // ---------------- ir.ino ----------------
   control('flash ' + elf.ir);
   control('irpin B 2');
-  await waitFor(() => /ir v0\.10\./.test(simLog), 'ir.ino banner');
+  const remoteBanner = () => new RegExp('^' + REMOTE_SKETCH + ' v0\\.10\\.', 'gm');
+  await waitFor(() => remoteBanner().test(simLog), REMOTE_SKETCH + '.ino banner');
+  await waitFor(() => /^ready/m.test(simLog.slice(simLog.search(remoteBanner()))), REMOTE_SKETCH + '.ino ready');
+  await sleep(300);
+  check(await page.evaluate(() => editorSettings.sketchName === 'ir'), 'the page chose the remote sketch by itself from the "' + REMOTE_SKETCH + ' v..." boot line');
   await page.evaluate(() => { robotLink.incomingText = ''; });
   await chooseSketch('ir');
   await page.evaluate(() => { document.querySelectorAll('#programTabs .program-tab')[0].click(); });
@@ -219,9 +226,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // The robot's name: kN saves it, the next boot announces it, the page switches to that robot's tabs
   await page.evaluate(() => sendToRobot('kNTesty;'));
   await sleep(500);
-  const bannerCount = (simLog.match(/ir v0\.10\./g) || []).length;
+  const bannerCount = (simLog.match(remoteBanner()) || []).length;
   control('reboot');
-  await waitFor(() => (simLog.match(/ir v0\.10\./g) || []).length > bannerCount, 'ir.ino reboot banner');
+  await waitFor(() => (simLog.match(remoteBanner()) || []).length > bannerCount, REMOTE_SKETCH + '.ino reboot banner');
   await waitFor(() => /ir: name Testy/.test(simLog), 'ir: name Testy at boot', 8000);
   await sleep(400);
   check(await page.evaluate(() => editorSettings.robotName === 'Testy' && document.getElementById('robotChipButton').textContent === 'Robot: Testy ▾' && knownRobots().indexOf('Testy') !== -1), 'the page switched to robot "Testy" on its own and remembers it');

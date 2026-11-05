@@ -16,6 +16,7 @@ const USB_ONLY = ['ir', 'programming', 'blocks'];   // (ir-e2e and programming-e
 const JOBS = Math.max(1, parseInt(process.argv[2] || process.env.MECANUM_JOBS || '4', 10));
 const runs = [];
 SUITES.forEach((suite) => (USB_ONLY.includes(suite) ? ['usb'] : ['usb', 'bt']).forEach((link) => runs.push({ suite, link })));
+runs.push({ suite: 'blocks', link: 'programming' });   // the Blocks page again, its remote half on programming.ino
 // Longest suites first so the tail is short.
 const ORDER = { calpage: 0, autocal: 1, tape: 2, blocks: 3, program: 4, sensors: 5, sticks: 6, rename: 7, ir: 8, programming: 9 };
 runs.sort((a, b) => ORDER[a.suite] - ORDER[b.suite]);
@@ -32,7 +33,7 @@ const elapsed = () => Math.round((Date.now() - started) / 1000);
 
 function runOne(run) {
   return new Promise((resolve) => {
-    const args = [path.join(__dirname, run.suite + '-e2e.js')].concat(run.link === 'bt' ? ['bt'] : []);
+    const args = [path.join(__dirname, run.suite + '-e2e.js')].concat(run.link === 'usb' ? [] : [run.link]);
     const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     child.stdout.on('data', (d) => { output += d; });
