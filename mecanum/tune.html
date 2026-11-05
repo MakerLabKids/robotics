@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#15181c">
+<title>Tune the Robot 0.1.0 - Maker Lab Kids</title>
+<meta name="description" content="Tune the mecanum robot over Bluetooth: square 90 degree turns, a true meter, and a straight sideways slide.">
+<link rel="stylesheet" href="../css/site.css">
+<style>
+  body { padding-bottom: 78px; }   /* room for the STOP bar */
+  .tool-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; }
+  .tool-row[hidden] { display: none; }
+  button.t { font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); background: #2b323b; border: 1px solid #3a434e; border-radius: 10px; padding: 12px 16px; min-height: 48px; cursor: pointer; }
+  button.t:disabled { opacity: 0.4; cursor: default; }
+  button.t.go { background: var(--orange); border-color: var(--orange); color: #15181c; }
+  button.t.fix { background: var(--green); border-color: var(--green); color: #15181c; }
+  button.t.connected { background: var(--green); border-color: var(--green); color: #15181c; }
+  button.t.quiet { font-size: 14px; font-weight: 600; padding: 8px 12px; min-height: 40px; color: var(--ink-dim); }
+  button.t.orange-pair { border-color: #ff7a1a; border-width: 2px; }
+  button.t.blue-pair { border-color: #4db8ff; border-width: 2px; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4545; flex: none; }
+  .dot.on { background: var(--green); }
+  .say { color: var(--blue); min-height: 1.4em; margin: 8px 0 0; }
+  .card ol + .tool-row, .card p + .tool-row { margin-top: 12px; }
+  .card p + p, .card ol + p, .tool-row + p { margin-top: 10px; }
+  .answer { border-top: 1px solid var(--panel-edge); margin-top: 14px; padding-top: 12px; }
+  .answer[hidden] { display: none; }
+  .fig { display: block; width: 190px; max-width: 60%; height: auto; margin: 4px auto; }
+  .big-number { font-family: var(--mono); font-size: 24px; font-weight: 800; min-width: 96px; text-align: center; white-space: nowrap; }
+  .cm-row { gap: 6px; flex-wrap: nowrap; }
+  .cm-row button.t { padding: 12px 8px; min-width: 46px; }
+  .split { display: flex; height: 18px; border-radius: 9px; overflow: hidden; margin: 10px 0 4px; background: #11151a; }
+  .split div { height: 100%; }
+  #orangeBar { background: #ff7a1a; }
+  #blueBar { background: #4db8ff; }
+  .split-text { font-family: var(--mono); font-size: 14px; color: var(--ink-dim); }
+  .orange-word { color: #ff9a4d; font-weight: 700; }
+  .blue-word { color: #4db8ff; font-weight: 700; }
+  table.pins { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.pins td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--panel-edge); vertical-align: top; }
+  table.pins td:last-child { font-family: var(--mono); text-align: right; }
+  table.pins tr:last-child td { border-bottom: none; }
+  details summary { cursor: pointer; font-weight: 700; }
+  #log { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow-y: auto; background: #11151a; border-radius: 8px; padding: 8px; margin-top: 8px; }
+  .stopbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 14px; padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #15181c; border-top: 1px solid var(--panel-edge); }
+  button.t#stopButton { background: #cc2b2b; border-color: #cc2b2b; color: #fff; letter-spacing: 0.12em; padding: 12px 30px; }
+  #busyText { color: var(--ink-dim); font-size: 14px; }
+  @media print { .stopbar { display: none; } }
+</style>
+<link rel="stylesheet" href="/css/nav.css">
+</head>
+<body>
+<!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">Remote guide</a><a href="/mecanum/ir">Programming</a><a href="/mecanum/challenges">Challenges</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth" class="active" aria-current="page">Bluetooth</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks">Blocks</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<nav class="mlk-subnav" aria-label="Bluetooth pages"><span>Bluetooth:</span><a href="/mecanum/bluetooth">How to connect</a><a href="/mecanum/sticks">Drive with Sticks</a><a href="/mecanum/tune" class="active" aria-current="page">Tune the robot</a></nav>
+<!-- /mlk-nav -->
+<main class="page">
+  <h1>Tune the robot</h1>
+  <p class="eyebrow">ir.ino or programming.ino on the robot</p>
+  <p class="subtitle">Three quick fixes from a phone: square turns, a true meter, and a
+  straight sideways slide. Each fix is saved on the robot, so it stays after you switch
+  it off.</p>
+
+  <section class="card">
+    <h2>Connect</h2>
+    <div class="status"><div class="dot" id="statusDot"></div><span id="statusText">Not connected</span></div>
+    <div class="tool-row">
+      <button class="t" id="connectBleButton">Bluetooth</button>
+      <button class="t" id="connectUsbButton">Serial</button>
+    </div>
+    <div class="tool-row" id="showAllRow" hidden>
+      <span>Robot not in the list?</span>
+      <button class="t quiet" id="showAllButton">Show every Bluetooth device</button>
+    </div>
+    <p class="say" id="connectSay"></p>
+    <p>New to this? <a href="/mecanum/bluetooth">How to connect</a>. The red
+    <b>STOP</b> at the bottom of the screen stops the robot at any time. So does any key
+    on the remote.</p>
+  </section>
+
+  <section class="card">
+    <h2>1. Turn a square corner</h2>
+    <ol>
+      <li>Put the robot on the floor with its nose along a line: a floor tile line or a
+      strip of tape.</li>
+      <li>Press the orange button. The robot turns right four times. That should bring it
+      all the way around, back onto the line.</li>
+    </ol>
+    <div class="tool-row">
+      <button class="t go needs-robot" id="turnTestButton">Turn right 4 times</button>
+      <button class="t quiet needs-robot" id="turnOnceButton">One turn</button>
+    </div>
+    <p class="say" id="turnSay"></p>
+    <div class="answer" id="turnAnswer" hidden>
+      <p><b>Where does it point now?</b> Turn the picture until it matches your robot.</p>
+      <svg class="fig" viewBox="-80 -80 160 160" role="img" aria-label="The robot from above on its line">
+        <line x1="0" y1="-76" x2="0" y2="76" stroke="#8a949e" stroke-width="3" stroke-dasharray="7 6"/>
+        <path d="M0 -79 l-7 11 h14 z" fill="#8a949e"/>
+        <g id="dialBot">
+<!-- bot:dial --><defs><clipPath id="tunedialwheel0"><rect x="-95.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tunedialwheel1"><rect x="60.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tunedialwheel2"><rect x="-95.5" y="32.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tunedialwheel3"><rect x="60.5" y="32.0" width="35" height="64" rx="7"/></clipPath></defs><g transform="translate(0 0) rotate(0) scale(0.5)"><rect x="-69.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tunedialwheel0)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="-119.0" x2="-69.5" y2="-102.0"/><line x1="-86.5" y1="-103.5" x2="-69.5" y2="-86.5"/><line x1="-86.5" y1="-88.0" x2="-69.5" y2="-71.0"/><line x1="-86.5" y1="-72.5" x2="-69.5" y2="-55.5"/><line x1="-86.5" y1="-57.0" x2="-69.5" y2="-40.0"/><line x1="-86.5" y1="-41.5" x2="-69.5" y2="-24.5"/><line x1="-86.5" y1="-26.0" x2="-69.5" y2="-9.0"/></g><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tunedialwheel1)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="-102.0" x2="86.5" y2="-119.0"/><line x1="69.5" y1="-86.5" x2="86.5" y2="-103.5"/><line x1="69.5" y1="-71.0" x2="86.5" y2="-88.0"/><line x1="69.5" y1="-55.5" x2="86.5" y2="-72.5"/><line x1="69.5" y1="-40.0" x2="86.5" y2="-57.0"/><line x1="69.5" y1="-24.5" x2="86.5" y2="-41.5"/><line x1="69.5" y1="-9.0" x2="86.5" y2="-26.0"/></g><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="-69.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tunedialwheel2)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="26.0" x2="-69.5" y2="9.0"/><line x1="-86.5" y1="41.5" x2="-69.5" y2="24.5"/><line x1="-86.5" y1="57.0" x2="-69.5" y2="40.0"/><line x1="-86.5" y1="72.5" x2="-69.5" y2="55.5"/><line x1="-86.5" y1="88.0" x2="-69.5" y2="71.0"/><line x1="-86.5" y1="103.5" x2="-69.5" y2="86.5"/><line x1="-86.5" y1="119.0" x2="-69.5" y2="102.0"/></g><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tunedialwheel3)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="9.0" x2="86.5" y2="26.0"/><line x1="69.5" y1="24.5" x2="86.5" y2="41.5"/><line x1="69.5" y1="40.0" x2="86.5" y2="57.0"/><line x1="69.5" y1="55.5" x2="86.5" y2="72.5"/><line x1="69.5" y1="71.0" x2="86.5" y2="88.0"/><line x1="69.5" y1="86.5" x2="86.5" y2="103.5"/><line x1="69.5" y1="102.0" x2="86.5" y2="119.0"/></g><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><path d="M0 -124.0 L-13 -109.0 L13 -109.0 Z" fill="#ff5a3c"/><rect x="-58.00" y="-111.00" width="116" height="222" rx="16" fill="#262b33" stroke="#0c0e11" stroke-width="1.6"/><rect x="-48.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-42.00" y="53.00" width="84" height="46" rx="4" fill="#0f1216"/><rect x="-35.00" y="56.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.00" y="78.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.50" y="60.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="30.50" y="82.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="-27.00" y="-57.00" width="54" height="70" rx="3" fill="#0d8a99"/><rect x="-19.50" y="6.50" width="13" height="17" rx="1.5" fill="#cdd2d8"/><rect x="9.00" y="7.00" width="10" height="14" rx="1.5" fill="#111417"/><rect x="-27.00" y="-56.00" width="54" height="60" rx="3" fill="#1b4fa6" stroke="#0d2c63" stroke-width="1"/><rect x="-25.90" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="22.50" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="-13.25" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="4.75" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="-9.50" y="-14.75" width="19" height="7.5" rx="1" fill="#0b0d10"/><circle cx="-9.00" cy="-38.00" r="1.3" fill="#555d66"/><circle cx="9.00" cy="-38.00" r="1.3" fill="#555d66"/><rect x="-20.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="-20.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="1.6" fill="#d3312b"/><circle cx="-18.00" cy="-11.00" r="1.8" fill="#63f58a"/><path d="M-24.2 -46 Q-41.14 -78 -9 -88" fill="none" stroke="#e33b2e" stroke-width="1.7" stroke-linecap="round"/><path d="M-24.2 -40 Q-41.14 -78 -3 -88" fill="none" stroke="#f6c21c" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -46 Q41.14 -78 3 -88" fill="none" stroke="#f4f6f8" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -40 Q41.14 -78 9 -88" fill="none" stroke="#2fa866" stroke-width="1.7" stroke-linecap="round"/><rect x="-12.50" y="-90.50" width="25" height="13" rx="2" fill="#2d6fd0"/><rect x="-24.00" y="-111.00" width="48" height="22" rx="2.5" fill="#1f62c4"/><circle cx="-12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="-12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="-12.50" cy="-100.00" r="2" fill="#4a525c"/><circle cx="12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="12.50" cy="-100.00" r="2" fill="#4a525c"/><rect x="-4.00" y="-94.00" width="8" height="3" rx="1.5" fill="#cdd2d8"/></g><!-- /bot:dial -->
+        </g>
+      </svg>
+      <div class="tool-row" style="justify-content:center">
+        <button class="t needs-robot" id="turnLessButton">&larr; Left</button>
+        <button class="t needs-robot" id="turnMoreButton">Right &rarr;</button>
+      </div>
+      <p id="turnErrorText" style="text-align:center"></p>
+      <div class="tool-row" style="justify-content:center">
+        <button class="t fix needs-robot" id="turnFixButton">Fix it</button>
+      </div>
+    </div>
+    <div class="tool-row"><button class="t quiet needs-robot" id="turnUndoButton">Undo my turn fixes</button></div>
+  </section>
+
+  <section class="card">
+    <h2>2. Drive 1 meter</h2>
+    <ol>
+      <li>Mark a start line on the floor, and another line 1 meter (100 cm) away.</li>
+      <li>Put the robot's front on the start line. It needs clear floor ahead: it stops
+      by itself when something is close in front.</li>
+      <li>Press the orange button, then measure how far the front went.</li>
+    </ol>
+    <div class="tool-row">
+      <button class="t go needs-robot" id="distanceTestButton">Drive 1 meter</button>
+    </div>
+    <p class="say" id="distanceSay"></p>
+    <div class="answer" id="distanceAnswer" hidden>
+      <p><b>How far did it go?</b></p>
+      <div class="tool-row cm-row" style="justify-content:center">
+        <button class="t needs-robot" data-cm="-5">-5</button>
+        <button class="t needs-robot" data-cm="-1">-1</button>
+        <span class="big-number"><span id="distanceCm">100</span> cm</span>
+        <button class="t needs-robot" data-cm="1">+1</button>
+        <button class="t needs-robot" data-cm="5">+5</button>
+      </div>
+      <div class="tool-row" style="justify-content:center">
+        <button class="t fix needs-robot" id="distanceFixButton">Fix it</button>
+      </div>
+    </div>
+    <div class="tool-row"><button class="t quiet needs-robot" id="distanceUndoButton">Undo my distance fixes</button></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Slide sideways</h2>
+    <p>To slide, the wheels work in two pairs: the <span class="orange-word">orange</span>
+    pair (front left and back right) and the <span class="blue-word">blue</span> pair
+    (front right and back left). When one pair gets too little power its wheels barely
+    turn, and the slide goes crooked.</p>
+    <svg class="fig" viewBox="-80 -80 160 160" role="img" aria-label="The robot from above: the front left and back right wheels are the orange pair, the front right and back left wheels are the blue pair">
+<!-- bot:slide --><defs><clipPath id="tuneslidewheel0"><rect x="-95.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tuneslidewheel1"><rect x="60.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tuneslidewheel2"><rect x="-95.5" y="32.0" width="35" height="64" rx="7"/></clipPath><clipPath id="tuneslidewheel3"><rect x="60.5" y="32.0" width="35" height="64" rx="7"/></clipPath></defs><g transform="translate(0 0) rotate(0) scale(0.5)"><rect x="-69.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tuneslidewheel0)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="-119.0" x2="-69.5" y2="-102.0"/><line x1="-86.5" y1="-103.5" x2="-69.5" y2="-86.5"/><line x1="-86.5" y1="-88.0" x2="-69.5" y2="-71.0"/><line x1="-86.5" y1="-72.5" x2="-69.5" y2="-55.5"/><line x1="-86.5" y1="-57.0" x2="-69.5" y2="-40.0"/><line x1="-86.5" y1="-41.5" x2="-69.5" y2="-24.5"/><line x1="-86.5" y1="-26.0" x2="-69.5" y2="-9.0"/></g><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tuneslidewheel1)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="-102.0" x2="86.5" y2="-119.0"/><line x1="69.5" y1="-86.5" x2="86.5" y2="-103.5"/><line x1="69.5" y1="-71.0" x2="86.5" y2="-88.0"/><line x1="69.5" y1="-55.5" x2="86.5" y2="-72.5"/><line x1="69.5" y1="-40.0" x2="86.5" y2="-57.0"/><line x1="69.5" y1="-24.5" x2="86.5" y2="-41.5"/><line x1="69.5" y1="-9.0" x2="86.5" y2="-26.0"/></g><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="-69.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tuneslidewheel2)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="26.0" x2="-69.5" y2="9.0"/><line x1="-86.5" y1="41.5" x2="-69.5" y2="24.5"/><line x1="-86.5" y1="57.0" x2="-69.5" y2="40.0"/><line x1="-86.5" y1="72.5" x2="-69.5" y2="55.5"/><line x1="-86.5" y1="88.0" x2="-69.5" y2="71.0"/><line x1="-86.5" y1="103.5" x2="-69.5" y2="86.5"/><line x1="-86.5" y1="119.0" x2="-69.5" y2="102.0"/></g><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#tuneslidewheel3)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="9.0" x2="86.5" y2="26.0"/><line x1="69.5" y1="24.5" x2="86.5" y2="41.5"/><line x1="69.5" y1="40.0" x2="86.5" y2="57.0"/><line x1="69.5" y1="55.5" x2="86.5" y2="72.5"/><line x1="69.5" y1="71.0" x2="86.5" y2="88.0"/><line x1="69.5" y1="86.5" x2="86.5" y2="103.5"/><line x1="69.5" y1="102.0" x2="86.5" y2="119.0"/></g><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><path d="M0 -124.0 L-13 -109.0 L13 -109.0 Z" fill="#ff5a3c"/><rect x="-58.00" y="-111.00" width="116" height="222" rx="16" fill="#262b33" stroke="#0c0e11" stroke-width="1.6"/><rect x="-48.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-42.00" y="53.00" width="84" height="46" rx="4" fill="#0f1216"/><rect x="-35.00" y="56.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.00" y="78.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.50" y="60.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="30.50" y="82.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="-27.00" y="-57.00" width="54" height="70" rx="3" fill="#0d8a99"/><rect x="-19.50" y="6.50" width="13" height="17" rx="1.5" fill="#cdd2d8"/><rect x="9.00" y="7.00" width="10" height="14" rx="1.5" fill="#111417"/><rect x="-27.00" y="-56.00" width="54" height="60" rx="3" fill="#1b4fa6" stroke="#0d2c63" stroke-width="1"/><rect x="-25.90" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="22.50" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="-13.25" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="4.75" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="-9.50" y="-14.75" width="19" height="7.5" rx="1" fill="#0b0d10"/><circle cx="-9.00" cy="-38.00" r="1.3" fill="#555d66"/><circle cx="9.00" cy="-38.00" r="1.3" fill="#555d66"/><rect x="-20.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="-20.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="1.6" fill="#d3312b"/><circle cx="-18.00" cy="-11.00" r="1.8" fill="#63f58a"/><path d="M-24.2 -46 Q-41.14 -78 -9 -88" fill="none" stroke="#e33b2e" stroke-width="1.7" stroke-linecap="round"/><path d="M-24.2 -40 Q-41.14 -78 -3 -88" fill="none" stroke="#f6c21c" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -46 Q41.14 -78 3 -88" fill="none" stroke="#f4f6f8" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -40 Q41.14 -78 9 -88" fill="none" stroke="#2fa866" stroke-width="1.7" stroke-linecap="round"/><rect x="-12.50" y="-90.50" width="25" height="13" rx="2" fill="#2d6fd0"/><rect x="-24.00" y="-111.00" width="48" height="22" rx="2.5" fill="#1f62c4"/><circle cx="-12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="-12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="-12.50" cy="-100.00" r="2" fill="#4a525c"/><circle cx="12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="12.50" cy="-100.00" r="2" fill="#4a525c"/><rect x="-4.00" y="-94.00" width="8" height="3" rx="1.5" fill="#cdd2d8"/></g><!-- /bot:slide -->
+      <g fill="none" stroke-width="4">
+        <rect x="-51" y="-51" width="24" height="38" rx="6" stroke="#ff7a1a"/>
+        <rect x="27" y="13" width="24" height="38" rx="6" stroke="#ff7a1a"/>
+        <rect x="27" y="-51" width="24" height="38" rx="6" stroke="#4db8ff"/>
+        <rect x="-51" y="13" width="24" height="38" rx="6" stroke="#4db8ff"/>
+      </g>
+    </svg>
+    <ol>
+      <li>Press a slide button and watch the wheels.</li>
+      <li>Two wheels barely turning? Give <b>their color</b> more power and slide again.</li>
+      <li>Done when all four wheels work and the robot slides straight sideways.</li>
+    </ol>
+    <div class="tool-row" style="justify-content:center">
+      <button class="t go needs-robot" id="slideLeftButton">&larr; Slide left</button>
+      <button class="t go needs-robot" id="slideRightButton">Slide right &rarr;</button>
+    </div>
+    <div class="split"><div id="orangeBar"></div><div id="blueBar"></div></div>
+    <p class="split-text" id="splitText"></p>
+    <div class="tool-row" style="justify-content:center">
+      <button class="t orange-pair needs-robot" id="moreOrangeButton">More orange</button>
+      <button class="t quiet needs-robot" id="evenButton">Even</button>
+      <button class="t blue-pair needs-robot" id="moreBlueButton">More blue</button>
+    </div>
+    <p class="say" id="slideSay"></p>
+    <div class="answer" id="slideAnswer" hidden>
+      <p><b>Did it creep forward or backward while it slid?</b> The page gives a little
+      more to the pair that needs it.</p>
+      <div class="tool-row" style="justify-content:center">
+        <button class="t needs-robot" id="creepForwardButton">&uarr; Forward</button>
+        <button class="t needs-robot" id="creepNoneButton">No, straight</button>
+        <button class="t needs-robot" id="creepBackButton">&darr; Backward</button>
+      </div>
+    </div>
+    <div class="tool-row"><button class="t quiet needs-robot" id="slideUndoButton">Undo my slide changes</button></div>
+  </section>
+
+  <section class="card">
+    <h2>For the grown-up</h2>
+    <p>Nothing here needs a new sketch: the page runs test moves, changes one of the
+    robot's motion numbers and saves it on the robot. The remote and a saved program use
+    the same numbers.</p>
+    <table class="pins">
+      <tr><td>Robot</td><td id="robotLine">-</td></tr>
+      <tr><td>Turn number (spin efficiency)</td><td id="spinNumber">-</td></tr>
+      <tr><td>Speeds: start, half, three quarters, full (mm/s)</td><td id="speedNumbers">-</td></tr>
+      <tr><td>Slide number (strafe efficiency)</td><td id="strafeNumber">-</td></tr>
+      <tr><td>Slide pair share (diagonal bias)</td><td id="diagNumber">-</td></tr>
+    </table>
+    <p>A distance fix changes the speeds and, by the same amount, the turn and slide
+    numbers, so turns and slides stay exactly as they were.</p>
+    <div class="tool-row"><button class="t quiet needs-robot" id="resetButton">Back to the class numbers (forgets every fix)</button></div>
+    <details>
+      <summary>What the robot says</summary>
+      <div id="log"></div>
+    </details>
+  </section>
+</main>
+<div class="stopbar">
+  <button class="t" id="stopButton">STOP</button>
+  <span id="busyText"></span>
+</div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Tune the robot: three fixes over Bluetooth (or USB) for a robot running
+// ir.ino or programming.ino. No firmware of its own: it uses commands the
+// sketches already take, one at a time (the Bluetooth module cannot listen
+// while the robot answers):
+//   k?;               the motion numbers (K,cal,...  K,end)
+//   km<i>=<value>;    change number i, live (answers with K,cal)
+//   kw;               save them on the robot (config: saved)
+//   kd;               back to the sketch's numbers
+//   m<bearing>,<mm>,<turn>;   a test move (move: start ... move: done)
+//   x                 stop
+// 1 Turn: four right 90s; they went e degrees past a full turn, so the turn
+//   number (spin efficiency) becomes old x (360 + e) / 360.
+// 2 Distance: asked for 100 cm, went d: every speed x d / 100. The turn and
+//   slide numbers are divided by the same factor, which leaves every turn and
+//   slide exactly as it was (same motor power, same time).
+// 3 Slide: the share taken from the FL + RR pair and given to FR + RL
+//   (diagonal bias): + more to FR + RL (blue), - more to FL + RR (orange).
+// ---------------------------------------------------------------------------
+
+var APP_VERSION = "0.1.0";
+var SERIAL_BAUD = 9600;
+var BLE_SERVICE_UUID = 0xFFE0;
+var BLE_NUS_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+var BLE_CHUNK_SIZE = 20;
+
+// Where each number sits in the robot's list (the M_ order in the sketches)
+var NUMBER_COUNT = 23;
+var I_LOW_SPEED = 2, I_HALF = 3, I_192 = 4, I_MAX = 5, I_SPIN = 6, I_STRAFE = 7, I_STRAFE_START = 18, I_DIAG = 21;
+var SPEED_INDEXES = [I_LOW_SPEED, I_HALF, I_192, I_MAX, I_STRAFE_START];
+var TURN_STEP_DEG = 5, TURN_LIMIT_DEG = 90;
+var DIAG_STEP = 0.05, DIAG_LIMIT = 0.45;
+var SLIDE_MM = 500;
+
+function byId(id) { return document.getElementById(id); }
+function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
+function sleep(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+function say(id, text) { byId(id).textContent = text; }
+
+// ---------------------------------------------------------------------------
+// Connection (the same transports as the Sticks page)
+// ---------------------------------------------------------------------------
+
+var link = null;           // { kind: "usb"|"ble", label, write(bytes) -> Promise, close() }
+var incomingLineBuffer = "";
+var lineDecoder = new TextDecoder();
+
+function handleIncomingBytes(bytes) {
+  incomingLineBuffer += lineDecoder.decode(bytes, { stream: true });
+  var newlineIndex = incomingLineBuffer.indexOf("\n");
+  while (newlineIndex >= 0) {
+    var line = incomingLineBuffer.slice(0, newlineIndex).replace(/\r$/, "");
+    incomingLineBuffer = incomingLineBuffer.slice(newlineIndex + 1);
+    if (line) {
+      handleRobotLine(line);
+    }
+    newlineIndex = incomingLineBuffer.indexOf("\n");
+  }
+}
+
+function handleLinkLost(reason) {
+  if (!link) {
+    return;
+  }
+  link = null;
+  forgetRobot();
+  say("connectSay", "Disconnected" + (reason ? ": " + reason : ""));
+  render();
+}
+
+function connectUsb() {
+  var port = null, reader = null, writer = null;
+  // (the classic serial Bluetooth ID, so a paired HC-05 / HC-06 shows up here too, on Android as well)
+  navigator.serial.requestPort({ allowedBluetoothServiceClassIds: ["00001101-0000-1000-8000-00805f9b34fb"] }).then(function (chosenPort) {
+    port = chosenPort;
+    return port.open({ baudRate: SERIAL_BAUD });
+  }).then(function () {
+    writer = port.writable.getWriter();
+    reader = port.readable.getReader();
+    var info = port.getInfo ? port.getInfo() : {};
+    link = {
+      kind: "usb",
+      label: info.bluetoothServiceClassId ? "Bluetooth (paired)" : "USB",
+      write: function (bytes) { return writer.write(bytes); },
+      close: function () {
+        link = null;
+        forgetRobot();
+        return reader.cancel().catch(function () {}).then(function () {
+          writer.releaseLock();
+          return port.close();
+        }).catch(function () {}).then(render);
+      }
+    };
+    port.addEventListener("disconnect", function () { handleLinkLost("unplugged"); });
+    linkOpened(2800);   // opening a USB port restarts the robot: let it start up
+    (function pump() {
+      reader.read().then(function (result) {
+        if (result.done) {
+          return;
+        }
+        handleIncomingBytes(result.value);
+        pump();
+      }).catch(function (error) {
+        if (link && link.kind === "usb") {
+          handleLinkLost(error.message);
+        }
+      });
+    })();
+  }).catch(function (error) {
+    say("connectSay", "Serial: " + error.message);
+    render();
+  });
+}
+
+function savedRobotNames() {
+  try { return JSON.parse(localStorage.getItem("mlk-robot-names")) || []; } catch (error) { return []; }
+}
+
+// The list shows robots by their serial service or a name it knows; showAll
+// lists every Bluetooth device nearby (a robot with a name of its own).
+function connectBle(showAll) {
+  var device = null, tx = null, rx = null, mode = "response";
+  navigator.bluetooth.requestDevice(showAll ? { acceptAllDevices: true, optionalServices: [BLE_SERVICE_UUID, BLE_NUS_SERVICE_UUID] } : {
+    filters: [{ services: [BLE_SERVICE_UUID] }, { services: [BLE_NUS_SERVICE_UUID] }, { namePrefix: "HC" }, { namePrefix: "HM" }, { namePrefix: "JDY" }, { namePrefix: "BT" }, { namePrefix: "MLT" }, { namePrefix: "MLK" }].concat(savedRobotNames().map(function (name) { return { name: name }; })),
+    optionalServices: [BLE_SERVICE_UUID, BLE_NUS_SERVICE_UUID]
+  }).then(function (chosenDevice) {
+    device = chosenDevice;
+    device.addEventListener("gattserverdisconnected", function () { handleLinkLost("Bluetooth dropped"); });
+    say("connectSay", "Connecting to " + (device.name || "the robot") + "...");
+    return device.gatt.connect();
+  }).then(function (server) {
+    return server.getPrimaryService(BLE_SERVICE_UUID).catch(function () {
+      return server.getPrimaryService(BLE_NUS_SERVICE_UUID);
+    });
+  }).then(function (service) {
+    return service.getCharacteristics();
+  }).then(function (characteristics) {
+    // The kit's module notifies on FFE1 and takes writes on FFE2: pick by properties.
+    characteristics.forEach(function (c) {
+      var p = c.properties || {};
+      if (!tx && (p.write || p.writeWithoutResponse)) { tx = c; }
+      if (!rx && (p.notify || p.indicate)) { rx = c; }
+    });
+    if (!tx) {
+      throw new Error("no writable characteristic");
+    }
+    mode = tx.properties.writeWithoutResponse ? "noresponse" : "response";
+    function writeChunk(chunk) {
+      if (mode === "noresponse" && tx.writeValueWithoutResponse) {
+        return tx.writeValueWithoutResponse(chunk);
+      }
+      return tx.writeValueWithResponse ? tx.writeValueWithResponse(chunk) : tx.writeValue(chunk);
+    }
+    link = {
+      kind: "ble",
+      label: device.name || "Bluetooth",
+      write: function (bytes) {
+        var chain = Promise.resolve();
+        for (var offset = 0; offset < bytes.length; offset += BLE_CHUNK_SIZE) {
+          (function (chunk) {
+            chain = chain.then(function () {
+              return writeChunk(chunk).catch(function () {
+                mode = mode === "noresponse" ? "response" : "noresponse";   // flip once, like the Sticks page
+                return writeChunk(chunk);
+              });
+            });
+          })(bytes.slice(offset, offset + BLE_CHUNK_SIZE));
+        }
+        return Promise.race([chain, new Promise(function (resolve) { setTimeout(resolve, 1500); })]);
+      },
+      close: function () {
+        link = null;
+        forgetRobot();
+        if (device.gatt.connected) {
+          device.gatt.disconnect();
+        }
+        render();
+        return Promise.resolve();
+      }
+    };
+    if (!rx) {
+      throw new Error("the robot cannot answer on this connection");
+    }
+    rx.addEventListener("characteristicvaluechanged", function (event) {
+      handleIncomingBytes(event.target.value);
+    });
+    return rx.startNotifications();
+  }).then(function () {
+    linkOpened(600);
+  }).catch(function (error) {
+    say("connectSay", "Bluetooth: " + error.message);
+    if (device && device.gatt && device.gatt.connected) {
+      device.gatt.disconnect();
+    }
+    link = null;
+    render();
+    if (!device) {
+      byId("showAllRow").hidden = false;   // the list was closed without a pick
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The robot: its numbers, and one command at a time
+// ---------------------------------------------------------------------------
+
+var robot = { numbers: null, saved: false, name: "", role: "", firmware: "" };
+var calSeen = false;       // a whole K,cal line arrived since it was last cleared
+var stopReason = "";       // why the robot stopped a move by itself
+var busy = "";             // what the page is doing right now ("" = nothing)
+var lineWaiters = [];      // { pattern, resolve }
+
+// What this visit has changed, so each card can undo its own part
+var turnFactor = 1, distanceFactor = 1, diagAtConnect = null;
+var turnTested = false, turnError = 0;
+var distanceTested = false, distanceCm = 100;
+var lastSlide = "";        // "right" / "left": the slide just watched
+
+function forgetRobot() {
+  robot = { numbers: null, saved: false, name: "", role: "", firmware: "" };
+  turnFactor = 1;
+  distanceFactor = 1;
+  diagAtConnect = null;
+  turnTested = false;
+  distanceTested = false;
+  lastSlide = "";
+  busy = "";
+  lineWaiters.splice(0).forEach(function (waiter) { waiter.resolve(null); });
+}
+
+// K,cal,<numbers 0..18>,<lever>,<numbers 19..22>,<e = saved on the robot, d = the sketch's>
+function readCalLine(line) {
+  var fields = line.slice(6).split(",");
+  var flag = /^[a-z]$/.test(fields[fields.length - 1]) ? fields.pop() : "";
+  var values = fields.map(Number);
+  if (values.length < NUMBER_COUNT + 1 || values.some(function (v) { return !isFinite(v); })) {
+    return;   // cut short on the way: ask again
+  }
+  var numbers = [];
+  for (var i = 0; i < NUMBER_COUNT; i++) {
+    numbers.push(values[i < 19 ? i : i + 1]);
+  }
+  robot.numbers = numbers;
+  robot.saved = flag === "e";
+  calSeen = true;
+}
+
+function handleRobotLine(line) {
+  var log = byId("log");
+  log.textContent = (log.textContent + line + "\n").split("\n").slice(-60).join("\n");
+  if (/^K,cal,/.test(line)) {
+    readCalLine(line);
+  } else if (/^K,name,/.test(line)) {
+    robot.name = line.slice(7);
+  } else if (/^K,role,/.test(line)) {
+    robot.role = line.slice(7);
+  } else if (/^K,fw,/.test(line)) {
+    robot.firmware = line.slice(5);
+  } else if (/^stop: /.test(line)) {
+    stopReason = line.slice(6);
+  }
+  lineWaiters.slice().forEach(function (waiter) {
+    if (waiter.pattern.test(line)) {
+      lineWaiters.splice(lineWaiters.indexOf(waiter), 1);
+      waiter.resolve(line);
+    }
+  });
+  render();
+}
+
+// The next line that fits, or null after ms.
+function waitForLine(pattern, ms) {
+  return new Promise(function (resolve) {
+    var waiter = { pattern: pattern, resolve: resolve };
+    lineWaiters.push(waiter);
+    setTimeout(function () {
+      var at = lineWaiters.indexOf(waiter);
+      if (at >= 0) {
+        lineWaiters.splice(at, 1);
+        resolve(null);
+      }
+    }, ms);
+  });
+}
+
+function write(text) {
+  if (!link) {
+    return Promise.resolve();
+  }
+  return Promise.resolve(link.write(new TextEncoder().encode(text))).catch(function (error) {
+    say("connectSay", "Could not send: " + error.message);
+  });
+}
+
+// Send a command and wait for its answer; a command can be lost on the way, so try again.
+async function ask(text, pattern, ms, tries) {
+  for (var attempt = 0; attempt < tries && link; attempt++) {
+    var answer = waitForLine(pattern, ms);
+    await write(text);
+    var line = await answer;
+    if (line) {
+      return line;
+    }
+  }
+  return null;
+}
+
+async function readNumbers() {
+  for (var attempt = 0; attempt < 4 && link; attempt++) {
+    calSeen = false;
+    var end = await ask("k?;", /^K,end/, 3000, 1);
+    if (end && calSeen) {
+      if (diagAtConnect === null) {
+        diagAtConnect = robot.numbers[I_DIAG];
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+// Change one number on the robot and check its answer shows it.
+async function setNumber(index, value) {
+  var text = (Math.round(value * 1000) / 1000).toString();
+  for (var attempt = 0; attempt < 3 && link; attempt++) {
+    calSeen = false;
+    await ask("km" + index + "=" + text + ";", /^K,cal,/, 2500, 1);
+    if (calSeen && Math.abs(robot.numbers[index] - Number(text)) < 0.002) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// changes: [[index, value], ...]; all of them, then saved on the robot.
+async function applyNumbers(changes) {
+  for (var i = 0; i < changes.length; i++) {
+    if (!(await setNumber(changes[i][0], changes[i][1]))) {
+      return false;
+    }
+  }
+  if (!(await ask("kw;", /^config: saved/, 2500, 3))) {
+    return false;
+  }
+  robot.saved = true;
+  return true;
+}
+
+// A test move: true when it ran to its end. The robot ignores everything but
+// a stop while it moves, so sending the move again when "move: start" never
+// came cannot run it twice.
+async function runMove(text, timeoutMs) {
+  var finished = false;
+  stopReason = "";
+  var done = waitForLine(/^move: (done|ABORTED)/, timeoutMs).then(function (line) { finished = true; return line; });
+  var started = waitForLine(/^move: start/, 2000);
+  await write(text);
+  if (!(await started) && !finished) {
+    await write(text);
+  }
+  var line = await done;
+  return !!line && /done/.test(line);
+}
+
+function stopNow() {
+  [0, 60, 120].forEach(function (ms) { setTimeout(function () { write("x"); }, ms); });   // three times: one can be lost
+}
+
+function whyStopped() {
+  return stopReason === "something ahead" ? "Stopped: something is too close in front of the robot." : "Stopped.";
+}
+
+// One job at a time: the buttons wait while it runs.
+function task(what, work) {
+  if (busy || !link || !robot.numbers) {
+    return Promise.resolve();
+  }
+  busy = what;
+  render();
+  return work().catch(function (error) {
+    say("connectSay", "Something went wrong: " + error.message);
+  }).then(function () {
+    busy = "";
+    render();
+  });
+}
+
+// The buttons wait until the robot has finished answering: a command sent
+// while it is still talking is lost over Bluetooth.
+function linkOpened(waitMs) {
+  busy = "Asking the robot for its numbers...";
+  say("connectSay", "Connected. Asking the robot for its numbers...");
+  render();
+  setTimeout(function () {
+    readNumbers().then(function (ok) {
+      busy = "";
+      if (!link) {
+        return;
+      }
+      say("connectSay", ok ? "Ready." : "The robot did not send its numbers. Is it running ir.ino or programming.ino? Disconnect and connect again.");
+      render();
+    });
+  }, waitMs);
+}
+
+// ---------------------------------------------------------------------------
+// 1 Turn
+// ---------------------------------------------------------------------------
+
+async function runTurns(count) {
+  if (count === 4) {
+    turnTested = false;
+  }
+  say("turnSay", count === 4 ? "Turning right, four times..." : "Turning right once...");
+  for (var i = 0; i < count; i++) {
+    if (!(await runMove("m0,0,90;", 8000))) {
+      say("turnSay", whyStopped());
+      return;
+    }
+    await sleep(400);
+  }
+  if (count === 4) {
+    turnTested = true;
+    turnError = 0;
+    say("turnSay", "Done. Look at the robot and the line.");
+  } else {
+    say("turnSay", "Done.");
+  }
+}
+
+async function fixTurn() {
+  if (turnError === 0) {
+    turnTested = false;
+    say("turnSay", "Spot on: nothing to fix.");
+    return;
+  }
+  var old = robot.numbers[I_SPIN];
+  var next = clamp(old * (360 + turnError) / 360, 0.2, 2.0);
+  if (await applyNumbers([[I_SPIN, next]])) {
+    turnFactor *= next / old;
+    turnTested = false;
+    turnError = 0;
+    say("turnSay", "Fixed and saved on the robot. Turn 4 times again to check.");
+  } else {
+    say("turnSay", "The robot did not take the fix. Try again.");
+  }
+}
+
+async function undoTurn() {
+  if (await applyNumbers([[I_SPIN, clamp(robot.numbers[I_SPIN] / turnFactor, 0.2, 2.0)]])) {
+    turnFactor = 1;
+    turnTested = false;
+    say("turnSay", "Back to how the turns were when you connected.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 2 Distance
+// ---------------------------------------------------------------------------
+
+async function runMeter() {
+  distanceTested = false;
+  say("distanceSay", "Driving 1 meter...");
+  if (await runMove("m0,1000,0;", 15000)) {
+    distanceTested = true;
+    distanceCm = 100;
+    say("distanceSay", "Done. Measure from the start line to the robot's front.");
+  } else {
+    say("distanceSay", whyStopped());
+  }
+}
+
+// Every speed x factor; the turn and slide numbers / factor, so turns and slides do not change.
+async function scaleDistance(factor) {
+  var n = robot.numbers;
+  var changes = SPEED_INDEXES.map(function (index) { return [index, n[index] * factor]; });
+  changes.push([I_SPIN, clamp(n[I_SPIN] / factor, 0.2, 2.0)]);
+  changes.push([I_STRAFE, clamp(n[I_STRAFE] / factor, 0.2, 2.0)]);
+  return applyNumbers(changes);
+}
+
+async function fixDistance() {
+  if (distanceCm === 100) {
+    distanceTested = false;
+    say("distanceSay", "Spot on: nothing to fix.");
+    return;
+  }
+  var factor = clamp(distanceCm / 100, 0.5, 2.0);
+  if (await scaleDistance(factor)) {
+    distanceFactor *= factor;
+    distanceTested = false;
+    say("distanceSay", "Fixed and saved on the robot. Drive 1 meter again to check.");
+  } else {
+    say("distanceSay", "The robot did not take the fix. Try again.");
+  }
+}
+
+async function undoDistance() {
+  if (await scaleDistance(1 / distanceFactor)) {
+    distanceFactor = 1;
+    distanceTested = false;
+    say("distanceSay", "Back to how far it drove when you connected.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 3 Slide
+// ---------------------------------------------------------------------------
+
+async function runSlide(direction) {
+  lastSlide = "";
+  say("slideSay", "Sliding " + direction + "...");
+  if (await runMove("m" + (direction === "right" ? 90 : 270) + "," + SLIDE_MM + ",0;", 12000)) {
+    lastSlide = direction;
+    say("slideSay", "Done. Were all four wheels working?");
+  } else {
+    say("slideSay", whyStopped());
+  }
+}
+
+async function setDiag(value, message) {
+  value = clamp(Math.round(value * 100) / 100, -DIAG_LIMIT, DIAG_LIMIT);
+  if (await applyNumbers([[I_DIAG, value]])) {
+    lastSlide = "";
+    say("slideSay", message);
+  } else {
+    say("slideSay", "The robot did not take the change. Try again.");
+  }
+}
+
+// Sliding right, the orange pair (FL + RR) rolls forward and the blue pair
+// backward; sliding left, the other way round. The pair that rolls the way
+// the robot creeps is the strong one: the other pair gets a little more.
+function creepFix(answer) {
+  if (answer === "none") {
+    lastSlide = "";
+    say("slideSay", "Good: leave it as it is.");
+    render();
+    return Promise.resolve();
+  }
+  var toBlue = (lastSlide === "right") === (answer === "forward");
+  return setDiag(robot.numbers[I_DIAG] + (toBlue ? DIAG_STEP : -DIAG_STEP),
+    "Gave a little more to the " + (toBlue ? "blue" : "orange") + " pair, saved. Slide again.");
+}
+
+// ---------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------
+
+function render() {
+  var connected = link !== null;
+  var ready = connected && robot.numbers !== null;
+  byId("statusDot").className = connected ? "dot on" : "dot";
+  byId("statusText").textContent = !connected ? "Not connected" :
+    (robot.name || link.label) + (ready ? "" : " (waiting for its numbers)");
+  var usbButton = byId("connectUsbButton"), bleButton = byId("connectBleButton");
+  usbButton.textContent = connected && link.kind === "usb" ? "Disconnect" : "Serial";
+  bleButton.textContent = connected && link.kind === "ble" ? "Disconnect" : "Bluetooth";
+  usbButton.className = connected && link.kind === "usb" ? "t connected" : "t";
+  bleButton.className = connected && link.kind === "ble" ? "t connected" : "t";
+  usbButton.disabled = !navigator.serial || (connected && link.kind !== "usb");
+  bleButton.disabled = !navigator.bluetooth || (connected && link.kind !== "ble");
+  if (connected) {
+    byId("showAllRow").hidden = true;
+  }
+  if (!navigator.serial && !navigator.bluetooth) {
+    say("connectSay", "This browser cannot talk to the robot. Use Chrome on an Android phone, a Chromebook or a computer.");
+  }
+
+  var waiting = !ready || busy !== "";
+  var buttons = document.querySelectorAll(".needs-robot");
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].disabled = waiting;
+  }
+  byId("stopButton").disabled = !connected;
+  byId("busyText").textContent = busy;
+
+  // 1 Turn
+  byId("turnAnswer").hidden = !turnTested;
+  byId("dialBot").setAttribute("transform", "rotate(" + turnError + ")");
+  byId("turnErrorText").textContent = turnError === 0 ? "Back on the line: spot on." :
+    turnError > 0 ? "It turned " + turnError + " degrees too far." : "It stopped " + (-turnError) + " degrees short.";
+  byId("turnUndoButton").disabled = waiting || Math.abs(turnFactor - 1) < 0.0005;
+
+  // 2 Distance
+  byId("distanceAnswer").hidden = !distanceTested;
+  byId("distanceCm").textContent = distanceCm;
+  byId("distanceUndoButton").disabled = waiting || Math.abs(distanceFactor - 1) < 0.0005;
+
+  // 3 Slide
+  var bias = ready ? robot.numbers[I_DIAG] : 0;
+  byId("orangeBar").style.width = (50 - bias * 50) + "%";
+  byId("blueBar").style.width = (50 + bias * 50) + "%";
+  byId("splitText").textContent = ready ? "orange pair " + Math.round((1 - bias) * 100) + " %   blue pair " + Math.round((1 + bias) * 100) + " %" : "";
+  byId("slideAnswer").hidden = !lastSlide;
+  byId("moreOrangeButton").disabled = waiting || bias <= -DIAG_LIMIT + 0.001;
+  byId("moreBlueButton").disabled = waiting || bias >= DIAG_LIMIT - 0.001;
+  byId("evenButton").disabled = waiting || Math.abs(bias) < 0.001;
+  byId("slideUndoButton").disabled = waiting || diagAtConnect === null || Math.abs(bias - diagAtConnect) < 0.001;
+
+  // For the grown-up
+  var n = robot.numbers;
+  byId("robotLine").textContent = !ready ? "-" : [robot.name, robot.role, robot.firmware, robot.saved ? "its own saved numbers" : "the class numbers"].filter(Boolean).join(", ");
+  byId("spinNumber").textContent = ready ? n[I_SPIN].toFixed(3) : "-";
+  byId("speedNumbers").textContent = ready ? [n[I_LOW_SPEED], n[I_HALF], n[I_192], n[I_MAX]].map(Math.round).join(", ") : "-";
+  byId("strafeNumber").textContent = ready ? n[I_STRAFE].toFixed(3) : "-";
+  byId("diagNumber").textContent = ready ? n[I_DIAG].toFixed(2) : "-";
+}
+
+byId("connectUsbButton").addEventListener("click", function () {
+  if (link && link.kind === "usb") {
+    stopNow();
+    setTimeout(function () { if (link) { link.close(); } }, 200);
+  } else if (!link) {
+    connectUsb();
+  }
+});
+byId("connectBleButton").addEventListener("click", function () {
+  if (link && link.kind === "ble") {
+    stopNow();
+    setTimeout(function () { if (link) { link.close(); } }, 250);
+  } else if (!link) {
+    connectBle(false);
+  }
+});
+byId("showAllButton").addEventListener("click", function () {
+  if (!link) {
+    connectBle(true);
+  }
+});
+byId("stopButton").addEventListener("click", stopNow);
+
+byId("turnTestButton").addEventListener("click", function () { task("Turning...", function () { return runTurns(4); }); });
+byId("turnOnceButton").addEventListener("click", function () { task("Turning...", function () { return runTurns(1); }); });
+byId("turnLessButton").addEventListener("click", function () { turnError = Math.max(-TURN_LIMIT_DEG, turnError - TURN_STEP_DEG); render(); });
+byId("turnMoreButton").addEventListener("click", function () { turnError = Math.min(TURN_LIMIT_DEG, turnError + TURN_STEP_DEG); render(); });
+byId("turnFixButton").addEventListener("click", function () { task("Saving...", fixTurn); });
+byId("turnUndoButton").addEventListener("click", function () { task("Saving...", undoTurn); });
+
+byId("distanceTestButton").addEventListener("click", function () { task("Driving...", runMeter); });
+var cmButtons = document.querySelectorAll("[data-cm]");
+for (var cmIndex = 0; cmIndex < cmButtons.length; cmIndex++) {
+  cmButtons[cmIndex].addEventListener("click", function () {
+    distanceCm = clamp(distanceCm + Number(this.getAttribute("data-cm")), 30, 250);
+    render();
+  });
+}
+byId("distanceFixButton").addEventListener("click", function () { task("Saving...", fixDistance); });
+byId("distanceUndoButton").addEventListener("click", function () { task("Saving...", undoDistance); });
+
+byId("slideRightButton").addEventListener("click", function () { task("Sliding...", function () { return runSlide("right"); }); });
+byId("slideLeftButton").addEventListener("click", function () { task("Sliding...", function () { return runSlide("left"); }); });
+byId("moreOrangeButton").addEventListener("click", function () {
+  task("Saving...", function () { return setDiag(robot.numbers[I_DIAG] - DIAG_STEP, "More to the orange pair, saved. Slide again."); });
+});
+byId("moreBlueButton").addEventListener("click", function () {
+  task("Saving...", function () { return setDiag(robot.numbers[I_DIAG] + DIAG_STEP, "More to the blue pair, saved. Slide again."); });
+});
+byId("evenButton").addEventListener("click", function () {
+  task("Saving...", function () { return setDiag(0, "Both pairs the same, saved. Slide again."); });
+});
+byId("creepForwardButton").addEventListener("click", function () { task("Saving...", function () { return creepFix("forward"); }); });
+byId("creepBackButton").addEventListener("click", function () { task("Saving...", function () { return creepFix("back"); }); });
+byId("creepNoneButton").addEventListener("click", function () { creepFix("none"); });
+byId("slideUndoButton").addEventListener("click", function () {
+  task("Saving...", function () { return setDiag(diagAtConnect, "Back to how it slid when you connected."); });
+});
+
+byId("resetButton").addEventListener("click", function () {
+  if (!window.confirm("Forget every fix saved on this robot and go back to the class numbers?")) {
+    return;
+  }
+  task("Resetting...", async function () {
+    await ask("kd;", /^K,cal,/, 2500, 3);
+    turnFactor = 1;
+    distanceFactor = 1;
+    diagAtConnect = null;
+    turnTested = false;
+    distanceTested = false;
+    lastSlide = "";
+    say("connectSay", (await readNumbers()) ? "Back to the class numbers." : "The robot did not answer. Try again.");
+  });
+});
+
+render();
+
+// Chrome on Android crashes when a page leaves with a Bluetooth or serial
+// connection open: disconnect before following a link, and on the way out.
+(function () {
+  function closeLink() {
+    if (link && link.close) {
+      try { link.close(); } catch (error) { /* already gone */ }
+    }
+  }
+  window.addEventListener("pagehide", closeLink);
+  document.addEventListener("click", function (event) {
+    var anchor = event.target.closest ? event.target.closest("a[href]") : null;
+    if (!anchor || !link || anchor.target === "_blank" || /^#/.test(anchor.getAttribute("href"))) {
+      return;
+    }
+    event.preventDefault();
+    var href = anchor.href;
+    closeLink();
+    setTimeout(function () { location.href = href; }, 250);
+  });
+})();
+</script>
+<!-- mlk-foot -->
+<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a><span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a><span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>
+<!-- /mlk-foot -->
+</body>
+</html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Mecanum Sticks 0.1.11 - Maker Lab Kids</title>
+<title>Mecanum Sticks 0.1.12 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -99,11 +99,11 @@
 <body>
 <!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
 <nav class="mlk-nav mlk-nav-tool" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">Remote guide</a><a href="/mecanum/ir">Programming</a><a href="/mecanum/challenges">Challenges</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth" class="active" aria-current="page">Bluetooth</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks">Blocks</a><a href="/mecanum/lessons/">Lessons</a><a class="mlk-nav-back" href="/mecanum/bluetooth" onclick="if (document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">&larr; Back</a></nav>
-<nav class="mlk-subnav" aria-label="Bluetooth pages"><span>Bluetooth:</span><a href="/mecanum/bluetooth">How to connect</a><a href="/mecanum/sticks" class="active" aria-current="page">Drive with Sticks</a></nav>
+<nav class="mlk-subnav" aria-label="Bluetooth pages"><span>Bluetooth:</span><a href="/mecanum/bluetooth">How to connect</a><a href="/mecanum/sticks" class="active" aria-current="page">Drive with Sticks</a><a href="/mecanum/tune">Tune the robot</a></nav>
 <!-- /mlk-nav -->
   <div class="bar">
     <button id="fullscreenButton">Full screen</button>
-    <div class="title">Mecanum Sticks <span>0.1.11</span></div>
+    <div class="title">Mecanum Sticks <span>0.1.12</span></div>
     <div class="status"><div class="dot" id="statusDot"></div><span id="statusText">Not connected</span></div>
     <div class="spacer"></div>
     <div class="mode" role="group" aria-label="Stick mode">
@@ -151,7 +151,7 @@
 //   turn, its corners pick the speed.
 // ---------------------------------------------------------------------------
 
-var APP_VERSION = "0.1.11";
+var APP_VERSION = "0.1.12";
 var FIRMWARE_COMPAT = "0.10.8";      // first sketch with the v command
 var SERIAL_BAUD = 9600;
 var BLE_SERVICE_UUID = 0xFFE0;

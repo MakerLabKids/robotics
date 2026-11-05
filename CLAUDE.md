@@ -27,7 +27,8 @@ like a schedule. Three tiers:
 
 - **Live (in the nav):** Home, Remote guide, Programming (ir.html), Challenges, Light bot
   (moth mode `# # 1`, cockroach mode `# # 2`), Bluetooth (since 2026-11-05: How to connect,
-  mecanum/bluetooth.html, and Drive with Sticks, mecanum/sticks.html), Wiring, Blocks (a
+  mecanum/bluetooth.html, Drive with Sticks, mecanum/sticks.html, and Tune the robot,
+  mecanum/tune.html), Wiring, Blocks (a
   tease, not taught yet), Lessons (talking points: no numbers, no order, no "next week").
 - **Set aside (comes back later):** the Workshop app (mecanum/index.html),
   Calibrate, Rename, Holonomic notes. They stay where they are, out of the nav, with a
@@ -133,6 +134,19 @@ function and constant both have must be identical (four functions differ on purp
 fix to one goes into the other in the same commit. Test: `node
 scripts/mecanum-sim/programming-e2e.js` (in run-all; starts on ir.ino and "uploads"
 programming.ino over it). Status and next steps: NOTES.md, "programming.ino".
+
+## Tune the robot (mecanum/tune.html)
+
+`mecanum/tune.html` (2026-11-05) calibrates a robot running ir.ino or programming.ino from
+a phone over Bluetooth, with NO firmware of its own: it runs test moves (`m`), changes a
+motion number (`km<i>=<v>;`) and saves it (`kw;`). Three cards: turn (four right 90s, the
+kid turns a picture to match, spin efficiency x (360 + error) / 360), distance (1 m, cm
+typed with +/- buttons, every speed x cm / 100, and the turn and strafe efficiencies / the
+same factor so turns and slides keep the same motor power and time), slide (the diagonal
+bias: more power to the FL+RR "orange" pair or the FR+RL "blue" pair). The number indexes
+in the page (I_SPIN 6, I_DIAG 21, ...) are the sketches' M_ enum order: keep them in step.
+Its two robot pictures come from `python3 scripts/tune-figs.py` (the shared bot_top
+drawing). Test: `node scripts/mecanum-sim/tune-e2e.js [bt] [ir]` (in run-all).
 
 ## Writing Style
 

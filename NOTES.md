@@ -102,8 +102,8 @@ in resources/).
   another saved program** (`* 2 <slot>` on the remote, `g<slot>` in a program line; see
   "programming.ino", "Programs that run programs").
 - Pages: Programming Guide (mecanum/ir.html) 0.1.25, Remote Guide 0.1.21, Light bot 0.1.19,
-  Light sensor build 0.1.11, Wiring 0.1.12, Blocks 0.1.12, Connect with Bluetooth 0.1.0,
-  Sticks 0.1.9, Workshop app 0.6.39. Versions live in the page
+  Light sensor build 0.1.11, Wiring 0.1.12, Blocks 0.1.12, Connect with Bluetooth 0.1.3,
+  Sticks 0.1.12 (Full screen / Exit), Tune the robot 0.1.0, Workshop app 0.6.39. Versions live in the page
   titles. A nav change (scripts/site-nav.js) rewrites every page, so every versioned page
   needs its build number raised in the same commit (title, plus APP_VERSION / EDITOR_VERSION
   where a page has one, the title in scripts/square-figs.py, then
@@ -202,6 +202,50 @@ robotics.makerlabkids.com/mecanum/sticks, "Serial", pick the module). Every modu
 arrives with the same name (HC-05 / HC-06): name them first (`kN<name>;` over USB, then
 power off and on; never confirmed on an HC-06) or pair one bot at a time with the others
 switched off. iPhones cannot connect. The light code has not changed since 0.10.84.
+
+Tune the robot (2026-11-05). The user: "how much room do we have for a little bit of
+calibration from bluetooth mode? I really need a simple rotation calibration so we can
+turn 90 degrees. Distance would be second: just a 1 meter test. And 3rd, a stretch: a way
+to send more power to one of the diagonal pairs when strafing. Most of the bots don't
+strafe well: two wheels (a diagonal pair) are barely turning while the other two are
+furiously spinning."
+- Room: programming.ino is 25942 bytes (80%, 6314 free), 904 bytes of RAM free. None of
+  it was needed: the sketches already take `m` test moves, `km<i>=<v>;`, `kw;`, `kd;` over
+  Bluetooth, so the calibration is a page, **mecanum/tune.html** (Tune the robot 0.1.0, in
+  the Bluetooth subnav). No firmware change, no reflash, works on ir.ino and
+  programming.ino as they are (0.10.86 tested).
+- 1 Turn: "Turn right 4 times" (four `m0,0,90;`), then the kid turns a picture of the
+  robot (5 degree steps) to match where the real one points, Fix it: spin efficiency x
+  (360 + error) / 360, saved. The same math as ir.ino's `# # #` step 3.
+- 2 Distance: "Drive 1 meter" (`m0,1000,0;`), cm with -5 -1 +1 +5 buttons, Fix it: the
+  five speeds (start, half, 192, max, strafe start) x cm / 100 as `# # #` does, AND spin
+  and strafe efficiency / the same factor. That second half is new: without it a distance
+  fix of f changes every turn by f; with it a turn asks for the same PWM for the same time
+  (tune-e2e checks the duties are identical before and after). So the three cards can be
+  done in any order.
+- 3 Slide: the diagonal bias (M_DIAG_BIAS, index 21): "More orange" (FL+RR) / "Even" /
+  "More blue" (FR+RL) in 0.05 steps, slide left / right 50 cm tests, and after a slide
+  "did it creep forward or backward?" which moves one step the right way (sliding right,
+  FL+RR roll forward: creeping forward means that pair is the strong one).
+- **Why most bots strafe badly: the class default STRAFE_DIAG_BIAS is 0.34**, measured on
+  robot 2 on 2026-10-07 (its comment says robot 1 twisted badly at 0.101). It takes 34%
+  from FL+RR and gives it to FR+RL, and at the program slide speed the weak pair falls to
+  the start power: the simulator shows motor power 196, 85, 255, 86 at 0.34 and 196, 196,
+  255, 255 at 0. That is exactly "two barely turning, two furiously spinning". Not changed
+  in the sketches (a firmware bump on four sketches, and robots with saved numbers keep
+  theirs anyway): told the user; "Even" on the Tune page is the per-robot fix. Ask before
+  changing the default to 0.
+- Each card has its own undo (back to how it was at connect); "Back to the class numbers"
+  is `kd;`. Every change is saved at once (`kw;`). A fixed STOP bar sends x three times.
+- Nothing of this has run on a real robot. First things to check on hardware: the dial's
+  direction (the picture turned right = the robot went past the line clockwise), and which
+  color pair is which on a real bot (orange = front left + back right).
+- Simulator fact for Bluetooth tests: in `live bt` mode the simulator's stdout is the
+  robot's USB copy of an answer. The Bluetooth copy of the same bytes leaves later (the
+  sketch buffers up to 255, about 270 ms), and a command sent in that gap is garbled (an
+  `m` was read as `b`). A real phone only hears the Bluetooth copy, so tune-e2e delays
+  what it hands the page by 300 ms in bt mode. The page itself also keeps its buttons
+  waiting until `K,end` has arrived.
 
 Not done yet (next steps, in order):
 1. Flash programming.ino on one calibrated bot and check on hardware: it drives as
