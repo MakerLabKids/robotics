@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.87 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.88 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -82,7 +82,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.87"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.88"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -164,6 +164,7 @@ const int SONAR_STOP_MM = 250;                  // anything nearer ahead stops t
 const bool SONAR_STOPS_EVERYTHING = false;      // false: only forward motion (so it can back away); true: every move
 const unsigned long SONAR_PERIOD_MS = 60;       // how often it looks while moving
 const unsigned long SONAR_TIMEOUT_US = 25000;   // round trip, ~4.3 m (the u reading)
+const unsigned long SONAR_START_US = 6000;      // how long the echo may take to start (a class module: ~2.1 ms; was 2 ms until 0.10.87)
 
 // ===========================================================================
 // CONFIG - light sensors: two LDRs at the front corners (# # 1 / # # 2)
@@ -855,7 +856,7 @@ long sonarMm(unsigned long timeoutUs) {
   byte echoMask = digitalPinToBitMask(SONAR_ECHO_PIN);
   unsigned long startedAt = micros();
   while (!(*echoPort & echoMask)) {
-    if (micros() - startedAt > 2000) return -1;
+    if (micros() - startedAt > SONAR_START_US) return -1;
   }
   startedAt = micros();
   while (*echoPort & echoMask) {

@@ -16,6 +16,7 @@
 //   ir <hex> [ms]   an NEC remote key on the IR pin (address 0), held for ms with repeats
 //   irpin <port> <bit>   where the IR receiver is: D 2 (the default, D2) or B 2 (D10)
 //   sonar <mm>      HC-SR04 on A3 trig / A2 echo: echo for that distance (-1 = none)
+//   sonarstart <us> how long after the ping its echo starts (500; slow class modules: ~2100)
 //   pwm             print the four motor PWM duties (M1-M4, 0 when disconnected)
 //   dirs            print which way each wheel turns: [dirs FL FR RL RR], each + - or 0
 //   spinmodel <maxdps> <taums> [stall]   a robot whose gyro answers its motors: while
@@ -94,6 +95,7 @@ static uint8_t shiftBits = 0, shiftLatched = 0;
 static double headingDeg = 0;
 static int tofRangeMm = 8190;
 static int sonarMm = -1;
+static int sonarStartUs = 500;
 static char irPort = 'D';   // the IR receiver's port and bit (irpin)
 static int irBit = 2;
 
@@ -217,6 +219,7 @@ static int handleDeviceCommand(const char *line) {
   if (sscanf(line, "jolt %lf", &mv) == 1) { joltMms2 = mv * 9806.65; joltLeftMs = 60; return 1; }
   if (sscanf(line, "spike %lf", &mv) == 1) { joltMms2 = mv * 9806.65; joltLeftMs = 20; return 1; }
   if (sscanf(line, "gravity %lf", &mv) == 1) { gravityG = mv; return 1; }
+  if (sscanf(line, "sonarstart %d", &n) == 1) { sonarStartUs = n; return 1; }
   if (sscanf(line, "sonar %d", &n) == 1) { sonarMm = n; return 1; }
   char port;
   if (sscanf(line, "irpin %c %d", &port, &n) == 2 && port >= 'A' && port <= 'D' && n >= 0 && n < 8) {
@@ -310,7 +313,7 @@ static double sendNec(int command, double holdMs) {
 }
 
 // HC-SR04: when the trig pin (A3 = PC3) falls, raise echo (A2 = PC2) after
-// 0.5 ms for as long as the sound takes there and back.
+// sonarStartUs (0.5 ms) for as long as the sound takes there and back.
 static avr_cycle_count_t sonarEchoLevel(avr_t *mcu, avr_cycle_count_t when, void *param) {
   (void)when;
   avr_raise_irq(avr_io_getirq(mcu, AVR_IOCTL_IOPORT_GETIRQ('C'), 2), param != NULL);
@@ -320,8 +323,8 @@ static avr_cycle_count_t sonarEchoLevel(avr_t *mcu, avr_cycle_count_t when, void
 static void onSonarTrig(struct avr_irq_t *irq, uint32_t value, void *param) {
   (void)param;
   if (irq->value && !value && sonarMm > 0) {
-    avr_cycle_timer_register_usec(avr, 500, sonarEchoLevel, (void *)1);
-    avr_cycle_timer_register_usec(avr, 500 + (uint32_t)(sonarMm * 2000.0 / 343.0), sonarEchoLevel, NULL);
+    avr_cycle_timer_register_usec(avr, sonarStartUs, sonarEchoLevel, (void *)1);
+    avr_cycle_timer_register_usec(avr, sonarStartUs + (uint32_t)(sonarMm * 2000.0 / 343.0), sonarEchoLevel, NULL);
   }
 }
 

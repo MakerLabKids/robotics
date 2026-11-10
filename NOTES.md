@@ -197,7 +197,10 @@ Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, s
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings
 as wired (Trig A3 / Echo A2) and swapped, waits 60 ms, prints echo rest level, start delay
-and pulse width over USB. Result: (waiting for the user).
+and pulse width over USB. Result: as wired it reads fine (~258 mm) but the echo STARTS
+2004-2112 us after the ping, past the firmware's 2000 us limit, so u said -1. Fixed in
+0.10.88: SONAR_START_US 6000 (ir.ino + programming.ino); uno-sim has `sonarstart <us>` and
+ir-e2e checks a 2.1 ms module. Expect more of the class modules to be this slow.
 
 This week (the user, 2026-11-10): Blockly over Bluetooth, and part 2 the distance sensor
 in "if" blocks. Done: firmware 0.10.87 (ir.ino + programming.ino: USE_LIGHT_BACK 0, the

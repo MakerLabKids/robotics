@@ -61,6 +61,7 @@ const script = [
   'sonar 150', press('U', 300), 'pwm', 'wait 400',
   press('D', 300), 'pwm', 'wait 400',
   'send u\\n', 'wait 100',
+  'sonarstart 2100', 'send u\\n', 'wait 100', 'sonarstart 500',   // a slow module (a class robot, 2026-11-10: its echo starts ~2.1 ms after the ping)
   'sonar -1',
   mark(),                            // 3 a program: * * *, * UP 5 0, * 3 9 0, * * *, slot 3, * *
   press('***'), 'wait 800',
@@ -183,6 +184,7 @@ p = pwms(s);
 check(/stop: something ahead/.test(s) && p.length >= 1 && !moving(p[0]), 'UP with something 150 mm ahead: does not drive, says why');
 check(/drive: back/.test(s) && p.length >= 2 && moving(p[1]), 'DOWN still drives with something ahead');
 check(/^U,1[3-7]\d$/m.test(s), 'u reads the sonar (~150 mm)');
+check((s.match(/^U,1[3-7]\d$/mg) || []).length >= 2, 'u reads a slow sonar too (its echo starts 2.1 ms after the ping)');
 
 // 3 programming
 s = sections[3];
