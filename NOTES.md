@@ -225,7 +225,10 @@ Bluetooth subnav as "Plug in the module") and its print-ready copy
 the chassis BETWEEN the sonar bracket and the Arduino / driver tower, not under the
 sensor; the wires leave the Arduino, go down through another hole, run forward under the
 bot, and the connectors come up into the hole from below, halfway in, and stop. So
-picture 1 is a side view (0.1.2). On the shield (the user: "an important depiction") the
+picture 1 is a side view (0.1.2). Route changed 2026-11-10 (the user: the wires were too short the old
+way): from the shield at the back of the tower they run UNDER the Arduino board, go down
+through a slot just in front of the tower, a short way under the chassis, and up into the
+hole (0.1.11). On the shield (the user: "an important depiction") the
 four wires make an L on the analog header: +5V, Gnd and A0 down the A0 column, A1 next to
 A0 (top row all +5V, middle all Gnd, bottom A0-A5). Since 0.1.4 two panels show it, drawn
 by `python3 scripts/bluetooth-figs.py` (the light sheet's board_overview and
