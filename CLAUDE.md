@@ -31,7 +31,7 @@ like a schedule. Three tiers:
   still titled Bluetooth; since 2026-11-05: Plug in the module, How to connect,
   mecanum/bluetooth.html, and Drive with Sticks, mecanum/sticks.html), Calibration
   (mecanum/tune.html, its own top-level item since 2026-11-10, no subnav; the set-aside
-  Calibrate page is a different one), Wiring, Blocks (taught
+  Calibrate page is a different one), Wiring, Blockly (mecanum/blocks.html, labeled Blocks until 2026-11-10; taught
   since 2026-11-10: the lead tile on Home, programs run or saved over Bluetooth), Lessons (talking points: no numbers, no order, no "next week").
 - **Set aside (comes back later):** the Workshop app (mecanum/index.html),
   Calibrate, Rename, Holonomic notes. They stay where they are, out of the nav, with a

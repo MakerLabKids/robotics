@@ -15,7 +15,7 @@ const NAV = [
   ["/mecanum/bluetooth", "Sticks"],
   ["/mecanum/tune", "Calibration"],
   ["/mecanum/wiring", "Wiring"],
-  ["/mecanum/blocks", "Blocks"],
+  ["/mecanum/blocks", "Blockly"],
   ["/mecanum/lessons/", "Lessons"]
 ];
 

@@ -298,7 +298,8 @@ Not done yet (next steps, in order):
    clear it when the lesson changes). "Programming" left the top nav: the "IR Remote" item
    (was "Remote guide") is a section with Remote guide, Programming with IR Remote (ir.html)
    Program a square and Challenges (out of the top nav too); the Home tile is "Programming with IR Remote". Not renamed: ir.html's
-   own title ("Programming Guide").
+   own title ("Programming Guide"). The Blocks nav item and Home tile are "Blockly"; the page's
+   own title is still "Mecanum Blocks".
    **The bots were named before** (the user, 2026-11-05: "we previously named the bots...
    did that get blown away?"). Answer: no. The name is in the Bluetooth module's own
    memory; a sketch upload never touches it, and only a kN / rename (pending flag, then
