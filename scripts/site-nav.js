@@ -21,6 +21,10 @@ const NAV = [
   ["/mecanum/lessons/", "Lessons"]
 ];
 
+// This week's lesson: its nav item breathes (a slow orange glow, css/nav.css) on
+// every page but its own. "" for none.
+const FEATURED = "/mecanum/blocks";
+
 // Set aside until the class gets there: reachable from /archive/, not the nav.
 const SET_ASIDE = [
   ["/mecanum/", "Workshop app"],
@@ -74,7 +78,8 @@ for (const name of fs.readdirSync(path.join(root, "mecanum/lessons"))) {
 }
 
 function link(href, label, current) {
-  return '<a href="' + href + '"' + (href === current ? ' class="active" aria-current="page"' : "") + ">" + label + "</a>";
+  if (href === current) return '<a href="' + href + '" class="active" aria-current="page">' + label + "</a>";
+  return '<a href="' + href + '"' + (href === FEATURED ? ' class="mlk-nav-featured"' : "") + ">" + label + "</a>";
 }
 
 function navFor(page) {

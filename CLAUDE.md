@@ -42,6 +42,8 @@ Every page gets the same nav bar and footer from `scripts/site-nav.js` (markup c
 between marker comments, styled by css/nav.css). Change the nav there and run
 `node scripts/site-nav.js`; `npm run test:site` fails if a page's copy drifts. A new
 page needs an entry in its PAGES list. Nav links use clean URLs (/mecanum/ir).
+`FEATURED` there is this week's lesson: its nav item breathes (slow orange glow, still
+under reduced motion) on every page but its own; "" turns it off.
 
 ## Robot pictures
 
