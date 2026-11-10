@@ -127,7 +127,7 @@ a plain INPUT (the receiver drives its line).
 ## Distance sensor sheet (mecanum/sonar-build.html)
 
 `mecanum/sonar-build.html` (2026-11-10, Wiring subnav "Plug in the distance sensor") is the
-one-page printable sheet for the HC-SR04, in the Bluetooth sheet's style: the sonar's four
+one-page printable sheet for the HC-SR04, in the Bluetooth sheet's style: a side view (step 2) shows the wires starting just behind the sonar, over the chassis, under the Arduino, looping up into the driver board; the sonar's four
 wires make an L at A2 (+5V, Gnd, A2 = Echo down the A2 column, A3 = Trig beside it), next
 to the Bluetooth L at A0/A1; the LDRs stay on A4/A5. Shield pictures and step 6's robot:
 `python3 scripts/sonar-figs.py`. Blockly screenshot: `node temp/shot-sonar.js`
