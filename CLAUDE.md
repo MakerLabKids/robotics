@@ -26,7 +26,7 @@ The live site is for the ONE current class, at where it is now: nothing that rea
 like a schedule. Three tiers:
 
 - **Live (in the nav):** Home, IR Remote (since 2026-11-10 a section: Remote guide,
-  Programming with IR Remote = ir.html, Program a square), Challenges, Light bot
+  Programming with IR Remote = ir.html, Program a square, Challenges), Light bot
   (moth mode `# # 1`, cockroach mode `# # 2`), Sticks (labeled Bluetooth until 2026-11-10; its subnav is
   still titled Bluetooth; since 2026-11-05: Plug in the module, How to connect,
   mecanum/bluetooth.html, and Drive with Sticks, mecanum/sticks.html), Calibration

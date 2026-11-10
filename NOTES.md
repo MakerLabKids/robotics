@@ -297,7 +297,7 @@ Not done yet (next steps, in order):
    And Blocks breathes in the nav as this week's lesson (FEATURED in site-nav.js; move or
    clear it when the lesson changes). "Programming" left the top nav: the "IR Remote" item
    (was "Remote guide") is a section with Remote guide, Programming with IR Remote (ir.html)
-   and Program a square; the Home tile is "Programming with IR Remote". Not renamed: ir.html's
+   Program a square and Challenges (out of the top nav too); the Home tile is "Programming with IR Remote". Not renamed: ir.html's
    own title ("Programming Guide").
    **The bots were named before** (the user, 2026-11-05: "we previously named the bots...
    did that get blown away?"). Answer: no. The name is in the Bluetooth module's own

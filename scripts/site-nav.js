@@ -11,7 +11,6 @@ const root = path.resolve(__dirname, "..");
 const NAV = [
   ["/", "Home"],
   ["/mecanum/remote-guide", "IR Remote"],
-  ["/mecanum/challenges", "Challenges"],
   ["/mecanum/light", "Light bot"],
   ["/mecanum/bluetooth", "Sticks"],
   ["/mecanum/tune", "Calibration"],
@@ -38,7 +37,8 @@ const SECTIONS = {
   ir: { title: "IR Remote", pages: [
     ["/mecanum/remote-guide", "Remote guide"],
     ["/mecanum/ir", "Programming with IR Remote"],
-    ["/mecanum/square", "Program a square"]
+    ["/mecanum/square", "Program a square"],
+    ["/mecanum/challenges", "Challenges"]
   ] },
   light: { title: "Light bot", pages: [
     ["/mecanum/light", "How to use the Light Bot"],
@@ -58,7 +58,7 @@ const PAGES = {
   "mecanum/remote-guide.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/remote-guide" },
   "mecanum/ir.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/ir" },
   "mecanum/square.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/square" },
-  "mecanum/challenges.html": { active: "/mecanum/challenges" },
+  "mecanum/challenges.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/challenges" },
   "mecanum/light.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light" },
   "mecanum/light-build.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light-build" },
   "mecanum/bluetooth-build.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth-build" },
