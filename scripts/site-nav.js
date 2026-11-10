@@ -10,8 +10,7 @@ const root = path.resolve(__dirname, "..");
 // The live site: what the current class has covered.
 const NAV = [
   ["/", "Home"],
-  ["/mecanum/remote-guide", "Remote guide"],
-  ["/mecanum/ir", "Programming"],
+  ["/mecanum/remote-guide", "IR Remote"],
   ["/mecanum/challenges", "Challenges"],
   ["/mecanum/light", "Light bot"],
   ["/mecanum/bluetooth", "Sticks"],
@@ -36,8 +35,9 @@ const SET_ASIDE = [
 
 // A section's own pages, shown as a subnav under the bar on each of them.
 const SECTIONS = {
-  programming: { title: "Programming", pages: [
-    ["/mecanum/ir", "Programming guide"],
+  ir: { title: "IR Remote", pages: [
+    ["/mecanum/remote-guide", "Remote guide"],
+    ["/mecanum/ir", "Programming with IR Remote"],
     ["/mecanum/square", "Program a square"]
   ] },
   light: { title: "Light bot", pages: [
@@ -55,9 +55,9 @@ const SECTIONS = {
 //           tool: narrow screens get a Back link only (to back, or the archive), noFoot }
 const PAGES = {
   "index.html": { active: "/" },
-  "mecanum/remote-guide.html": { active: "/mecanum/remote-guide" },
-  "mecanum/ir.html": { active: "/mecanum/ir", section: "programming", here: "/mecanum/ir" },
-  "mecanum/square.html": { active: "/mecanum/ir", section: "programming", here: "/mecanum/square" },
+  "mecanum/remote-guide.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/remote-guide" },
+  "mecanum/ir.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/ir" },
+  "mecanum/square.html": { active: "/mecanum/remote-guide", section: "ir", here: "/mecanum/square" },
   "mecanum/challenges.html": { active: "/mecanum/challenges" },
   "mecanum/light.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light" },
   "mecanum/light-build.html": { active: "/mecanum/light", section: "light", here: "/mecanum/light-build" },
