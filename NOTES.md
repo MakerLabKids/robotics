@@ -193,6 +193,12 @@ stopped (any key from ANY remote in the room, a sagging battery restarting the b
 `p?;` shows what is really stored. Still unknown: typed on the remote or sent from
 Blocks, and which firmware.
 
+Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
+In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
+Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings
+as wired (Trig A3 / Echo A2) and swapped, waits 60 ms, prints echo rest level, start delay
+and pulse width over USB. Result: (waiting for the user).
+
 This week (the user, 2026-11-10): Blockly over Bluetooth, and part 2 the distance sensor
 in "if" blocks. Done: firmware 0.10.87 (ir.ino + programming.ino: USE_LIGHT_BACK 0, the
 sonar on, Echo A2 / Trig A3; all four shared sketches bumped; ir 30150 B, programming
