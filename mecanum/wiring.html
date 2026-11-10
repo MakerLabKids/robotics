@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#ffffff">
-<title>Robot Wiring 0.1.18 - Maker Lab Kids</title>
+<title>Robot Wiring 0.1.19 - Maker Lab Kids</title>
 <style>
   :root {
     --ink: #1c1f24;
@@ -57,6 +57,7 @@
 <body>
 <!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
 <nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">IR Remote</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Sticks</a><a href="/mecanum/tune">Calibration</a><a href="/mecanum/wiring" class="active" aria-current="page">Wiring</a><a href="/mecanum/blocks" class="mlk-nav-featured">Blockly</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<nav class="mlk-subnav" aria-label="Wiring pages"><span>Wiring:</span><a href="/mecanum/wiring" class="active" aria-current="page">Every wire</a><a href="/mecanum/sonar-build">Plug in the distance sensor</a></nav>
 <!-- /mlk-nav -->
 <div class="sheet">
 
@@ -116,8 +117,8 @@
     <path d="M315 284 V408 H240 V420" stroke="#0b6fb3" stroke-width="2.5" fill="none" stroke-dasharray="5 3"/>
     <!-- sonar -->
     <rect x="300" y="44" width="120" height="40" rx="6" fill="#5b47c9"/>
-    <text x="360" y="61" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Sonar, or back LDR</text>
-    <text x="360" y="76" text-anchor="middle" font-size="10" fill="#fff">Echo A2, Trig A3 / LDR A3</text>
+    <text x="360" y="61" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Sonar</text>
+    <text x="360" y="76" text-anchor="middle" font-size="10" fill="#fff">Echo A2, Trig A3</text>
     <path d="M345 244 V150 H345 V84" stroke="#5b47c9" stroke-width="2.5" fill="none"/>
     <path d="M375 244 V150 H375 V84" stroke="#5b47c9" stroke-width="2.5" fill="none" stroke-dasharray="5 3"/>
     <!-- gyro -->
@@ -143,10 +144,10 @@
     <tr><td><b>Motors</b></td><td>2 wires each</td><td>Front left <b>M4</b>, front right <b>M3</b>, rear left <b>M1</b>, rear right <b>M2</b>. If a wheel spins backward, swap that motor's two wires (or fix it in the app).</td></tr>
     <tr><td><b>Battery</b></td><td>+ and -</td><td>The shield's EXT_PWR screw terminal (+ to +).</td></tr>
     <tr><td><b>Bluetooth</b> (HC-06)</td><td>VCC GND TXD RXD</td><td>VCC to 5V, GND to GND, <b>TXD to A0</b>, <b>RXD to A1</b>.</td></tr>
-    <tr><td><b>Sonar</b> (HC-SR04)</td><td>VCC Trig Echo GND</td><td>VCC to 5V, GND to GND, <b>Echo to A2</b>, <b>Trig to A3</b>. Off in ir.ino as shipped (0.10.79+), since A3 is the back LDR's pin; <code>USE_LIGHT_BACK 0</code> brings it back, and then it stops for anything nearer than 25 cm ahead.</td></tr>
+    <tr><td><b>Sonar</b> (HC-SR04)</td><td>VCC Trig Echo GND</td><td>VCC to 5V, GND to GND, <b>Echo to A2</b>, <b>Trig to A3</b>: an L next to the Bluetooth one (<a href="/mecanum/sonar-build">step by step</a>). On in ir.ino and programming.ino since 0.10.87: the robot stops for anything nearer than 25 cm ahead, and Blockly reads it (<code>u</code>).</td></tr>
     <tr><td><b>IR receiver</b></td><td>OUT GND VCC (check the labels)</td><td>VCC to 5V, GND to GND, OUT to <b>D2</b> for mecanum_holonomic.ino, or <b>D10</b> (the SER1 servo header) for ir.ino.</td></tr>
-    <tr><td><b>Light sensors</b> (2 LDRs)</td><td>2 legs each, + a resistor each</td><td>Left front corner to <b>A4</b>, right front corner to <b>A5</b>, optional back one to <b>A3</b>. See below.</td></tr>
-    <tr><td><b>Gyro</b> (MPU-6050, optional)</td><td>VCC GND SCL SDA</td><td>VCC to 5V, GND to GND, <b>SDA to A4</b>, <b>SCL to A5</b>. Found by itself at power-on. Shares A4/A5 with the LDRs: one or the other.</td></tr>
+    <tr><td><b>Light sensors</b> (2 LDRs)</td><td>2 legs each, + a resistor each</td><td>Left front corner to <b>A4</b>, right front corner to <b>A5</b>. See below.</td></tr>
+    <tr><td><b>Gyro</b> (MPU-6050, optional)</td><td>VCC GND SCL SDA</td><td>VCC to 5V, GND to GND, <b>SDA to A4</b>, <b>SCL to A5</b>. Found by itself at power-on. Shares A4/A5 with the LDRs: one or the other. (I2C is always A4/A5 on the Uno, so any I2C part needs the LDRs unplugged.)</td></tr>
   </table>
 
   <h2>Light sensors (LDRs): the light bot</h2>
@@ -156,7 +157,6 @@
     <b>Before you start:</b>
     <ul>
       <li>The LDRs go on <b>A4 (left) and A5 (right)</b>. If a gyro is plugged into A4/A5, unplug its SDA and SCL wires.</li>
-      <li><b>Optional third LDR on A3</b>, middle of the back, looking straight back, wired the same way (LDR from +5V to A3, resistor from A3 to Gnd). Unplug the sonar's Trig wire from A3. The robot checks for it at the start of each light mode.</li>
       <li>With <b>ir.ino</b> (version 0.10.78 or newer) the remote does it all: <b># # 1</b> follows the light, <b># # 2</b> runs from it. Flashing the flashlight left, right, left, right also starts following.</li>
     </ul>
   </div>
@@ -254,10 +254,9 @@
   <h3>With the remote (ir.ino)</h3>
   <ol>
     <li>Flash <a href="../ir/ir.ino" download>ir.ino</a> 0.10.78 or newer. The calibration is kept, because it is stored in the robot's memory.</li>
-    <li><b>Check</b> (optional, with the <a href="ir.html#instructor">Programming page</a> or a USB cable): type <code>b</code>. It answers <code>B,&lt;direction&gt;,&lt;brightest&gt;,&lt;left&gt;,&lt;right&gt;</code> (and <code>,&lt;back&gt;</code> with a back LDR). Cover the left LDR and the third number should drop. Shine a flashlight on it and the number should jump.</li>
-    <li><b># # 1</b>: <b>moth mode</b>, follow the light. The robot wiggles and learns the flashlight (0.10.81 or newer): shine on one LDR, nothing (light away or off), the other, nothing, and again; then on both, nothing, both. A twitch for each shine it counts, a slow "no" if an LDR barely changes, a nod when done; OK skips it. Then shine a phone flashlight at its nose and walk away: it turns toward the brighter side and comes after you. It stops when the light goes. Nothing stops it short of you (the sonar is off), so keep walking or turn the flashlight off.</li>
+    <li><b>Check</b> (optional, with the <a href="ir.html#instructor">Programming page</a> or a USB cable): type <code>b</code>. It answers <code>B,&lt;direction&gt;,&lt;brightest&gt;,&lt;left&gt;,&lt;right&gt;</code>. Cover the left LDR and the third number should drop. Shine a flashlight on it and the number should jump.</li>
+    <li><b># # 1</b>: <b>moth mode</b>, follow the light. The robot wiggles and learns the flashlight (0.10.81 or newer): shine on one LDR, nothing (light away or off), the other, nothing, and again; then on both, nothing, both. A twitch for each shine it counts, a slow "no" if an LDR barely changes, a nod when done; OK skips it. Then shine a phone flashlight at its nose and walk away: it turns toward the brighter side and comes after you. It stops when the light goes. The sonar stops it about 25 cm short of you.</li>
     <li><b># # 2</b>: <b>cockroach mode</b>, run from the light. Shine the flashlight at it and it backs away, turning to keep watching the flashlight.</li>
-    <li><b>With the back LDR</b>: a light behind makes # # 1 back straight toward it and # # 2 run forward away from it. If the flashlight also lights one front LDR a little, it turns as it goes, swinging its tail toward the light.</li>
     <li><b>Any key</b> stops it.</li>
     <li><b>No remote?</b> With the robot sitting idle, flash the flashlight on the left LDR, then the right, the left, the right, all within 5 seconds (a moment on each). Then both, nothing, both, and it goes into moth mode, the same as # # 1. Version 0.10.78 or newer.</li>
   </ol>
@@ -271,7 +270,7 @@
       <li><b>It never moves</b>: check with <code>b</code>. Both numbers should move when you cover the LDRs or shine the flashlight on them. If they don't, look for a loose wire or a missing resistor, or a gyro still plugged into A4/A5.</li>
       <li><b>It turns away from the light when following</b>: left and right are swapped (A4 is the left one).</li>
       <li><b>It reacts to the room, not the flashlight</b>: put the tubes on the LDRs, or use a brighter flashlight.</li>
-      <li><b>It runs into you</b>: the sonar is off in this build. Turn the flashlight off to stop it, or press any key.</li>
+      <li><b>It runs into you</b>: check the sonar (Echo A2, Trig A3) and that the robot runs 0.10.87 or newer. Turn the flashlight off to stop it, or press any key.</li>
       <li><b>The number goes DOWN in bright light</b>: the LDR and the resistor are swapped (LDR to 5V, resistor to Gnd: the old way). Swap them, or flash a sketch older than 0.10.83.</li>
     </ul>
   </div>

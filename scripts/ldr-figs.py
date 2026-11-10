@@ -269,7 +269,7 @@ def header_closeup(columns, hints=()):
                  "+5V on +5V (wire 2), Gnd on Gnd (wire 1), A5 on A5 (wire 3).")
     else:
         label = ("Step 14: the same header with both sensors plugged in: the right sensor on the A5 column and the left sensor on A4, "
-                 "each with +5V on top, Gnd in the middle and the signal at the edge. A3 is marked back.")
+                 "each with +5V on top, Gnd in the middle and the signal at the edge.")
     return f'<svg viewBox="0 20 360 250" role="img" aria-label="{label}">\n' + "\n".join(out) + "\n</svg>"
 
 
@@ -383,7 +383,7 @@ def figure(state):
     if state == "header":
         return header_closeup([5])
     if state == "header-all":
-        return header_closeup([4, 5], hints=(3,))
+        return header_closeup([4, 5])
     if state == "robot":
         return robot_view()
     if state == "chase":

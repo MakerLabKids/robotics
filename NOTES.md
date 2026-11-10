@@ -193,6 +193,20 @@ stopped (any key from ANY remote in the room, a sagging battery restarting the b
 `p?;` shows what is really stored. Still unknown: typed on the remote or sent from
 Blocks, and which firmware.
 
+This week (the user, 2026-11-10): Blockly over Bluetooth, and part 2 the distance sensor
+in "if" blocks. Done: firmware 0.10.87 (ir.ino + programming.ino: USE_LIGHT_BACK 0, the
+sonar on, Echo A2 / Trig A3; all four shared sketches bumped; ir 30150 B, programming
+26322 B), Blockly 0.1.18 (sonar first in the distance blocks' dropdown, the wall examples
+use the sonar, new live example "Look first": repeat 10, if sonar closer than 300 mm turn
+right 90, else forward 200), the sheet mecanum/sonar-build.html + resources/sonar-sheet.pdf,
+wiring / light / ir pages without the back LDR. The robots must be reflashed with 0.10.87
+for the sonar. NOT checked on a real robot: the sonar reading over Bluetooth while a Blockly
+program runs (half-duplex: one command at a time), and whether the kit already wired the
+sonar's +5V/Gnd somewhere other than the A2 column (the sheet says to check). The user's
+idea "two LDRs, sonar, plus anything on I2C" does not fit: I2C is A4/A5, the LDRs' pins.
+Ways out (not chosen): LDRs to A2/A3 and the sonar to D9 (SER2) as a one-pin sonar, or a
+mux / ADS1115 on I2C for the LDRs.
+
 Next class (the user, 2026-11-05: "tomorrow"): the kids play with light following; if
 everyone is good and there is time, the Bluetooth modules go on and loaner phones connect
 for the first time. Nothing Bluetooth has run on a real robot or a real phone yet, so:

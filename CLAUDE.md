@@ -124,6 +124,18 @@ hardware: `node scripts/mecanum-sim/ir-e2e.js` (script-mode simavr, in run-all).
 Simulator note: simavr forces a pulled-up INPUT high on every PORT write, so the IR pin is
 a plain INPUT (the receiver drives its line).
 
+## Distance sensor sheet (mecanum/sonar-build.html)
+
+`mecanum/sonar-build.html` (2026-11-10, Wiring subnav "Plug in the distance sensor") is the
+one-page printable sheet for the HC-SR04, in the Bluetooth sheet's style: the sonar's four
+wires make an L at A2 (+5V, Gnd, A2 = Echo down the A2 column, A3 = Trig beside it), next
+to the Bluetooth L at A0/A1; the LDRs stay on A4/A5. Shield pictures and step 6's robot:
+`python3 scripts/sonar-figs.py`. Blockly screenshot: `node temp/shot-sonar.js`
+(img/blocks-if-light.png); PDF: `node temp/print-sonar.js`, copy temp/sonar-build.pdf to
+resources/sonar-sheet.pdf; keep it one page. The sonar is ON in ir.ino and programming.ino
+since 0.10.87 (`USE_LIGHT_BACK 0`; the back LDR on A3 is gone from the pages). I2C is A4/A5
+on the Uno, the LDRs' pins: an I2C part and the LDRs cannot both be plugged in.
+
 ## Remote + Bluetooth programming robot (programming.ino)
 
 `programming/programming.ino` (2026-11-04) is ir.ino for a class whose robots are already

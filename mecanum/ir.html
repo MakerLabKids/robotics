@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#15181c">
-<title>Programming Guide 0.1.31 - Maker Lab Kids</title>
+<title>Programming Guide 0.1.32 - Maker Lab Kids</title>
 <style>
   :root {
     --bg: #15181c;
@@ -362,8 +362,8 @@
       <h3 style="margin-top:0">Set up a robot</h3>
       <p>Flash <a href="../ir/ir.ino" download><b>ir.ino</b></a> (Arduino IDE, Uno). It drives on the same motion numbers as mecanum_holonomic.ino, including a set saved by the <a href="calibration.html">Calibrate / Tune</a> page.</p>
       <p><b>IR receiver</b> (3 pins: OUT, VCC, GND): OUT to <b>D10</b>, the signal pin of the shield's <b>SER1</b> servo header, 5 V and GND beside it. No soldering. Any other pin works too: change <code>IR_RECEIVER_PIN</code> at the top of the sketch (the robot says which pin it uses when it boots).</p>
-      <p><b>Light sensors</b> (for # # 1 / # # 2): two LDRs, each with a fixed resistor (4.7k): 5V - resistor - pin - LDR - GND (0.10.83 or newer; older sketches expect the LDR on the 5V side). Left front corner to <b>A4</b>, right front corner to <b>A5</b>, each looking 45 degrees out. Unplug a gyro from A4/A5 first if there is one. Diagram and how to pick the resistor: <a href="wiring.html">Wiring</a>. Check them with <b>Watch the light sensors</b> below (or a single <code>b</code>): cover one and its number drops. If it rises instead, that LDR and its resistor are swapped. <b>A4 and A5 are also the I2C pins</b> (SDA/SCL), so an IMU left plugged into the shield's I2C header fights the two dividers: unplug it. <b>Optional back LDR</b> on <b>A3</b>, middle of the back, looking straight back, wired the same way: the robot finds it by itself at the start of each light mode (<code>light: back sensor found</code>).</p>
-      <p><b>Sonar</b> (HC-SR04): <b>off</b> as shipped since 0.10.79, because A3 (its Trig) is the back LDR's pin; the robot says <code>no sonar</code> when it boots. To bring it back, set <code>USE_LIGHT_BACK</code> to 0 at the top of the sketch and plug it in where the kit puts it: trig A3, echo A2. Then under 25 cm ahead = stop; <code>SONAR_STOP_MM</code> sets the distance, <code>SONAR_STOPS_EVERYTHING</code> makes it stop every move.</p>
+      <p><b>Light sensors</b> (for # # 1 / # # 2): two LDRs, each with a fixed resistor (4.7k): 5V - resistor - pin - LDR - GND (0.10.83 or newer; older sketches expect the LDR on the 5V side). Left front corner to <b>A4</b>, right front corner to <b>A5</b>, each looking 45 degrees out. Unplug a gyro from A4/A5 first if there is one. Diagram and how to pick the resistor: <a href="wiring.html">Wiring</a>. Check them with <b>Watch the light sensors</b> below (or a single <code>b</code>): cover one and its number drops. If it rises instead, that LDR and its resistor are swapped. <b>A4 and A5 are also the I2C pins</b> (SDA/SCL), so an IMU left plugged into the shield's I2C header fights the two dividers: unplug it.</p>
+      <p><b>Sonar</b> (HC-SR04): <b>on</b> since 0.10.87 (it was off from 0.10.79, when A3 was kept for a back LDR): Echo <b>A2</b>, Trig <b>A3</b>, plus +5V and Gnd down the A2 column, an L next to the Bluetooth one (<a href="/mecanum/sonar-build">How to plug in the distance sensor</a>). Under 25 cm ahead = stop; <code>SONAR_STOP_MM</code> sets the distance, <code>SONAR_STOPS_EVERYTHING</code> makes it stop every move. Blockly reads it with <code>u</code> for its "sonar sees something closer than" block. <code>USE_LIGHT_BACK 1</code> trades it for a back LDR on A3.</p>
       <p>The remote is the kit's 17-key one (arrows, OK, 0-9, * #). Another remote prints <code>ir: key 0x.. not mapped</code> in the console below; its codes go in <code>IR_KEYS</code>.</p>
     </div>
 

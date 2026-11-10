@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Plug In the Distance Sensor 0.1.1 - Maker Lab Kids</title>
+<meta name="description" content="How to plug the sonar distance sensor into the mecanum robot, step by step, then use it in Blockly with if blocks.">
+<link rel="stylesheet" href="../css/site.css">
+<style>
+  .doc-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
+  .doc-head h1 { margin: 0; }
+  .doc-head .subtitle { margin: 4px 0 0; }
+  .page-lockup { height: 64px; width: auto; background: #fff; border-radius: 8px; padding: 6px 10px; }
+  .build-steps h2 { margin-top: 28px; }
+  .steps { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .steps figure { margin: 0; padding: 10px; border: 1px solid var(--panel-edge); border-radius: 10px; background: var(--panel);
+                  display: flex; flex-direction: column; }
+  .steps svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  .steps figcaption { margin-top: 8px; font-size: 14px; }
+  .steps .step-title { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: 0; text-transform: none; }
+  .steps figure.wide { grid-column: 1 / -1; }
+  .use { display: flex; gap: 14px; align-items: flex-start; }
+  .use .shot { flex: 1 1 auto; min-width: 0; width: 60%; height: auto; border: 1px solid #999; border-radius: 8px; background: #fff; }
+  .use .use-qr { flex: 0 0 150px; text-align: center; font-size: 12px; }
+  .use .use-qr svg { width: 150px; height: 150px; border-radius: 6px; }
+  .use-link { font-weight: 700; overflow-wrap: anywhere; }
+  @media print {
+    .page-lockup { background: none; padding: 0; height: 50px; }
+    .steps { grid-template-columns: repeat(4, 1fr); gap: 8px 10px; margin-top: 10px; }
+    .steps figure { padding: 6px; border-color: #999; background: none; break-inside: avoid; page-break-inside: avoid; }
+    .steps svg { color: #000; }
+    .steps .fig-bg { fill: #fff; }
+    .steps figcaption { font-size: 11.5px; margin-top: 4px; }
+    .steps .step-title { font-size: 13px; margin-bottom: 4px; color: #000; }
+    .steps figure.wide { grid-column: span 2; }
+    .use { gap: 8px; }
+    .use .shot { width: auto; max-width: 78%; max-height: 1.9in; flex: 0 1 auto; }
+    .doc-head { margin-bottom: 0; }
+    .doc-head h1 { font-size: 22px; }
+    .use .use-qr { flex-basis: 96px; font-size: 9px; }
+    .use .use-qr svg { width: 96px; height: 96px; }
+    .build-steps h2 { margin-top: 8px; }
+    .card { padding: 8px 12px; }
+  }
+  @page {
+    margin: 0.4in 0.45in 0.6in;
+    @bottom-center { content: "Maker Lab Kids \00B7  robotics.makerlabkids.com"; font: 10px system-ui, sans-serif; color: #555; }
+  }
+</style>
+<link rel="stylesheet" href="/css/nav.css">
+</head>
+<body>
+<!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">IR Remote</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Sticks</a><a href="/mecanum/tune">Calibration</a><a href="/mecanum/wiring" class="active" aria-current="page">Wiring</a><a href="/mecanum/blocks" class="mlk-nav-featured">Blockly</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<nav class="mlk-subnav" aria-label="Wiring pages"><span>Wiring:</span><a href="/mecanum/wiring">Every wire</a><a href="/mecanum/sonar-build" class="active" aria-current="page">Plug in the distance sensor</a></nav>
+<!-- /mlk-nav -->
+<main class="page">
+  <header class="doc-head">
+    <img class="page-lockup" src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div>
+      <h1>How to plug in the distance sensor</h1>
+      <p class="subtitle">Then use it in Blockly: if it sees something, do this, else do that</p>
+    </div>
+  </header>
+
+  <section class="build-steps">
+    <div class="steps">
+      <figure>
+        <h3 class="step-title">1. Find the sonar</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 1: the sonar distance sensor seen from the front: a blue board with two round silver eyes, and four pins along the bottom labeled VCC, Trig, Echo and GND.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <rect x="40" y="60" width="280" height="140" rx="8" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
+            <circle cx="112" cy="128" r="50" fill="#cdd2d8" stroke="#555d66" stroke-width="3"/>
+            <circle cx="112" cy="128" r="36" fill="#9aa3ad" stroke="#555d66" stroke-width="1.5"/>
+            <circle cx="248" cy="128" r="50" fill="#cdd2d8" stroke="#555d66" stroke-width="3"/>
+            <circle cx="248" cy="128" r="36" fill="#9aa3ad" stroke="#555d66" stroke-width="1.5"/>
+            <rect x="166" y="80" width="28" height="18" rx="2" fill="#cdd2d8" stroke="#555d66" stroke-width="1"/>
+            <path d="M138 200 v40 M166 200 v40 M194 200 v40 M222 200 v40" fill="none" stroke="#9aa3ad" stroke-width="6" stroke-linecap="round"/>
+            <text x="138" y="262" text-anchor="middle" font-size="13">VCC</text>
+            <text x="166" y="280" text-anchor="middle" font-size="13">Trig</text>
+            <text x="194" y="262" text-anchor="middle" font-size="13">Echo</text>
+            <text x="222" y="280" text-anchor="middle" font-size="13">GND</text>
+            <text x="180" y="40" text-anchor="middle">the front of the robot</text>
+          </g>
+        </svg>
+        <figcaption>The <b>sonar</b> is the pair of round <b>"eyes"</b> at the front of the
+        robot. Its <b>4 pins</b> are labeled <b>VCC</b>, <b>Trig</b>, <b>Echo</b>,
+        <b>GND</b>.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">2. Which wire is which</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 2: each wire goes from a pin on the sonar to a pin on the motor shield: VCC to +5V, GND to Gnd, Echo to A2, Trig to A3.">
+          <g font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="currentColor">
+            <text x="60" y="30" text-anchor="middle" font-size="14">on the sonar</text>
+            <text x="298" y="30" text-anchor="middle" font-size="14">on the shield</text>
+            <rect x="20" y="46" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="74" text-anchor="middle">VCC</text>
+            <rect x="20" y="108" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="136" text-anchor="middle">GND</text>
+            <rect x="20" y="170" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="198" text-anchor="middle">Echo</text>
+            <rect x="20" y="232" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="60" y="260" text-anchor="middle">Trig</text>
+            <rect x="258" y="46" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="74" text-anchor="middle">+5V</text>
+            <rect x="258" y="108" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="136" text-anchor="middle">Gnd</text>
+            <rect x="258" y="170" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="198" text-anchor="middle">A2</text>
+            <rect x="258" y="232" width="80" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="2"/><text x="298" y="260" text-anchor="middle">A3</text>
+            <path d="M100 68 H258" fill="none" stroke="#e33b2e" stroke-width="7" stroke-linecap="round"/>
+            <path d="M100 130 H258" fill="none" stroke="#888" stroke-width="9" stroke-linecap="round"/>
+            <path d="M100 130 H258" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+            <path d="M100 192 H258" fill="none" stroke="#2fa84f" stroke-width="7" stroke-linecap="round"/>
+            <path d="M100 254 H258" fill="none" stroke="#8e44c9" stroke-width="7" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <figcaption><b>VCC</b> goes to <b>+5V</b>, <b>GND</b> to <b>Gnd</b>, <b>Echo</b>
+        to <b>A2</b>, <b>Trig</b> to <b>A3</b>. Follow each wire from the sonar back to
+        the shield. Your wires can be any colors.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">3. Find the analog header</h3>
+        <!-- sonar:board --><svg viewBox="0 0 360 300" role="img" aria-label="The motor shield from above. The analog header is at the bottom right, under the right motor connector: three rows, +5V on top, Gnd in the middle and A0-5 along the board's edge, with A0 on the left and A5 on the right. An L is outlined at the third column: the A2 column, plus A3 on the bottom row.">
+<rect width="360" height="300" rx="10" class="fig-bg" fill="#f4f1ea"/>
+<rect x="20" y="20" width="320" height="240" rx="12" fill="#1f5fae" stroke="#174a88" stroke-width="2"/>
+<rect x="20" y="70" width="34" height="62" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<rect x="20" y="150" width="34" height="62" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<rect x="95" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="160" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="225" y="60" width="44" height="90" rx="3" fill="#222"/>
+<rect x="70" y="200" width="56" height="40" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<text x="98" y="256" text-anchor="middle" font-size="11" fill="#fff">power in</text>
+<rect x="227" y="206" width="81" height="42" rx="2" fill="#f2d33c"/>
+<rect x="232" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="211" width="6" height="6" fill="#6b5a12"/>
+<rect x="232" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="224" width="6" height="6" fill="#6b5a12"/>
+<rect x="232" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="245" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="258" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="271" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="284" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="297" y="237" width="6" height="6" fill="#6b5a12"/>
+<rect x="286" y="80" width="54" height="126" rx="3" fill="#2f86d6" stroke="#174a88"/>
+<text x="312" y="140" text-anchor="middle" font-size="11" fill="#fff">motors</text>
+<path d="M254 207 H268 V233 H281 V247 H254 Z" fill="none" stroke="#e65100" stroke-width="3" stroke-linejoin="round"/>
+<text x="312" y="218" font-size="10" fill="#fff">+5V</text>
+<text x="312" y="231" font-size="10" fill="#fff">Gnd</text>
+<text x="312" y="244" font-size="10" fill="#fff">A0-5</text>
+<path d="M168 288 Q261 290 261 252" fill="none" stroke="#e65100" stroke-width="2.5"/>
+<path d="M255 262 L261 251 L267 262" fill="none" stroke="#e65100" stroke-width="2.5"/>
+<text x="162" y="292" text-anchor="end" font-size="14" fill="#222">the A2 column</text>
+</svg><!-- /sonar:board -->
+        <figcaption>The other ends go on the motor shield, on the analog header: the
+        <b>top row is all +5V</b>, the <b>middle row is all Gnd</b>, the <b>bottom row is
+        A0 to A5</b>. The sonar uses the <b>third column, A2</b>.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">4. Make an L</h3>
+        <!-- sonar:header --><svg viewBox="0 20 360 250" role="img" aria-label="Close-up of the analog header from above: columns A0 to A5 from left to right, the top row all +5V, the middle row all Gnd, the bottom row A0 to A5 at the board's edge. The sonar's four plugs make an L in the middle: +5V, Gnd and A2 (Echo) down the A2 column, and A3 (Trig) beside A2 on the bottom row. The Bluetooth L is on its left at A0 and A1, the light sensors on its right at A4 and A5.">
+<rect y="20" width="360" height="250" rx="10" class="fig-bg" fill="#f4f1ea"/>
+<rect x="0" y="20" width="360" height="206" fill="#1f5fae"/>
+<line x1="0" y1="226" x2="360" y2="226" stroke="#174a88" stroke-width="3"/>
+<rect x="7" y="69" width="276" height="138" rx="3" fill="#f2d33c"/>
+<rect x="23" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="85" width="14" height="14" fill="#6b5a12"/>
+<rect x="23" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="131" width="14" height="14" fill="#6b5a12"/>
+<rect x="23" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="69" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="115" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="161" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="207" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="253" y="177" width="14" height="14" fill="#6b5a12"/>
+<rect x="222" y="20" width="138" height="51" fill="#2f86d6" stroke="#174a88" stroke-width="2"/>
+<text x="291.0" y="50" text-anchor="middle" font-size="13" fill="#fff">motor connector</text>
+<rect x="10" y="72" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="30" cy="92" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="10" y="118" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="30" cy="138" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="10" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="30" cy="184" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="56" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="76" cy="184" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="194" y="72" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="214" cy="92" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="194" y="118" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="214" cy="138" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="194" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="214" cy="184" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="240" y="72" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="260" cy="92" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="240" y="118" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="260" cy="138" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="240" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5" opacity="0.45"/>
+<circle cx="260" cy="184" r="11" fill="#9aa3ad" stroke="#fff" stroke-width="1.5" opacity="0.6"/>
+<rect x="102" y="72" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="122" cy="92" r="11" fill="#d42a2a" stroke="#fff" stroke-width="1.5"/>
+<rect x="102" y="118" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="122" cy="138" r="11" fill="#161616" stroke="#fff" stroke-width="1.5"/>
+<rect x="102" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="122" cy="184" r="11" fill="#2fa84f" stroke="#fff" stroke-width="1.5"/>
+<rect x="148" y="164" width="40" height="40" rx="3" fill="#202326" stroke="#4a5058" stroke-width="1.5"/>
+<circle cx="168" cy="184" r="11" fill="#8e44c9" stroke="#fff" stroke-width="1.5"/>
+<path d="M97 67 H147 V159 H193 V209 H97 Z" fill="none" stroke="#e65100" stroke-width="3.5" stroke-linejoin="round"/>
+<text x="288" y="97" font-size="13" font-weight="700" fill="#fff">+5V</text>
+<text x="288" y="143" font-size="13" font-weight="700" fill="#fff">Gnd</text>
+<text x="288" y="189" font-size="13" font-weight="700" fill="#fff">A0-5</text>
+<text x="30" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A0</text>
+<text x="76" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A1</text>
+<text x="122" y="246" text-anchor="middle" font-size="14" font-weight="700" fill="#c24400">A2</text>
+<text x="168" y="246" text-anchor="middle" font-size="14" font-weight="700" fill="#c24400">A3</text>
+<text x="214" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A4</text>
+<text x="260" y="246" text-anchor="middle" font-size="14" font-weight="400" fill="#555">A5</text>
+<text x="53.0" y="263" text-anchor="middle" font-size="12" fill="#555">Bluetooth</text>
+<text x="122" y="263" text-anchor="middle" font-size="12" font-weight="700" fill="#c24400">Echo</text>
+<text x="168" y="263" text-anchor="middle" font-size="12" font-weight="700" fill="#c24400">Trig</text>
+<text x="237.0" y="263" text-anchor="middle" font-size="12" fill="#555">light sensors</text>
+</svg><!-- /sonar:header -->
+        <figcaption>The four wires make an <b>L</b>: <b>+5V</b>, <b>Gnd</b> and
+        <b>A2</b> (Echo) down the A2 column, and <b>A3</b> (Trig) next to A2. It sits
+        right next to the Bluetooth L.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">5. How it sees</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 5: the sonar sends a ping of sound at a wall and listens for the echo. A near wall echoes back fast, a far wall slowly.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <rect x="20" y="80" width="46" height="120" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
+            <circle cx="43" cy="112" r="16" fill="#cdd2d8" stroke="#555d66" stroke-width="2"/>
+            <circle cx="43" cy="168" r="16" fill="#cdd2d8" stroke="#555d66" stroke-width="2"/>
+            <path d="M84 96 q14 16 0 32 M104 88 q20 24 0 48 M124 80 q26 32 0 64" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round"/>
+            <path d="M226 160 q-14 8 0 16 M206 152 q-20 16 0 32 M186 146 q-26 22 0 44" fill="none" stroke="#2fa84f" stroke-width="4" stroke-linecap="round"/>
+            <rect x="262" y="40" width="40" height="200" fill="#9aa3ad" stroke="#555d66" stroke-width="2"/>
+            <text x="282" y="30" text-anchor="middle">wall</text>
+            <text x="118" y="64" text-anchor="middle" fill="#c24400">ping</text>
+            <text x="200" y="216" text-anchor="middle" fill="#1f7a3a">echo</text>
+            <text x="180" y="270" text-anchor="middle">near = fast echo, far = slow echo</text>
+          </g>
+        </svg>
+        <figcaption>Trig sends a <b>ping</b> of sound too high to hear. Echo listens for
+        it to bounce back: the longer the wait, the <b>farther away</b>. Soft or thin
+        things are hard to see.</figcaption>
+      </figure>
+      <figure>
+        <h3 class="step-title">6. Check it</h3>
+        <svg viewBox="0 0 360 300" role="img" aria-label="Step 6: the robot from above driving forward at a hand. It stops about 25 centimeters away.">
+          <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
+            <!-- sonar:bot --><defs><clipPath id="sonarcheckwheel0"><rect x="-95.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="sonarcheckwheel1"><rect x="60.5" y="-96.0" width="35" height="64" rx="7"/></clipPath><clipPath id="sonarcheckwheel2"><rect x="-95.5" y="32.0" width="35" height="64" rx="7"/></clipPath><clipPath id="sonarcheckwheel3"><rect x="60.5" y="32.0" width="35" height="64" rx="7"/></clipPath></defs><g transform="translate(88 190) rotate(0) scale(0.55)"><rect x="-69.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#sonarcheckwheel0)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="-119.0" x2="-69.5" y2="-102.0"/><line x1="-86.5" y1="-103.5" x2="-69.5" y2="-86.5"/><line x1="-86.5" y1="-88.0" x2="-69.5" y2="-71.0"/><line x1="-86.5" y1="-72.5" x2="-69.5" y2="-55.5"/><line x1="-86.5" y1="-57.0" x2="-69.5" y2="-40.0"/><line x1="-86.5" y1="-41.5" x2="-69.5" y2="-24.5"/><line x1="-86.5" y1="-26.0" x2="-69.5" y2="-9.0"/></g><rect x="-95.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="-72.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#sonarcheckwheel1)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="-102.0" x2="86.5" y2="-119.0"/><line x1="69.5" y1="-86.5" x2="86.5" y2="-103.5"/><line x1="69.5" y1="-71.0" x2="86.5" y2="-88.0"/><line x1="69.5" y1="-55.5" x2="86.5" y2="-72.5"/><line x1="69.5" y1="-40.0" x2="86.5" y2="-57.0"/><line x1="69.5" y1="-24.5" x2="86.5" y2="-41.5"/><line x1="69.5" y1="-9.0" x2="86.5" y2="-26.0"/></g><rect x="60.50" y="-96.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="-69.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#sonarcheckwheel2)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="-86.5" y1="26.0" x2="-69.5" y2="9.0"/><line x1="-86.5" y1="41.5" x2="-69.5" y2="24.5"/><line x1="-86.5" y1="57.0" x2="-69.5" y2="40.0"/><line x1="-86.5" y1="72.5" x2="-69.5" y2="55.5"/><line x1="-86.5" y1="88.0" x2="-69.5" y2="71.0"/><line x1="-86.5" y1="103.5" x2="-69.5" y2="86.5"/><line x1="-86.5" y1="119.0" x2="-69.5" y2="102.0"/></g><rect x="-95.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><rect x="55.00" y="56.00" width="14" height="16" rx="2" fill="#e3ad12"/><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="#f6c21c"/><g clip-path="url(#sonarcheckwheel3)" stroke="#15181c" stroke-width="7.4" stroke-linecap="round"><line x1="69.5" y1="9.0" x2="86.5" y2="26.0"/><line x1="69.5" y1="24.5" x2="86.5" y2="41.5"/><line x1="69.5" y1="40.0" x2="86.5" y2="57.0"/><line x1="69.5" y1="55.5" x2="86.5" y2="72.5"/><line x1="69.5" y1="71.0" x2="86.5" y2="88.0"/><line x1="69.5" y1="86.5" x2="86.5" y2="103.5"/><line x1="69.5" y1="102.0" x2="86.5" y2="119.0"/></g><rect x="60.50" y="32.00" width="35" height="64" rx="7" fill="none" stroke="#7a5c00" stroke-width="1.4"/><path d="M0 -124.0 L-13 -109.0 L13 -109.0 Z" fill="#ff5a3c"/><rect x="-58.00" y="-111.00" width="116" height="222" rx="16" fill="#262b33" stroke="#0c0e11" stroke-width="1.6"/><rect x="-48.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-102.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="-10.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-48.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="43.50" y="82.00" width="5" height="20" rx="2.5" fill="#40484f"/><rect x="-42.00" y="53.00" width="84" height="46" rx="4" fill="#0f1216"/><rect x="-35.00" y="56.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.00" y="78.50" width="70" height="17" rx="8" fill="#5a46b8"/><rect x="-35.50" y="60.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="30.50" y="82.50" width="5" height="9" rx="1" fill="#cdd2d8"/><rect x="-27.00" y="-57.00" width="54" height="70" rx="3" fill="#0d8a99"/><rect x="-19.50" y="6.50" width="13" height="17" rx="1.5" fill="#cdd2d8"/><rect x="9.00" y="7.00" width="10" height="14" rx="1.5" fill="#111417"/><rect x="-27.00" y="-56.00" width="54" height="60" rx="3" fill="#1b4fa6" stroke="#0d2c63" stroke-width="1"/><rect x="-25.90" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="22.50" y="-51.00" width="3.4" height="50" rx="1" fill="#0b0d10"/><rect x="-13.25" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="4.75" y="-40.50" width="8.5" height="21" rx="1" fill="#0b0d10"/><rect x="-9.50" y="-14.75" width="19" height="7.5" rx="1" fill="#0b0d10"/><circle cx="-9.00" cy="-38.00" r="1.3" fill="#555d66"/><circle cx="9.00" cy="-38.00" r="1.3" fill="#555d66"/><rect x="-20.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-56.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="-52.00" r="2.3" fill="#cdd2d8"/><rect x="-20.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="-15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="-6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><rect x="1.50" y="-4.25" width="19" height="8.5" rx="1" fill="#3d8ce6"/><circle cx="6.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="15.50" cy="0.00" r="2.3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="3" fill="#cdd2d8"/><circle cx="18.00" cy="-11.00" r="1.6" fill="#d3312b"/><circle cx="-18.00" cy="-11.00" r="1.8" fill="#63f58a"/><path d="M-24.2 -46 Q-41.14 -78 -9 -88" fill="none" stroke="#e33b2e" stroke-width="1.7" stroke-linecap="round"/><path d="M-24.2 -40 Q-41.14 -78 -3 -88" fill="none" stroke="#f6c21c" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -46 Q41.14 -78 3 -88" fill="none" stroke="#f4f6f8" stroke-width="1.7" stroke-linecap="round"/><path d="M24.2 -40 Q41.14 -78 9 -88" fill="none" stroke="#2fa866" stroke-width="1.7" stroke-linecap="round"/><rect x="-12.50" y="-90.50" width="25" height="13" rx="2" fill="#2d6fd0"/><rect x="-24.00" y="-111.00" width="48" height="22" rx="2.5" fill="#1f62c4"/><circle cx="-12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="-12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="-12.50" cy="-100.00" r="2" fill="#4a525c"/><circle cx="12.50" cy="-100.00" r="8.8" fill="#cdd2d8"/><circle cx="12.50" cy="-100.00" r="6" fill="#2a2f36"/><circle cx="12.50" cy="-100.00" r="2" fill="#4a525c"/><rect x="-4.00" y="-94.00" width="8" height="3" rx="1.5" fill="#cdd2d8"/><circle cx="-46.00" cy="-104.00" r="9" fill="#f1e9d6"/><circle cx="-46" cy="-104" r="9" fill="none" stroke="#b9a47a" stroke-width="2"/><path d="M-51 -108 L-41 -106 L-51 -104 L-41 -102 L-51 -100" fill="none" stroke="#c0541a" stroke-width="1.6"/><circle cx="46.00" cy="-104.00" r="9" fill="#f1e9d6"/><circle cx="46" cy="-104" r="9" fill="none" stroke="#b9a47a" stroke-width="2"/><path d="M41 -108 L51 -106 L41 -104 L51 -102 L41 -100" fill="none" stroke="#c0541a" stroke-width="1.6"/></g><!-- /sonar:bot -->
+            <path d="M88 104 V60 m-9 12 l9 -12 l9 12" fill="none" stroke="#ff7a1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M232 70 c0 -14 8 -20 16 -20 v-10 c0 -8 12 -8 12 0 v-6 c0 -8 12 -8 12 0 v4 c0 -8 12 -8 12 0 v10 c0 -6 10 -6 10 0 v30 c0 16 -10 26 -30 26 h-8 c-14 0 -24 -14 -24 -34z" fill="#f2c9a0" stroke="#8a5a32" stroke-width="2"/>
+            <path d="M88 52 V30 H250 V48" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/>
+            <text x="170" y="22" text-anchor="middle" font-size="14">about 25 cm (10 inches)</text>
+            <text x="250" y="160" text-anchor="middle">hold</text>
+            <text x="250" y="182" text-anchor="middle">forward</text>
+            <text x="250" y="222" text-anchor="middle" fill="#c24400">it stops!</text>
+          </g>
+        </svg>
+        <figcaption>Hold <b>forward</b> on the remote, hand in front: the robot <b>stops
+        about 25 cm away</b>. (Robot program <b>0.10.87</b> or newer.)</figcaption>
+      </figure>
+      <figure class="wide">
+        <h3 class="step-title">7. Program it: if ... else</h3>
+        <div class="use">
+          <img class="shot" src="../img/blocks-if-light.png" alt="Blockly with the Look first program: repeat 10 times, if sonar sees something closer than 300 mm, turn right 90 degrees, else drive forward 200 mm" width="1650" height="960">
+          <div class="use-qr"><svg class="qr" viewBox="0 0 41 41" role="img" aria-label="QR code for https://robotics.makerlabkids.com/mecanum/blocks" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM25 5h1v1h-1zM26 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM20 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM15 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM20 12h1v1h-1zM21 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM4 13h1v1h-1zM8 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM4 14h1v1h-1zM5 14h1v1h-1zM7 14h1v1h-1zM10 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM33 14h1v1h-1zM4 15h1v1h-1zM9 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM35 15h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM26 16h1v1h-1zM27 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM7 17h1v1h-1zM8 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM21 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM16 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM32 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM7 19h1v1h-1zM12 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM4 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM17 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM5 22h1v1h-1zM7 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM5 23h1v1h-1zM7 23h1v1h-1zM12 23h1v1h-1zM13 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM35 23h1v1h-1zM36 23h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM17 24h1v1h-1zM18 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM11 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM6 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM35 26h1v1h-1zM7 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM16 30h1v1h-1zM17 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM35 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM15 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM25 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM13 33h1v1h-1zM15 33h1v1h-1zM20 33h1v1h-1zM23 33h1v1h-1zM25 33h1v1h-1zM27 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM17 34h1v1h-1zM18 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM24 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM27 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM15 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM19 36h1v1h-1zM21 36h1v1h-1zM24 36h1v1h-1zM25 36h1v1h-1zM26 36h1v1h-1zM28 36h1v1h-1zM30 36h1v1h-1zM36 36h1v1h-1z" fill="#000"/></svg>
+          <div>Blockly</div></div>
+        </div>
+        <figcaption><a class="use-link" href="/mecanum/blocks">robotics.makerlabkids.com/mecanum/blocks</a><br>
+        In <b>Sensors</b>, find <b>sonar sees something closer than 300 mm</b>. Put it in an
+        <b>if ... else</b>: if it sees something, turn; else, go forward. Or press <b>+ New</b>
+        and pick <b>Look first</b>. Connect with <b>Bluetooth</b>, choose <b>Robot</b>, press
+        <b>RUN</b>. Programs with <b>if</b> run from the computer, not from a remote slot.</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+<!-- mlk-foot -->
+<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a><span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a><span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>
+<!-- /mlk-foot -->
+</body>
+</html>

@@ -1,4 +1,4 @@
-// ir.ino   (v0.10.86 - the mecanum robot driven and programmed from the kit's IR remote;
+// ir.ino   (v0.10.87 - the mecanum robot driven and programmed from the kit's IR remote;
 //           L293D shield, Bluetooth on A0/A1 as shipped, HC-SR04 sonar on A2/A3 as shipped,
 //           IR receiver on IR_RECEIVER_PIN)
 //
@@ -82,7 +82,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define FIRMWARE_VERSION "0.10.86"   // same line as mecanum_holonomic (bump both together)
+#define FIRMWARE_VERSION "0.10.87"   // same line as mecanum_holonomic (bump both together)
 #define SKETCH_NAME "ir"
 
 // A program step (the IR sketch's own): which way, and how far / how many degrees
@@ -153,11 +153,10 @@ const unsigned long IR_STAR_TIMEOUT_MS = 5000;  // a lone * (or # #) is forgotte
 // ===========================================================================
 // CONFIG - HC-SR04 sonar (A3 trig / A2 echo as shipped): a stop, nothing more
 // ===========================================================================
-// USE_LIGHT_BACK 1: a third LDR may sit on A3 looking straight back (see CONFIG -
-// light sensors); each light mode checks whether one is there. A3 is the
-// sonar's Trig, so the sonar is off and nothing stops the robot short of a
-// wall. USE_LIGHT_BACK 0 brings the sonar back (and no back LDR).
-#define USE_LIGHT_BACK 1
+// The sonar is on (since 0.10.87, for the Blocks "if" lessons): Echo A2, Trig A3.
+// USE_LIGHT_BACK 1 puts a third LDR on A3 looking straight back instead (see
+// CONFIG - light sensors); A3 is the sonar's Trig, so that turns the sonar off.
+#define USE_LIGHT_BACK 0
 #define USE_SONAR (!USE_LIGHT_BACK)
 const byte SONAR_ECHO_PIN = A2;
 const byte SONAR_TRIG_PIN = A3;

@@ -44,6 +44,10 @@ const SECTIONS = {
     ["/mecanum/light", "How to use the Light Bot"],
     ["/mecanum/light-build", "How to build a light sensor"]
   ] },
+  wiring: { title: "Wiring", pages: [
+    ["/mecanum/wiring", "Every wire"],
+    ["/mecanum/sonar-build", "Plug in the distance sensor"]
+  ] },
   bluetooth: { title: "Bluetooth", pages: [
     ["/mecanum/bluetooth-build", "Plug in the module"],
     ["/mecanum/bluetooth", "How to connect"],
@@ -65,7 +69,8 @@ const PAGES = {
   "mecanum/bluetooth.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth" },
   "mecanum/sticks.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/sticks", tool: true, back: "/mecanum/bluetooth", noFoot: true },
   "mecanum/tune.html": { active: "/mecanum/tune" },
-  "mecanum/wiring.html": { active: "/mecanum/wiring" },
+  "mecanum/wiring.html": { active: "/mecanum/wiring", section: "wiring", here: "/mecanum/wiring" },
+  "mecanum/sonar-build.html": { active: "/mecanum/wiring", section: "wiring", here: "/mecanum/sonar-build" },
   "mecanum/blocks.html": { active: "/mecanum/blocks", noFoot: true },
   "mecanum/index.html": { setAside: "/mecanum/" },
   "mecanum/calibration.html": { setAside: "/mecanum/calibration", tool: true },

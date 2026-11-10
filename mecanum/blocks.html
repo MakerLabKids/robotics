@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.17 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.18 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -538,7 +538,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.17';
+var EDITOR_VERSION = '0.1.18';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -2266,7 +2266,7 @@ function defineRobotBlocks() {
     loadExtraState: function (state) { this.wantedProgramName = state && state.program ? String(state.program) : null; }
   };
 
-  var sensorOptions = [['laser', 'laser'], ['sonar', 'sonar']];
+  var sensorOptions = [['sonar', 'sonar'], ['laser', 'laser']];   // sonar first: the class robots have one (A2 / A3), no laser
   var keepDrivingOptions = [];
   for (var directionName in KEEP_DRIVING_DIRECTIONS) {
     keepDrivingOptions.push([KEEP_DRIVING_DIRECTIONS[directionName].label, directionName]);
@@ -2359,7 +2359,7 @@ function defineRobotBlocks() {
       ],
       inputsInline: true, previousStatement: null, nextStatement: null,
       style: 'robot_keep_driving_blocks',
-      tooltip: 'Start moving and carry straight on with the next block. It keeps going until a stop block, another move, or the end of the program. Use it with a sensor: keep driving, repeat until the laser sees a wall, stop.'
+      tooltip: 'Start moving and carry straight on with the next block. It keeps going until a stop block, another move, or the end of the program. Use it with a sensor: keep driving, repeat until the sonar sees a wall, stop.'
     },
     {
       type: 'robot_keep_driving_mix',
@@ -3675,6 +3675,7 @@ function programBlockBuilders() {
   function defineSubroutine(name, blocks, x, y) { return { type: 'procedures_defnoreturn', x: x, y: y, fields: { NAME: name }, inputs: { STACK: { block: chainBlocks(blocks) } } }; }
   function keepDriving(directionName, power) { return { type: 'robot_keep_driving', fields: { DIRECTION: directionName }, inputs: { POWER: numberShadow(power) } }; }
   function seesCloser(sensorName, mm) { return { type: 'robot_sees_closer', fields: { SENSOR: sensorName }, inputs: { DISTANCE: numberShadow(mm) } }; }
+  function ifElse(conditionBlock, thenBlocks, elseBlocks) { return { type: 'controls_if', extraState: { hasElse: true }, inputs: { IF0: { block: conditionBlock }, DO0: { block: chainBlocks(thenBlocks) }, ELSE: { block: chainBlocks(elseBlocks) } } }; }
   function repeatUntil(conditionBlock, blocks) { return { type: 'controls_whileUntil', fields: { MODE: 'UNTIL' }, inputs: { BOOL: { block: conditionBlock }, DO: { block: chainBlocks(blocks) } } }; }
   function getVariable(variableId) { return { type: 'variables_get', fields: { VAR: { id: variableId } } }; }
   function times(leftBlock, number) { return { type: 'math_arithmetic', fields: { OP: 'MULTIPLY' }, inputs: { A: { block: leftBlock }, B: numberShadow(number) } }; }
@@ -3683,7 +3684,7 @@ function programBlockBuilders() {
   return {
     drive: drive, turn: turn, toward: toward, driveTurning: driveTurning, repeatTimes: repeatTimes, waitSeconds: waitSeconds,
     headingHold: headingHold, stop: stop, callSubroutine: callSubroutine, defineSubroutine: defineSubroutine,
-    keepDriving: keepDriving, seesCloser: seesCloser, repeatUntil: repeatUntil, getVariable: getVariable,
+    keepDriving: keepDriving, seesCloser: seesCloser, repeatUntil: repeatUntil, ifElse: ifElse, getVariable: getVariable,
     times: times, driveBlockDistance: driveBlockDistance, countWith: countWith, runProgram: runProgram
   };
 }
@@ -3780,10 +3781,10 @@ function listLiveExamplePrograms() {
     },
     {
       name: 'Wall stop',
-      description: 'sensor: keep driving until the laser sees a wall',
+      description: 'sensor: keep driving until the sonar sees a wall',
       state: workspaceStateFromTopBlocks([startBlockWith([
         make.keepDriving('forward', 40),
-        make.repeatUntil(make.seesCloser('laser', 250), [make.waitSeconds(0.05)]),
+        make.repeatUntil(make.seesCloser('sonar', 300), [make.waitSeconds(0.05)]),
         make.stop(),
         make.turn(1, 180)
       ])])
@@ -3794,9 +3795,18 @@ function listLiveExamplePrograms() {
       state: workspaceStateFromTopBlocks([startBlockWith([
         make.repeatTimes(5, [
           make.keepDriving('forward', 40),
-          make.repeatUntil(make.seesCloser('laser', 300), [make.waitSeconds(0.05)]),
+          make.repeatUntil(make.seesCloser('sonar', 350), [make.waitSeconds(0.05)]),
           make.stop(),
           make.turn(1, 135)
+        ])
+      ])])
+    },
+    {
+      name: 'Look first',
+      description: 'sensor + if: 10 times, if the sonar sees something closer than 300 mm turn right, else go forward',
+      state: workspaceStateFromTopBlocks([startBlockWith([
+        make.repeatTimes(10, [
+          make.ifElse(make.seesCloser('sonar', 300), [make.turn(1, 90)], [make.drive(0, 200)])
         ])
       ])])
     },
