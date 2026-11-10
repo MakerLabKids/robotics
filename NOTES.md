@@ -203,6 +203,17 @@ resources/blockly-guide.pdf; `python3 scripts/blockly-guide.py`, block pictures
 in Blockly (see CLAUDE.md), maps-e2e. Linked from Home and Blockly's Help. Not tried by kids
 yet; the maps' difficulty and the toolbox's numbers are guesses to tune after class.
 
+The Blockly screen (2026-11-10, the user: "a full page overview of the blockly environment -
+label what everything is ... then a secondary page with additional callout details"):
+mecanum/blockly-tour.html (0.1.0, two printed pages, resources/blockly-tour.pdf). Page 1: the
+whole editor (no site nav or title bar) with 25 numbered markers and a legend; page 2:
+close-ups of the simulator (A-K), a block and its right-click menu (a-k), the console's line
+kinds (1-11), tips. Remake: `node scripts/blockly-tour-shots.js` (screenshots + marker
+positions in scripts/blockly-tour-points.json; needs fonts-dejavu-core / fonts-noto-core for
+the undo arrows, apt-installed, not in the image), `python3 scripts/blockly-tour.py`,
+`node scripts/site-nav.js`, PDF `node temp/print-tour.js` (copy to resources/). Redo the
+shots whenever the editor's layout changes.
+
 Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings

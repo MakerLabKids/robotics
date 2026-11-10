@@ -73,6 +73,7 @@ const PAGES = {
   "mecanum/sonar-build.html": { active: "/mecanum/wiring", section: "wiring", here: "/mecanum/sonar-build" },
   "mecanum/blocks.html": { active: "/mecanum/blocks", noFoot: true },
   "mecanum/blockly-guide.html": { active: "/mecanum/blocks" },
+  "mecanum/blockly-tour.html": { active: "/mecanum/blocks" },
   "mecanum/index.html": { setAside: "/mecanum/" },
   "mecanum/calibration.html": { setAside: "/mecanum/calibration", tool: true },
   "mecanum/rename.html": { setAside: "/mecanum/rename" },
