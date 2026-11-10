@@ -287,7 +287,11 @@ Not done yet (next steps, in order):
    Bluetooth button needed no PIN); nothing has been tried with ir.ino / programming.ino on
    a real robot yet. Names: the Sticks Bluetooth list filters by name prefix (HC, HM, JDY,
    BT, MLT, MLK) or names saved on that phone, so the page says to name robots MLK-....
-   Still to write: the Blocks send/run part for kids (Blocks stays a tease).
+   Still to write: the Blocks send/run part for kids. 2026-11-10 (the user: "update the
+   main page for this week's lesson", the lesson = Blocks over Bluetooth): Home leads with
+   a Blocks tile (simulator, connect over Bluetooth, run or save in a slot), Bluetooth
+   second (plug in the module, connect, Sticks), the sketch card says ir.ino /
+   programming.ino 0.10.86. Blocks is no longer a tease.
    **The bots were named before** (the user, 2026-11-05: "we previously named the bots...
    did that get blown away?"). Answer: no. The name is in the Bluetooth module's own
    memory; a sketch upload never touches it, and only a kN / rename (pending flag, then

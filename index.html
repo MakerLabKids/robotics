@@ -20,17 +20,30 @@
 </head>
 <body>
 <!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
-<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/" class="active" aria-current="page">Home</a><a href="/mecanum/remote-guide">Remote guide</a><a href="/mecanum/ir">Programming</a><a href="/mecanum/challenges">Challenges</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Bluetooth</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks">Blocks</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/" class="active" aria-current="page">Home</a><a href="/mecanum/remote-guide">Remote guide</a><a href="/mecanum/ir">Programming</a><a href="/mecanum/challenges">Challenges</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Sticks</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks">Blocks</a><a href="/mecanum/lessons/">Lessons</a></nav>
 <!-- /mlk-nav -->
 
 <main class="page">
   <h1>Robotics</h1>
   <p class="subtitle">Our 4WD mecanum robot drives forward, slides sideways and spins,
   all at the same time. We built it, wired it, and now we drive and program it from an
-  IR remote, or drive it from a phone over Bluetooth.</p>
+  IR remote, drive it from a phone over Bluetooth, and program it with blocks.</p>
 
   <div class="tile-grid">
-    <a class="tile tile-primary" href="/mecanum/remote-guide">
+    <a class="tile tile-primary" href="/mecanum/blocks">
+      <span class="tile-title">Blocks</span>
+      <span class="tile-note">Snap blocks together into a program, try it in the
+      simulator, then connect over Bluetooth and run it on your robot or save it in a
+      remote slot.</span>
+      <span class="tile-go">Build &rarr;</span>
+    </a>
+    <a class="tile" href="/mecanum/bluetooth">
+      <span class="tile-title">Bluetooth</span>
+      <span class="tile-note">Plug in the Bluetooth module, connect a phone or computer
+      to your robot, and drive it with two sticks on the screen.</span>
+      <span class="tile-go">Connect &rarr;</span>
+    </a>
+    <a class="tile" href="/mecanum/remote-guide">
       <span class="tile-title">Remote guide</span>
       <span class="tile-note">Every key on one printable page: drive, make a program,
       run it, calibrate, and the light bot.</span>
@@ -60,23 +73,11 @@
       use it, and how to build its light sensors.</span>
       <span class="tile-go">Shine &rarr;</span>
     </a>
-    <a class="tile" href="/mecanum/bluetooth">
-      <span class="tile-title">Bluetooth</span>
-      <span class="tile-note">Connect a phone to the robot and drive it with two sticks on
-      the screen.</span>
-      <span class="tile-go">Connect &rarr;</span>
-    </a>
     <a class="tile" href="/mecanum/wiring">
       <span class="tile-title">Wiring</span>
       <span class="tile-note">Every wire on the robot, and the light sensors for the light
       bot.</span>
       <span class="tile-go">Wire it &rarr;</span>
-    </a>
-    <a class="tile" href="/mecanum/blocks">
-      <span class="tile-title">Blocks</span>
-      <span class="tile-note">Coming up: program the robot by snapping blocks together on a
-      computer, then send the program to the remote's slots.</span>
-      <span class="tile-go">Peek &rarr;</span>
     </a>
     <a class="tile" href="/mecanum/lessons/">
       <span class="tile-title">Lessons</span>
@@ -106,7 +107,10 @@
   <section class="card">
     <h2>The sketch</h2>
     <p>The program on the robot's Arduino Uno is <a href="/ir/ir.ino" download>ir.ino</a>
-    <span class="version">0.10.80</span>. Open it in the Arduino IDE and upload it to the robot.</p>
+    <span class="version">0.10.86</span>, or <a href="/programming/programming.ino" download>programming.ino</a>
+    <span class="version">0.10.86</span> for a robot that is already calibrated (no built-in
+    demo programs). Both take programs from the remote and from Blocks over Bluetooth.
+    Open one in the Arduino IDE and upload it to the robot.</p>
   </section>
 </main>
 <!-- mlk-foot -->

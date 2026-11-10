@@ -7,14 +7,14 @@ const fs = require("fs");
 const path = require("path");
 const root = path.resolve(__dirname, "..");
 
-// The live site: what the current class has covered (plus Blocks, coming up).
+// The live site: what the current class has covered.
 const NAV = [
   ["/", "Home"],
   ["/mecanum/remote-guide", "Remote guide"],
   ["/mecanum/ir", "Programming"],
   ["/mecanum/challenges", "Challenges"],
   ["/mecanum/light", "Light bot"],
-  ["/mecanum/bluetooth", "Bluetooth"],
+  ["/mecanum/bluetooth", "Sticks"],
   ["/mecanum/wiring", "Wiring"],
   ["/mecanum/blocks", "Blocks"],
   ["/mecanum/lessons/", "Lessons"]
