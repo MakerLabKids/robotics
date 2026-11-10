@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Plug In the Distance Sensor 0.1.2 - Maker Lab Kids</title>
+<title>How to Plug In the Distance Sensor 0.1.3 - Maker Lab Kids</title>
 <meta name="description" content="How to plug the sonar distance sensor into the mecanum robot, step by step, then use it in Blockly with if blocks.">
 <link rel="stylesheet" href="../css/site.css">
 <style>
@@ -121,7 +121,7 @@
         <b>driver board</b> at the back of the tower.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">3. Which wire is which</h3>
+        <h3 class="step-title">3. Match the wires</h3>
         <svg viewBox="0 0 360 300" role="img" aria-label="Step 3: each wire goes from a pin on the sonar to a pin on the motor shield: VCC to +5V, GND to Gnd, Echo to A2, Trig to A3.">
           <g font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="currentColor">
             <text x="60" y="30" text-anchor="middle" font-size="14">on the sonar</text>
@@ -260,12 +260,10 @@
 <text x="168" y="263" text-anchor="middle" font-size="12" font-weight="700" fill="#c24400">Trig</text>
 <text x="237.0" y="263" text-anchor="middle" font-size="12" fill="#555">light sensors</text>
 </svg><!-- /sonar:header -->
-        <figcaption>The four wires make an <b>L</b>: <b>+5V</b>, <b>Gnd</b> and
-        <b>A2</b> (Echo) down the A2 column, and <b>A3</b> (Trig) next to A2. It sits
-        right next to the Bluetooth L.</figcaption>
+        <figcaption>The four wires make an <b>L</b> shape.</figcaption>
       </figure>
       <figure>
-        <h3 class="step-title">6. How it sees</h3>
+        <h3 class="step-title">6. Learn how it sees</h3>
         <svg viewBox="0 0 360 300" role="img" aria-label="Step 6: the sonar sends a ping of sound at a wall and listens for the echo. A near wall echoes back fast, a far wall slowly.">
           <g font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="currentColor">
             <rect x="20" y="80" width="46" height="120" rx="6" fill="#1b4fa6" stroke="#0d2c63" stroke-width="2"/>
@@ -298,8 +296,8 @@
             <text x="250" y="222" text-anchor="middle" fill="#c24400">it stops!</text>
           </g>
         </svg>
-        <figcaption>Hold <b>forward</b> on the remote, hand in front: the robot <b>stops
-        about 25 cm away</b>. (Robot program <b>0.10.87</b> or newer.)</figcaption>
+        <figcaption>Hold <b>forward</b> on the remote and put your hand in front: the robot
+        <b>stops about 25 cm away</b>. (It needs robot program <b>0.10.87</b> or newer.)</figcaption>
       </figure>
       <figure class="wide">
         <h3 class="step-title">8. Program it: if ... else</h3>
