@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.22 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.23 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -184,6 +184,7 @@ select { border: 1px solid var(--line); border-radius: var(--radius); background
   min-width: 0;
 }
 .simulator-section { padding: 10px; border-bottom: 1px solid var(--line); }
+.simulator-task { margin: 2px 0 6px; font-size: 13px; font-weight: 600; color: var(--ink); }
 .simulator-mat { touch-action: none; }   /* (a finger drags the robot or the lamp, not the page) */
 .simulator-mat {
   display: block;
@@ -400,7 +401,11 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
     <section class="simulator-section" id="simulatorSection" aria-label="Simulator">
       <canvas class="simulator-mat" id="simulatorCanvas"></canvas>
       <p class="simulator-readout" id="simulatorReadout"></p>
+      <p class="simulator-task" id="simulatorTask"></p>
       <div class="simulator-controls">
+        <label>Map
+          <select id="simulatorMapSelect"></select>
+        </label>
         <label>Speed
           <select id="simulatorSpeedSelect">
             <option value="1">real time</option>
@@ -540,7 +545,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.22';
+var EDITOR_VERSION = '0.1.23';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -1330,10 +1335,14 @@ function normalisedDegrees(degrees) {   // -180 .. 180
 /* The simulated lamp: how bright it looks from the robot, and which way it is
    (degrees, 0 = dead ahead, right positive), plus four pretend LDRs. */
 function simulatedLight() {
+  if (SIMULATED_LAMP.present === false || SIMULATED_LAMP.on === false) {
+    return { level: 0, directionDegrees: 0, sensors: SIMULATED_LDR_BEARINGS.map(function () { return 0; }) };
+  }
   var dRight = SIMULATED_LAMP.rightMm - simulatorWorld.rightMm;
   var dForward = SIMULATED_LAMP.forwardMm - simulatorWorld.forwardMm;
   var distance = Math.hypot(dRight, dForward);
-  var level = 100 * clampNumber(1 - (distance - SIMULATED_LAMP_FULL_MM) / (SIMULATED_LAMP_DARK_MM - SIMULATED_LAMP_FULL_MM), 0, 1);
+  var darkMm = SIMULATED_LAMP.darkMm || SIMULATED_LAMP_DARK_MM;
+  var level = 100 * clampNumber(1 - (distance - SIMULATED_LAMP_FULL_MM) / (darkMm - SIMULATED_LAMP_FULL_MM), 0, 1);
   var bearing = Math.atan2(dRight, dForward) * 180 / Math.PI;
   var direction = normalisedDegrees(bearing - simulatorWorld.headingDegrees);
   var sensors = SIMULATED_LDR_BEARINGS.map(function (ldrBearing) {
@@ -1345,6 +1354,8 @@ function simulatedLight() {
 /* The simulated loop of tape under the 8-channel array: is it seen, how far
    right of the array's centre it runs (mm), and what each channel reads. */
 function simulatedLine() {
+  if (darkTileUnderRobot()) { return { seen: true, positionMm: 0, sensors: [100, 100, 100, 100, 100, 100, 100, 100] }; }
+  if (simulatorMap && !simulatorMap.definition.tapeLoop) { return { seen: false, positionMm: 0, sensors: [0, 0, 0, 0, 0, 0, 0, 0] }; }
   var dRight = simulatorWorld.rightMm - SIMULATED_LINE.centreRightMm;
   var dForward = simulatorWorld.forwardMm - SIMULATED_LINE.centreForwardMm;
   var distance = Math.hypot(dRight, dForward) || 1e-6;
@@ -1373,13 +1384,280 @@ function simulatedImu(what) {
   }
 }
 
-function resetSimulatorWorld() {
+
+/* ---------------------------- simulator maps ---------------------------- */
+/* Ten floors to choose from (Map, under the simulator). Each one builds its walls,
+   doors, floor tiles, lamp and goal star; from map 4 on something is different every
+   run (RUN and Back to start build the map again), so only a program that uses its
+   sensors gets there every time. Distances in mm: right is +right, forward is +forward,
+   the middle of the floor is 0, 0. */
+var SIMULATED_ROBOT_RADIUS_MM = 110;      // how close the middle of the robot gets to a wall
+var simulatorMap = null;                  // the chosen map, as built for this run
+
+function randomBetween(lowest, highest) { return lowest + Math.random() * (highest - lowest); }
+function wallBox(r1, f1, r2, f2) { return { r1: Math.min(r1, r2), f1: Math.min(f1, f2), r2: Math.max(r1, r2), f2: Math.max(f1, f2) }; }
+// On / off times for a door or a lamp: [first state, then each change at these seconds]
+function makeSwitchTimes(startsOn, onSeconds, offSeconds) {
+  var changes = [], clock = 0, on = startsOn;
+  while (clock < 600) { clock += on ? randomBetween(onSeconds[0], onSeconds[1]) : randomBetween(offSeconds[0], offSeconds[1]); changes.push(clock); on = !on; }
+  return { startsOn: startsOn, changes: changes };
+}
+function isSwitchedOn(switchTimes, clock) {
+  var on = switchTimes.startsOn;
+  for (var index = 0; index < switchTimes.changes.length && switchTimes.changes[index] <= clock; index++) { on = !on; }
+  return on;
+}
+function mazeWalls(edges) {   // a 3 x 3 maze of 800 mm cells: ['v', column, row] or ['h', column, row]
+  return edges.map(function (edge) {
+    var column = edge[1], row = edge[2];
+    if (edge[0] === 'v') { var x = -400 + 800 * column; return wallBox(x - 20, -1200 + 800 * row, x + 20, -400 + 800 * row); }
+    var y = -400 + 800 * row; return wallBox(-1200 + 800 * column, y - 20, -400 + 800 * column, y + 20);
+  });
+}
+
+var SIMULATOR_MAPS = [
+  { id: 'square', name: '1. Square room', room: [1600, 1600], start: [0, 0], tapeLoop: true, lampDraggable: true,
+    task: 'Drive a square. Then try the lamp (Sensors: light) and the loop of tape (Sensors: line).',
+    build: function (map) { map.lamp = { rightMm: editorSettings.simulatorLampRightMm, forwardMm: editorSettings.simulatorLampForwardMm }; } },
+  { id: 'box', name: '2. Star behind the box', room: [1600, 1600], start: [0, -600],
+    task: 'Drive to the star. A box is in the way: go around it.',
+    build: function (map) { map.walls.push(wallBox(-300, -150, 300, 150)); map.goal = { rightMm: 0, forwardMm: 600, radiusMm: 150 }; } },
+  { id: 'hallway', name: '3. The hallway', room: [2000, 2000], start: [-666, -750],
+    task: 'Follow the hallway to the star. Plan each move: how far, and which way?',
+    build: function (map) {
+      map.walls.push(wallBox(-353, -1000, -313, 450), wallBox(313, -450, 353, 1000));
+      map.goal = { rightMm: 666, forwardMm: 750, radiusMm: 150 };
+    } },
+  { id: 'wall', name: '4. Stop at the wall', room: [1200, 3000], start: [0, -1300],
+    task: 'The wall is somewhere else every run. Drive up to it and stop on the star (closer than 20 cm) without bumping it.',
+    build: function (map) {
+      var wallAt = Math.round(randomBetween(-300, 1100) / 10) * 10;
+      map.walls.push(wallBox(-600, wallAt, 600, wallAt + 40));
+      map.goal = { rightMm: 0, forwardMm: wallAt - 215, radiusMm: 100, mustStop: true, noBumps: true };
+    } },
+  { id: 'tile', name: '5. Stop on the dark tile', room: [1200, 3000], start: [0, -1300],
+    task: 'One tile is dark, a different one every run. Stop on it. "line seen" (Sensors: line) is true over a dark floor.',
+    build: function (map) {
+      var dark = Math.floor(Math.random() * 6);
+      for (var index = 0; index < 6; index++) {
+        var middle = -700 + index * 400;
+        map.tiles.push({ box: wallBox(-150, middle - 150, 150, middle + 150), dark: index === dark });
+        if (index === dark) { map.goal = { rightMm: 0, forwardMm: middle, radiusMm: 150, mustStop: true }; }
+      }
+    } },
+  { id: 'light', name: '6. Find the light', room: [2000, 2000], start: [0, 0],
+    task: 'The lamp is in a different corner every run. Find it: the light blocks say how bright it is and which way.',
+    build: function (map) {
+      var corner = Math.floor(Math.random() * 4);
+      map.lamp = { rightMm: corner % 2 ? 750 : -750, forwardMm: corner < 2 ? 750 : -750 };
+      map.goal = { rightMm: map.lamp.rightMm, forwardMm: map.lamp.forwardMm, radiusMm: 300 };
+    } },
+  { id: 'gap', name: '7. Find the gap', room: [2000, 2000], start: [0, -750],
+    task: 'The gap in the wall moves every run. Slide along the wall until the sonar sees through the gap, then go through to the star behind it.',
+    build: function (map) {
+      var gapAt = Math.round(randomBetween(-650, 650) / 10) * 10;
+      map.walls.push(wallBox(-1000, -20, gapAt - 225, 20), wallBox(gapAt + 225, -20, 1000, 20));
+      map.goal = { rightMm: gapAt, forwardMm: 650, radiusMm: 150 };
+    } },
+  { id: 'door', name: '8. The door', room: [1600, 2400], start: [0, -900],
+    task: 'The door opens and closes. Wait until the sonar sees it open, then go through to the star.',
+    build: function (map) {
+      map.walls.push(wallBox(-800, 0, -250, 40), wallBox(250, 0, 800, 40));
+      map.doors.push({ box: wallBox(-250, 0, 250, 40), openTimes: makeSwitchTimes(false, [2, 4], [2, 5]) });
+      map.goal = { rightMm: 0, forwardMm: 900, radiusMm: 150 };
+    } },
+  { id: 'redlight', name: '9. Red light, green light', room: [1600, 3200], start: [0, -1400],
+    task: 'Only move while the lamp is on! When it goes dark, stop: the light level drops. Moving in the dark gets you caught.',
+    build: function (map) {
+      map.lamp = { rightMm: 0, forwardMm: 1450, darkMm: 4000, onTimes: makeSwitchTimes(true, [2, 5], [1.5, 3.5]) };   // (a bright lamp: seen from the far end)
+      map.goal = { rightMm: 0, forwardMm: 1100, radiusMm: 150 };
+      map.redLight = true;
+    } },
+  { id: 'maze', name: '10. The maze', room: [2400, 2400], start: [-800, -800],
+    task: 'A different maze every run. Look before you go: turn, check the sonar, pick the open way to the star.',
+    build: function (map) {
+      var layouts = [
+        [['v', 0, 0], ['v', 0, 1], ['v', 1, 1], ['v', 1, 2]],
+        [['h', 0, 0], ['h', 1, 0], ['h', 1, 1], ['h', 2, 1]],
+        [['v', 0, 0], ['h', 1, 1], ['v', 1, 2], ['h', 2, 0]]
+      ];
+      map.walls = map.walls.concat(mazeWalls(layouts[Math.floor(Math.random() * layouts.length)]));
+      map.goal = { rightMm: 800, forwardMm: 800, radiusMm: 150 };
+    } }
+];
+
+function chosenMapDefinition() {
+  for (var index = 0; index < SIMULATOR_MAPS.length; index++) {
+    if (SIMULATOR_MAPS[index].id === editorSettings.simulatorMap) { return SIMULATOR_MAPS[index]; }
+  }
+  return SIMULATOR_MAPS[0];
+}
+
+function buildSimulatorMap() {
+  var definition = chosenMapDefinition();
+  var map = { definition: definition, walls: [], doors: [], tiles: [], lamp: null, goal: null, clockSeconds: 0,
+    reached: false, stillSeconds: 0, bumps: 0, caught: 0, darkSeconds: 0, redLight: false };
+  definition.build(map);
+  simulatorMap = map;
+  updateMapLamp();
+}
+
+function updateMapLamp() {
+  var lamp = simulatorMap && simulatorMap.lamp;
+  SIMULATED_LAMP.present = Boolean(lamp);
+  if (!lamp) { SIMULATED_LAMP.on = false; return; }
+  SIMULATED_LAMP.rightMm = lamp.rightMm;
+  SIMULATED_LAMP.forwardMm = lamp.forwardMm;
+  SIMULATED_LAMP.darkMm = lamp.darkMm || SIMULATED_LAMP_DARK_MM;
+  SIMULATED_LAMP.on = lamp.onTimes ? isSwitchedOn(lamp.onTimes, simulatorMap.clockSeconds) : true;
+}
+
+function doorIsOpen(door) { return isSwitchedOn(door.openTimes, simulatorMap.clockSeconds); }
+
+// The walls the robot bumps into and the sonar sees right now (a closed door is one).
+function solidMapWalls() {
+  if (!simulatorMap) { return []; }
+  var solid = simulatorMap.walls.slice();
+  simulatorMap.doors.forEach(function (door) { if (!doorIsOpen(door)) { solid.push(door.box); } });
+  return solid;
+}
+
+function keepSimulatedRobotOutOfMapWalls() {
+  var hit = false;
+  solidMapWalls().forEach(function (box) {
+    var closestRight = clampNumber(simulatorWorld.rightMm, box.r1, box.r2);
+    var closestForward = clampNumber(simulatorWorld.forwardMm, box.f1, box.f2);
+    var awayRight = simulatorWorld.rightMm - closestRight, awayForward = simulatorWorld.forwardMm - closestForward;
+    var distance = Math.hypot(awayRight, awayForward);
+    if (distance >= SIMULATED_ROBOT_RADIUS_MM) { return; }
+    hit = true;
+    if (distance > 1e-6) {
+      simulatorWorld.rightMm = closestRight + awayRight / distance * SIMULATED_ROBOT_RADIUS_MM;
+      simulatorWorld.forwardMm = closestForward + awayForward / distance * SIMULATED_ROBOT_RADIUS_MM;
+      return;
+    }
+    var pushes = [
+      [simulatorWorld.rightMm - box.r1, box.r1 - SIMULATED_ROBOT_RADIUS_MM, null], [box.r2 - simulatorWorld.rightMm, box.r2 + SIMULATED_ROBOT_RADIUS_MM, null],
+      [simulatorWorld.forwardMm - box.f1, null, box.f1 - SIMULATED_ROBOT_RADIUS_MM], [box.f2 - simulatorWorld.forwardMm, null, box.f2 + SIMULATED_ROBOT_RADIUS_MM]
+    ].sort(function (a, b) { return a[0] - b[0]; });
+    if (pushes[0][1] !== null) { simulatorWorld.rightMm = pushes[0][1]; } else { simulatorWorld.forwardMm = pushes[0][2]; }
+  });
+  if (hit && simulatorMap) { simulatorMap.bumps += 1; }
+  return hit;
+}
+
+function rayHitsBox(startRight, startForward, directionRight, directionForward, box) {
+  var nearest = -Infinity, farthest = Infinity;
+  var axes = [[startRight, directionRight, box.r1, box.r2], [startForward, directionForward, box.f1, box.f2]];
+  for (var index = 0; index < 2; index++) {
+    var start = axes[index][0], direction = axes[index][1], low = axes[index][2], high = axes[index][3];
+    if (Math.abs(direction) < 1e-9) {
+      if (start < low || start > high) { return Infinity; }
+    } else {
+      var a = (low - start) / direction, b = (high - start) / direction;
+      nearest = Math.max(nearest, Math.min(a, b));
+      farthest = Math.min(farthest, Math.max(a, b));
+    }
+  }
+  if (farthest < Math.max(nearest, 0)) { return Infinity; }
+  return Math.max(nearest, 0);
+}
+
+function isInsideBox(box, rightMm, forwardMm) { return rightMm >= box.r1 && rightMm <= box.r2 && forwardMm >= box.f1 && forwardMm <= box.f2; }
+
+function darkTileUnderRobot() {
+  if (!simulatorMap) { return false; }
+  return simulatorMap.tiles.some(function (tile) { return tile.dark && isInsideBox(tile.box, simulatorWorld.rightMm, simulatorWorld.forwardMm); });
+}
+
+// The map's clock, the lamp and the doors, the goal star and the red-light rule:
+// called by the simulator as the run goes (worldSeconds of map time, isMoving).
+function advanceSimulatorMap(worldSeconds, isMoving) {
+  var map = simulatorMap;
+  if (!map) { return; }
+  var lampWasOn = SIMULATED_LAMP.on;
+  map.clockSeconds += worldSeconds;
+  updateMapLamp();
+  if (map.redLight && map.lamp) {
+    map.darkSeconds = SIMULATED_LAMP.on ? 0 : map.darkSeconds + worldSeconds;
+    if (!SIMULATED_LAMP.on && lampWasOn) { addConsoleLine('simulator', 'the lamp went dark: freeze!'); }
+    if (SIMULATED_LAMP.on && !lampWasOn) { addConsoleLine('simulator', 'the lamp is on: go!'); }
+    if (!SIMULATED_LAMP.on && map.darkSeconds > 0.6 && isMoving && !map.movingInTheDark) {
+      map.caught += 1;
+      addConsoleLine('warning', 'Caught moving in the dark! (' + map.caught + ')');
+    }
+    map.movingInTheDark = !SIMULATED_LAMP.on && isMoving;
+  }
+  map.stillSeconds = isMoving ? 0 : map.stillSeconds + worldSeconds;
+  var goal = map.goal;
+  if (goal && !map.reached && Math.hypot(simulatorWorld.rightMm - goal.rightMm, simulatorWorld.forwardMm - goal.forwardMm) <= goal.radiusMm &&
+      (!goal.mustStop || map.stillSeconds >= 0.3)) {
+    map.reached = true;
+    var notes = [];
+    if (goal.noBumps || map.bumps > 0) { notes.push(map.bumps === 0 ? 'no bumps' : map.bumps + ' bump' + (map.bumps === 1 ? '' : 's')); }
+    if (map.redLight) { notes.push(map.caught === 0 ? 'never caught' : 'caught ' + map.caught + ' time' + (map.caught === 1 ? '' : 's')); }
+    addConsoleLine('say', '★ Made it! ' + map.definition.name.replace(/^\d+\. /, '') + ' in ' + map.clockSeconds.toFixed(1) + ' s' + (notes.length ? ', ' + notes.join(', ') : '') + '.');
+  }
+}
+
+// Map picked from the menu: its floor size and start, then build it.
+function chooseSimulatorMap(mapId) {
+  editorSettings.simulatorMap = mapId;
+  var definition = chosenMapDefinition();
+  editorSettings.simulatorHasRoom = true;
+  editorSettings.simulatorRoomWidthMm = definition.room[0];
+  editorSettings.simulatorRoomDepthMm = definition.room[1];
+  editorSettings.simulatorStartRightMm = definition.start[0];
+  editorSettings.simulatorStartForwardMm = definition.start[1];
+  saveEditorSettings();
+  showSimulatorSettings();
+  resetSimulatorWorld();
+}
+
+function drawSimulatorMap(context, screenX, screenY, pixelsPerMm) {
+  var map = simulatorMap;
+  if (!map) { return; }
+  function fillBox(box, fill, stroke, dashed) {
+    var x = screenX(box.r1), y = screenY(box.f2), width = (box.r2 - box.r1) * pixelsPerMm, height = (box.f2 - box.f1) * pixelsPerMm;
+    if (fill) { context.fillStyle = fill; context.fillRect(x, y, width, height); }
+    if (stroke) { context.strokeStyle = stroke; context.lineWidth = 1.5; if (dashed) { context.setLineDash([5, 4]); } context.strokeRect(x, y, width, height); context.setLineDash([]); }
+  }
+  map.tiles.forEach(function (tile) { fillBox(tile.box, tile.dark ? '#14171b' : 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.5)'); });
+  if (map.goal) {
+    var goalX = screenX(map.goal.rightMm), goalY = screenY(map.goal.forwardMm);
+    var outer = Math.max(9, Math.min(map.goal.radiusMm, 150) * 0.8 * pixelsPerMm), inner = outer * 0.45;
+    context.beginPath();
+    for (var point = 0; point < 10; point++) {
+      var angle = -Math.PI / 2 + point * Math.PI / 5, radius = point % 2 ? inner : outer;
+      context.lineTo(goalX + Math.cos(angle) * radius, goalY + Math.sin(angle) * radius);
+    }
+    context.closePath();
+    context.fillStyle = map.reached ? '#2fbf6b' : '#ffd84a';
+    context.fill();
+    context.strokeStyle = map.reached ? '#145c33' : '#8a6d00';
+    context.lineWidth = 1.5;
+    context.stroke();
+  }
+  map.walls.forEach(function (box) { fillBox(box, '#d6dbe0', '#ffffff'); });
+  map.doors.forEach(function (door) {
+    if (doorIsOpen(door)) { fillBox(door.box, null, '#ff9b54', true); } else { fillBox(door.box, '#ff9b54', '#ffffff'); }
+  });
+}
+
+function resetSimulatorWorld(keepTheMap) {
   simulatorWorld.rightMm = editorSettings.simulatorStartRightMm;
   simulatorWorld.forwardMm = editorSettings.simulatorStartForwardMm;
   simulatorWorld.headingDegrees = 0;
   simulatorWorld.turnRateDegreesPerSec = 0;
   simulatorWorld.trailPoints = [{ rightMm: simulatorWorld.rightMm, forwardMm: simulatorWorld.forwardMm }];
   simulatorWorld.isTouchingWall = false;
+  if (keepTheMap && simulatorMap) {
+    simulatorMap.clockSeconds = 0; simulatorMap.reached = false; simulatorMap.bumps = 0; simulatorMap.caught = 0; simulatorMap.stillSeconds = 0;
+    updateMapLamp();
+  } else {
+    buildSimulatorMap();
+  }
+  showSimulatorTask();
   drawSimulator();
 }
 
@@ -1400,7 +1678,6 @@ function keepSimulatedRobotInsideRoom() {
 }
 
 function simulatedDistanceAheadMm() {
-  if (!editorSettings.simulatorHasRoom) { return Infinity; }
   var room = simulatorRoomHalfSizes();
   var headingRadians = degreesToRadians(simulatorWorld.headingDegrees);
   var directionRight = Math.sin(headingRadians);
@@ -1408,10 +1685,13 @@ function simulatedDistanceAheadMm() {
   var noseRight = simulatorWorld.rightMm + directionRight * SIMULATED_ROBOT_LENGTH_MM / 2;
   var noseForward = simulatorWorld.forwardMm + directionForward * SIMULATED_ROBOT_LENGTH_MM / 2;
   var nearest = Infinity;
-  if (directionRight > 1e-9) { nearest = Math.min(nearest, (room.halfWidth - noseRight) / directionRight); }
-  if (directionRight < -1e-9) { nearest = Math.min(nearest, (-room.halfWidth - noseRight) / directionRight); }
-  if (directionForward > 1e-9) { nearest = Math.min(nearest, (room.halfDepth - noseForward) / directionForward); }
-  if (directionForward < -1e-9) { nearest = Math.min(nearest, (-room.halfDepth - noseForward) / directionForward); }
+  if (editorSettings.simulatorHasRoom) {
+    if (directionRight > 1e-9) { nearest = Math.min(nearest, (room.halfWidth - noseRight) / directionRight); }
+    if (directionRight < -1e-9) { nearest = Math.min(nearest, (-room.halfWidth - noseRight) / directionRight); }
+    if (directionForward > 1e-9) { nearest = Math.min(nearest, (room.halfDepth - noseForward) / directionForward); }
+    if (directionForward < -1e-9) { nearest = Math.min(nearest, (-room.halfDepth - noseForward) / directionForward); }
+  }
+  solidMapWalls().forEach(function (box) { nearest = Math.min(nearest, rayHitsBox(noseRight, noseForward, directionRight, directionForward, box)); });
   return Math.max(0, nearest);
 }
 
@@ -1585,7 +1865,7 @@ function setUpSimulatorDragging() {
   function simulatorIsRunning() { return activeRun !== null && activeRun.targetName === 'simulator'; }
   function whatIsUnder(point, view) {
     function pixelsTo(rightMm, forwardMm) { return Math.sqrt(Math.pow((rightMm - point.rightMm) * view.pixelsPerMm, 2) + Math.pow((forwardMm - point.forwardMm) * view.pixelsPerMm, 2)); }
-    if (pixelsTo(SIMULATED_LAMP.rightMm, SIMULATED_LAMP.forwardMm) <= Math.max(18, 100 * view.pixelsPerMm)) { return 'lamp'; }
+    if (chosenMapDefinition().lampDraggable && pixelsTo(SIMULATED_LAMP.rightMm, SIMULATED_LAMP.forwardMm) <= Math.max(18, 100 * view.pixelsPerMm)) { return 'lamp'; }
     if (!simulatorIsRunning() && editorSettings.simulatorView !== 'closeUp' &&
         pixelsTo(simulatorWorld.rightMm, simulatorWorld.forwardMm) <= Math.max(18, SIMULATED_ROBOT_LENGTH_MM / 2 * view.pixelsPerMm)) { return 'robot'; }
     return null;
@@ -1617,24 +1897,35 @@ function setUpSimulatorDragging() {
       var lampAt = keptOnTheFloor(floorPoint(event, dragging.view), 60);
       SIMULATED_LAMP.rightMm = lampAt.rightMm;
       SIMULATED_LAMP.forwardMm = lampAt.forwardMm;
+      if (simulatorMap && simulatorMap.lamp) { simulatorMap.lamp.rightMm = lampAt.rightMm; simulatorMap.lamp.forwardMm = lampAt.forwardMm; }
       drawSimulator();
     } else {
       var robotAt = keptOnTheFloor(floorPoint(event, dragging.view), SIMULATED_ROBOT_LENGTH_MM / 2);
       editorSettings.simulatorStartRightMm = robotAt.rightMm;
       editorSettings.simulatorStartForwardMm = robotAt.forwardMm;
-      resetSimulatorWorld();
+      resetSimulatorWorld(true);
     }
   });
   function stopDragging() {
     if (!dragging) { return; }
-    editorSettings.simulatorLampRightMm = SIMULATED_LAMP.rightMm;
-    editorSettings.simulatorLampForwardMm = SIMULATED_LAMP.forwardMm;
+    if (dragging.what === 'lamp') {
+      editorSettings.simulatorLampRightMm = SIMULATED_LAMP.rightMm;
+      editorSettings.simulatorLampForwardMm = SIMULATED_LAMP.forwardMm;
+    }
     saveEditorSettings();
     dragging = null;
     canvas.style.cursor = '';
   }
   canvas.addEventListener('pointerup', stopDragging);
   canvas.addEventListener('pointercancel', stopDragging);
+}
+
+function showSimulatorTask() {
+  var definition = chosenMapDefinition();
+  var task = elementById('simulatorTask');
+  if (task) { task.textContent = definition.name + ': ' + definition.task; }
+  var select = elementById('simulatorMapSelect');
+  if (select && select.value !== definition.id) { select.value = definition.id; }
 }
 
 function drawSimulator() {
@@ -1711,24 +2002,30 @@ function drawSimulator() {
     context.strokeRect(screenX(lowestRight), screenY(highestForward), (highestRight - lowestRight) * pixelsPerMm, (highestForward - lowestForward) * pixelsPerMm);
   }
 
+  drawSimulatorMap(context, screenX, screenY, pixelsPerMm);
   // The loop of tape and the lamp the sensor blocks see
-  context.strokeStyle = 'rgba(20,24,28,0.85)';
-  context.lineWidth = Math.max(2, 20 * pixelsPerMm);
-  context.beginPath();
-  context.arc(screenX(SIMULATED_LINE.centreRightMm), screenY(SIMULATED_LINE.centreForwardMm), SIMULATED_LINE.radiusMm * pixelsPerMm, 0, Math.PI * 2);
-  context.stroke();
+  if (!simulatorMap || simulatorMap.definition.tapeLoop) {
+    context.strokeStyle = 'rgba(20,24,28,0.85)';
+    context.lineWidth = Math.max(2, 20 * pixelsPerMm);
+    context.beginPath();
+    context.arc(screenX(SIMULATED_LINE.centreRightMm), screenY(SIMULATED_LINE.centreForwardMm), SIMULATED_LINE.radiusMm * pixelsPerMm, 0, Math.PI * 2);
+    context.stroke();
+  }
+  if (SIMULATED_LAMP.present !== false) { drawSimulatedLamp(); }
+  function drawSimulatedLamp() {
   var lampX = screenX(SIMULATED_LAMP.rightMm), lampY = screenY(SIMULATED_LAMP.forwardMm);
   var lampRadius = Math.max(5, 60 * pixelsPerMm);
   var glow = context.createRadialGradient(lampX, lampY, lampRadius * 0.4, lampX, lampY, lampRadius * 4);
   glow.addColorStop(0, 'rgba(255,230,120,0.55)');
   glow.addColorStop(1, 'rgba(255,230,120,0)');
   context.fillStyle = glow;
-  context.beginPath(); context.arc(lampX, lampY, lampRadius * 4, 0, Math.PI * 2); context.fill();
-  context.fillStyle = '#ffe066';
+  if (SIMULATED_LAMP.on !== false) { context.beginPath(); context.arc(lampX, lampY, lampRadius * 4, 0, Math.PI * 2); context.fill(); }
+  context.fillStyle = SIMULATED_LAMP.on !== false ? '#ffe066' : '#5b6470';
   context.beginPath(); context.arc(lampX, lampY, lampRadius, 0, Math.PI * 2); context.fill();
   context.strokeStyle = '#8a6d00';
   context.lineWidth = 1;
   context.stroke();
+  }
 
   context.strokeStyle = 'rgba(255,255,255,0.75)';
   context.lineWidth = 1.5;
@@ -1774,9 +2071,9 @@ function drawSimulator() {
 
   var headingShown = ((Math.round(simulatorWorld.headingDegrees) % 360) + 360) % 360;
   var readout = 'forward ' + Math.round(simulatorWorld.forwardMm) + ' mm, right ' + Math.round(simulatorWorld.rightMm) + ' mm, heading ' + headingShown + '°';
-  if (editorSettings.simulatorHasRoom) {
-    var laserReading = simulatedSensorReadingMm('laser');
-    readout += ', laser ' + (laserReading === -1 ? 'nothing in range' : laserReading + ' mm');
+  if (editorSettings.simulatorHasRoom || (simulatorMap && simulatorMap.walls.length)) {
+    var sonarReading = simulatedSensorReadingMm('sonar');
+    readout += ', sonar ' + (sonarReading === -1 ? 'nothing in range' : sonarReading + ' mm');
   }
   elementById('simulatorReadout').textContent = readout;
 }
@@ -1855,6 +2152,7 @@ function createSimulatorBackend(control) {
     simulatorWorld.forwardMm = move.startForwardMm + move.directionForward * move.distanceMm * fraction;
     simulatorWorld.headingDegrees = move.startHeadingDegrees + move.turnDegrees * fraction;
     var hitWall = keepSimulatedRobotInsideRoom();
+    hitWall = keepSimulatedRobotOutOfMapWalls() || hitWall;
     addSimulatorTrailPoint();
     if (hitWall) {
       addConsoleLine('simulator', 'bumped the wall, this move is cut short');
@@ -1876,6 +2174,9 @@ function createSimulatorBackend(control) {
     simulatorWorld.forwardMm += (Math.cos(headingRadians) * forwardSpeed - Math.sin(headingRadians) * rightSpeed) * seconds;
     simulatorWorld.headingDegrees += continuousDrive.spinPercent / 100 * SIMULATED_FULL_POWER_SPIN_DEGREES_PER_SEC * seconds;
     var hitWall = keepSimulatedRobotInsideRoom();
+    var hitMapWall = keepSimulatedRobotOutOfMapWalls();
+    if (hitMapWall && simulatorWorld.isTouchingWall && simulatorMap) { simulatorMap.bumps -= 1; }   // (one bump while it keeps pushing)
+    hitWall = hitMapWall || hitWall;
     if (hitWall && !simulatorWorld.isTouchingWall) {
       addConsoleLine('simulator', 'pushing against the wall');
     }
@@ -1911,6 +2212,12 @@ function createSimulatorBackend(control) {
     } else if (activeMove === null && lineFollow === null && continuousDrive === null) {
       simulatorWorld.turnRateDegreesPerSec = 0;
     }
+    var isMoving = activeMove !== null || lineFollow !== null ||
+      (continuousDrive !== null && (continuousDrive.forwardPercent !== 0 || continuousDrive.rightPercent !== 0 || continuousDrive.spinPercent !== 0));
+    // the map's clock runs with the simulated time; a program that only reads sensors
+    // (nothing moving or waiting) still lets it run at the chosen speed
+    var nothingPending = activeMove === null && lineFollow === null && continuousDrive === null && pendingWaits.length === 0;
+    advanceSimulatorMap(secondsSimulated > 0 ? secondsSimulated : (nothingPending ? Math.min(0.05, realSeconds * speedMultiplier()) : 0), isMoving);
     drawSimulator();
   }
 
@@ -2029,6 +2336,7 @@ function createSimulatorBackend(control) {
     continuousDrive = null;
     activeMove = null;
     lineFollow = null;
+    advanceSimulatorMap(0.5, false);   // (a program that stops on the goal and ends right there still counts)
     drawSimulator();
   }
 
@@ -3740,7 +4048,8 @@ var editorSettings = {
   simulatorStartRightMm: 0,      // where RUN and Back to start put the pretend robot (drag it there)
   simulatorStartForwardMm: 0,
   simulatorLampRightMm: SIMULATED_LAMP.rightMm,   // where the lamp sits (drag it there)
-  simulatorLampForwardMm: SIMULATED_LAMP.forwardMm
+  simulatorLampForwardMm: SIMULATED_LAMP.forwardMm,
+  simulatorMap: 'square'          // which of SIMULATOR_MAPS
 };
 var isLoadingProgramIntoWorkspace = false;
 var saveTimer = null;
@@ -3863,6 +4172,121 @@ function listDemoPrograms() {
 }
 
 /* Examples that need RUN from this editor: sensors, waits, diagonal drives. They do not fit a remote slot. */
+
+/* The subroutine toolbox (+ New, "Toolbox: subroutines"): ready-made subroutines that
+   use the sensors well, simple ones first, then tunable ones with inputs. Copy the ones
+   you need into your own tab (select, Ctrl+C, switch tabs, Ctrl+V). */
+function toolboxExampleState() {
+  var variables = [];
+  function variable(name) {
+    var id = 'toolbox_' + name.replace(/[^a-z0-9]+/gi, '_');
+    if (!variables.some(function (known) { return known.id === id; })) { variables.push({ name: name, id: id }); }
+    return id;
+  }
+  function chain(list) { for (var index = list.length - 2; index >= 0; index--) { list[index].next = { block: list[index + 1] }; } return list[0]; }
+  function number(value) { return { type: 'math_number', fields: { NUM: value } }; }
+  function shadowNumber(value) { return { shadow: number(value) }; }
+  function get(name) { return { type: 'variables_get', fields: { VAR: { id: variable(name) } } }; }
+  function numberSlot(valueBlock) { return { shadow: number(0), block: valueBlock }; }
+  function set(name, valueBlock) { return { type: 'variables_set', fields: { VAR: { id: variable(name) } }, inputs: { VALUE: { block: valueBlock } } }; }
+  function change(name, valueBlock) { return { type: 'math_change', fields: { VAR: { id: variable(name) } }, inputs: { DELTA: numberSlot(valueBlock) } }; }
+  function seesCloser(distanceBlock) { return { type: 'robot_sees_closer', fields: { SENSOR: 'sonar' }, inputs: { DISTANCE: numberSlot(distanceBlock) } }; }
+  function not(conditionBlock) { return { type: 'logic_negate', inputs: { BOOL: { block: conditionBlock } } }; }
+  function and(a, b) { return { type: 'logic_operation', fields: { OP: 'AND' }, inputs: { A: { block: a }, B: { block: b } } }; }
+  function compare(op, a, b) { return { type: 'logic_compare', fields: { OP: op }, inputs: { A: { block: a }, B: { block: b } } }; }
+  function arithmetic(op, a, b) { return { type: 'math_arithmetic', fields: { OP: op }, inputs: { A: numberSlot(a), B: numberSlot(b) } }; }
+  function wait(seconds) { return { type: 'robot_wait', inputs: { SECONDS: shadowNumber(seconds) } }; }
+  function stop() { return { type: 'robot_stop' }; }
+  function keepDriving(direction, powerBlock) { return { type: 'robot_keep_driving', fields: { DIRECTION: direction }, inputs: { POWER: numberSlot(powerBlock) } }; }
+  function drive(distanceBlock) { return { type: 'robot_drive', fields: { DIRECTION: '0' }, inputs: { DISTANCE: numberSlot(distanceBlock) } }; }
+  function turn(sign, angleBlock) { return { type: 'robot_turn', fields: { DIRECTION: String(sign) }, inputs: { ANGLE: numberSlot(angleBlock) } }; }
+  function repeatWhile(conditionBlock, blocks) { return { type: 'controls_whileUntil', fields: { MODE: 'WHILE' }, inputs: { BOOL: { block: conditionBlock }, DO: { block: chain(blocks) } } }; }
+  function repeatUntil(conditionBlock, blocks) { return { type: 'controls_whileUntil', fields: { MODE: 'UNTIL' }, inputs: { BOOL: { block: conditionBlock }, DO: { block: chain(blocks) } } }; }
+  function ifThen(conditionBlock, thenBlocks, elseBlocks) {
+    var block = { type: 'controls_if', inputs: { IF0: { block: conditionBlock }, DO0: { block: chain(thenBlocks) } } };
+    if (elseBlocks) { block.extraState = { hasElse: true }; block.inputs.ELSE = { block: chain(elseBlocks) }; }
+    return block;
+  }
+  function say(text) { return { type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: text } } } } }; }
+  var y = 40;
+  function subroutine(name, inputs, about, blocks, returnBlock) {
+    var block = {
+      type: returnBlock ? 'procedures_defreturn' : 'procedures_defnoreturn', x: 40, y: y,
+      fields: { NAME: name },
+      icons: { comment: { text: about, pinned: false, height: 80, width: 260 } },
+      inputs: { STACK: { block: chain(blocks) } }
+    };
+    if (inputs.length) { block.extraState = { params: inputs.map(function (input) { return { name: input, id: variable(input) }; }) }; }
+    if (returnBlock) { block.inputs.RETURN = { block: returnBlock }; }
+    y += 110 + blocks.length * 50;
+    return block;
+  }
+  var light = { type: 'robot_light_level' };
+  var tops = [
+    { type: 'robot_start', x: 40, y: 0, next: { block: say('The toolbox: copy the subroutines you need into your own tab (select one, Ctrl+C, go to your tab, Ctrl+V).') } },
+    // simple
+    subroutine('go until wall', [], 'Simple: drive forward until the sonar sees something closer than 30 cm, then stop.', [
+      keepDriving('forward', number(40)),
+      repeatUntil(seesCloser(number(300)), [wait(0.05)]),
+      stop()
+    ]),
+    subroutine('wait for green', [], 'Simple: wait here until the lamp is on (the light level goes over 20).', [
+      repeatUntil(compare('GT', light, number(20)), [wait(0.1)])
+    ]),
+    subroutine('face the light', [], 'Simple: turn so the nose points at the brightest light.', [
+      turn(1, { type: 'robot_light_direction' })
+    ]),
+    subroutine('go until dark tile', [], 'Simple: creep forward until the line sensor feels a dark floor, then roll on to its middle.', [
+      keepDriving('forward', number(30)),
+      repeatUntil({ type: 'robot_line_seen' }, [wait(0.02)]),
+      stop(),
+      drive(number(150))
+    ]),
+    // tunable
+    subroutine('forward if clear', ['distance', 'step', 'clearance'], 'Tunable: go forward up to distance mm in steps of step mm, but only while nothing is closer than clearance mm. Gives back how far it really went.', [
+      set('traveled', number(0)),
+      repeatWhile(and(compare('LT', get('traveled'), get('distance')), not(seesCloser(get('clearance')))), [
+        drive(get('step')),
+        change('traveled', get('step'))
+      ])
+    ], get('traveled')),
+    subroutine('creep to wall', ['stop at', 'power'], 'Tunable: fast until 20 cm before the stop distance, then slow, then stop at stop at mm from the wall. Try power 30 to 60.', [
+      keepDriving('forward', get('power')),
+      repeatUntil(seesCloser(arithmetic('ADD', get('stop at'), number(200))), [wait(0.02)]),
+      keepDriving('forward', arithmetic('DIVIDE', get('power'), number(3))),
+      repeatUntil(seesCloser(get('stop at')), [wait(0.02)]),
+      stop()
+    ]),
+    subroutine('wait until clear', ['clearance', 'timeout'], 'Tunable: wait while something is closer than clearance mm (a closed door), but never longer than timeout seconds.', [
+      set('started', { type: 'robot_seconds' }),
+      repeatWhile(and(seesCloser(get('clearance')), compare('LT', arithmetic('MINUS', { type: 'robot_seconds' }, get('started')), get('timeout'))), [wait(0.1)])
+    ]),
+    subroutine('slide right until gap', ['clearance', 'power'], 'Tunable: slide sideways while the wall is closer than clearance mm, stop where the sonar sees through a gap, then slide 20 cm more so the whole robot fits through. For the other way, change both to left.', [
+      keepDriving('slideRight', get('power')),
+      repeatWhile(seesCloser(get('clearance')), [wait(0.02)]),
+      stop(),
+      { type: 'robot_drive', fields: { DIRECTION: '90' }, inputs: { DISTANCE: shadowNumber(200) } }
+    ]),
+    subroutine('find open side', ['clearance'], 'Tunable: look right, then left, then back, and stay facing the first way with nothing closer than clearance mm.', [
+      turn(1, number(90)),
+      ifThen(seesCloser(get('clearance')), [
+        turn(-1, number(180)),
+        ifThen(seesCloser(get('clearance')), [turn(-1, number(90))])
+      ])
+    ]),
+    subroutine('go on green', ['distance', 'step', 'brightness'], 'Tunable: go forward distance mm, step by step, but only while the light level is over brightness. Wait in the dark.', [
+      set('traveled', number(0)),
+      repeatWhile(compare('LT', get('traveled'), get('distance')), [
+        ifThen(compare('GT', { type: 'robot_light_level' }, get('brightness')), [
+          drive(get('step')),
+          change('traveled', get('step'))
+        ], [wait(0.1)])
+      ])
+    ])
+  ];
+  return { blocks: { languageVersion: 0, blocks: tops }, variables: variables };
+}
+
 function listLiveExamplePrograms() {
   var make = programBlockBuilders();
   return [
@@ -3938,6 +4362,11 @@ function listLiveExamplePrograms() {
         { type: 'robot_follow_line', inputs: { SECONDS: numberShadow(20) } },
         { type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'done' } } } } }
       ])])
+    },
+    {
+      name: 'Toolbox: subroutines',
+      description: 'ready-made subroutines that use the sensors: simple ones, then tunable ones with inputs (copy the ones you need)',
+      state: toolboxExampleState()
     }
   ];
 }
@@ -4877,6 +5306,22 @@ function wireUpPage() {
   elementById('simulatorRoomWidthInput').addEventListener('change', readSimulatorSettingsFromPage);
   elementById('simulatorRoomDepthInput').addEventListener('change', readSimulatorSettingsFromPage);
   setUpSimulatorDragging();
+  SIMULATOR_MAPS.forEach(function (definition) {
+    var option = document.createElement('option');
+    option.value = definition.id;
+    option.textContent = definition.name;
+    elementById('simulatorMapSelect').appendChild(option);
+  });
+  elementById('simulatorMapSelect').value = chosenMapDefinition().id;
+  elementById('simulatorMapSelect').addEventListener('change', function pickSimulatorMap() {
+    if (activeRun !== null && activeRun.targetName === 'simulator') {
+      addConsoleLine('app', 'Press STOP first, then pick a map.');
+      elementById('simulatorMapSelect').value = chosenMapDefinition().id;
+      return;
+    }
+    chooseSimulatorMap(elementById('simulatorMapSelect').value);
+    addConsoleLine('app', chosenMapDefinition().name + ': ' + chosenMapDefinition().task);
+  });
   elementById('simulatorResetButton').addEventListener('click', function pressSimulatorReset() {
     if (activeRun !== null && activeRun.targetName === 'simulator') {
       addConsoleLine('app', 'Press STOP first, then Back to start.');

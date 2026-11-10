@@ -152,6 +152,19 @@ fix to one goes into the other in the same commit. Test: `node
 scripts/mecanum-sim/programming-e2e.js` (in run-all; starts on ir.ino and "uploads"
 programming.ino over it). Status and next steps: NOTES.md, "programming.ino".
 
+## Blockly simulator maps and the subroutine toolbox (2026-11-10)
+
+mecanum/blocks.html has ten simulator maps (Map, under the simulator; SIMULATOR_MAPS):
+square room, star behind the box, hallway, stop at the wall, stop on the dark tile, find
+the light, find the gap, the door, red light green light, the maze. From map 4 on the map
+is built again on every RUN / Back to start with random choices (wall distance, dark tile,
+lamp corner, gap, door and lamp timing, maze layout), so only sensor programs win; a goal
+star says "Made it" in the console, bumps and "caught" are counted. The map clock follows
+the simulated time. + New has "Toolbox: subroutines" (toolboxExampleState): simple and
+tunable sensor subroutines. Test: `node scripts/mecanum-sim/maps-e2e.js` (in run-all) runs
+a toolbox solution on every map with the random choices pinned, plus lazy programs that
+must fail.
+
 ## Tune the robot (mecanum/tune.html)
 
 `mecanum/tune.html` (2026-11-05) calibrates a robot running ir.ino or programming.ino from
