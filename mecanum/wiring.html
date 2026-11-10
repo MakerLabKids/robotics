@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#ffffff">
-<title>Robot Wiring 0.1.19 - Maker Lab Kids</title>
+<title>Robot Wiring 0.1.20 - Maker Lab Kids</title>
 <style>
   :root {
     --ink: #1c1f24;
@@ -67,6 +67,13 @@
   </div>
 
   <p><b>Building the robot:</b> <a href="https://docs.google.com/presentation/d/1k1UfN8qTw_x12qHCvQiXIB5S7rKnK1I23zu_td2CRZg/edit?usp=sharing">assembly instructions</a> (Google Slides, or <a href="../resources/robot-assembly-instructions.pdf">PDF</a>) and the <a href="https://docs.google.com/presentation/d/185tLkn-QkqF6KxE9Kb6-Nv29q53v7knIu68x30DUY2I/edit?usp=sharing">robot wiring guide</a> (Google Slides, or <a href="../resources/robot-wiring-guide.pdf">PDF</a>).</p>
+
+  <p><b>Step by step, with pictures</b> (each prints on one page):</p>
+  <ul>
+    <li><a href="/mecanum/bluetooth-build">How to plug in Bluetooth</a>: the Bluetooth module, for Sticks and Blockly (<a href="../resources/bluetooth-sheet.pdf">PDF</a>)</li>
+    <li><a href="/mecanum/sonar-build">How to plug in the distance sensor</a>: the sonar, for the Blockly "if" blocks (<a href="../resources/sonar-sheet.pdf">PDF</a>)</li>
+    <li><a href="/mecanum/light-build">How to build a light sensor</a>: the two LDRs for the light bot</li>
+  </ul>
 
   <h2>The whole robot</h2>
   <p>The Uno sits at the bottom and the L293D motor shield plugs on top of it. Everything else plugs into the shield.
@@ -143,7 +150,7 @@
     <tr><th>Part</th><th>Its pins</th><th>Goes to</th></tr>
     <tr><td><b>Motors</b></td><td>2 wires each</td><td>Front left <b>M4</b>, front right <b>M3</b>, rear left <b>M1</b>, rear right <b>M2</b>. If a wheel spins backward, swap that motor's two wires (or fix it in the app).</td></tr>
     <tr><td><b>Battery</b></td><td>+ and -</td><td>The shield's EXT_PWR screw terminal (+ to +).</td></tr>
-    <tr><td><b>Bluetooth</b> (HC-06)</td><td>VCC GND TXD RXD</td><td>VCC to 5V, GND to GND, <b>TXD to A0</b>, <b>RXD to A1</b>.</td></tr>
+    <tr><td><b>Bluetooth</b> (HC-06)</td><td>VCC GND TXD RXD</td><td>VCC to 5V, GND to GND, <b>TXD to A0</b>, <b>RXD to A1</b>: an L on A0 / A1 (<a href="/mecanum/bluetooth-build">step by step</a>).</td></tr>
     <tr><td><b>Sonar</b> (HC-SR04)</td><td>VCC Trig Echo GND</td><td>VCC to 5V, GND to GND, <b>Echo to A2</b>, <b>Trig to A3</b>: an L next to the Bluetooth one (<a href="/mecanum/sonar-build">step by step</a>). On in ir.ino and programming.ino since 0.10.87: the robot stops for anything nearer than 25 cm ahead, and Blockly reads it (<code>u</code>).</td></tr>
     <tr><td><b>IR receiver</b></td><td>OUT GND VCC (check the labels)</td><td>VCC to 5V, GND to GND, OUT to <b>D2</b> for mecanum_holonomic.ino, or <b>D10</b> (the SER1 servo header) for ir.ino.</td></tr>
     <tr><td><b>Light sensors</b> (2 LDRs)</td><td>2 legs each, + a resistor each</td><td>Left front corner to <b>A4</b>, right front corner to <b>A5</b>. See below.</td></tr>
