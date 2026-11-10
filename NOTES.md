@@ -291,7 +291,9 @@ Not done yet (next steps, in order):
    main page for this week's lesson", the lesson = Blocks over Bluetooth): Home leads with
    a Blocks tile (simulator, connect over Bluetooth, run or save in a slot), Bluetooth
    second (plug in the module, connect, Sticks), the sketch card says ir.ino /
-   programming.ino 0.10.86. Blocks is no longer a tease.
+   programming.ino 0.10.86. Blocks is no longer a tease. Same day the nav changed: the
+   "Bluetooth" item is labeled "Sticks" (same link, subnav still "Bluetooth"), and
+   "Calibration" is a top-level item for mecanum/tune.html, out of the Bluetooth subnav.
    **The bots were named before** (the user, 2026-11-05: "we previously named the bots...
    did that get blown away?"). Answer: no. The name is in the Bluetooth module's own
    memory; a sketch upload never touches it, and only a kN / rename (pending flag, then

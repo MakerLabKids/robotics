@@ -15,6 +15,7 @@ const NAV = [
   ["/mecanum/challenges", "Challenges"],
   ["/mecanum/light", "Light bot"],
   ["/mecanum/bluetooth", "Sticks"],
+  ["/mecanum/tune", "Calibration"],
   ["/mecanum/wiring", "Wiring"],
   ["/mecanum/blocks", "Blocks"],
   ["/mecanum/lessons/", "Lessons"]
@@ -42,8 +43,7 @@ const SECTIONS = {
   bluetooth: { title: "Bluetooth", pages: [
     ["/mecanum/bluetooth-build", "Plug in the module"],
     ["/mecanum/bluetooth", "How to connect"],
-    ["/mecanum/sticks", "Drive with Sticks"],
-    ["/mecanum/tune", "Tune the robot"]
+    ["/mecanum/sticks", "Drive with Sticks"]
   ] }
 };
 
@@ -60,7 +60,7 @@ const PAGES = {
   "mecanum/bluetooth-build.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth-build" },
   "mecanum/bluetooth.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/bluetooth" },
   "mecanum/sticks.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/sticks", tool: true, back: "/mecanum/bluetooth", noFoot: true },
-  "mecanum/tune.html": { active: "/mecanum/bluetooth", section: "bluetooth", here: "/mecanum/tune" },
+  "mecanum/tune.html": { active: "/mecanum/tune" },
   "mecanum/wiring.html": { active: "/mecanum/wiring" },
   "mecanum/blocks.html": { active: "/mecanum/blocks", noFoot: true },
   "mecanum/index.html": { setAside: "/mecanum/" },
