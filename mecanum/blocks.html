@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.20 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.21 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -184,6 +184,7 @@ select { border: 1px solid var(--line); border-radius: var(--radius); background
   min-width: 0;
 }
 .simulator-section { padding: 10px; border-bottom: 1px solid var(--line); }
+.simulator-mat { touch-action: none; }   /* (a finger drags the robot or the lamp, not the page) */
 .simulator-mat {
   display: block;
   width: 100%;
@@ -539,7 +540,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.20';
+var EDITOR_VERSION = '0.1.21';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -1373,11 +1374,11 @@ function simulatedImu(what) {
 }
 
 function resetSimulatorWorld() {
-  simulatorWorld.rightMm = 0;
-  simulatorWorld.forwardMm = 0;
+  simulatorWorld.rightMm = editorSettings.simulatorStartRightMm;
+  simulatorWorld.forwardMm = editorSettings.simulatorStartForwardMm;
   simulatorWorld.headingDegrees = 0;
   simulatorWorld.turnRateDegreesPerSec = 0;
-  simulatorWorld.trailPoints = [{ rightMm: 0, forwardMm: 0 }];
+  simulatorWorld.trailPoints = [{ rightMm: simulatorWorld.rightMm, forwardMm: simulatorWorld.forwardMm }];
   simulatorWorld.isTouchingWall = false;
   drawSimulator();
 }
@@ -1567,6 +1568,75 @@ function drawRobotPicture(context) {
   filledBox(0, -92.5, 8, 3, 1.5, picture.metal);
 }
 
+var lastSimulatorView = null;   // the last drawing's scale and centre, for dragging the robot and the lamp
+
+/* Drag the lamp (any time, even during a run) or the robot (its start: not during a
+   simulator run, and only in the whole-floor view) with the mouse or a finger. */
+function setUpSimulatorDragging() {
+  var canvas = elementById('simulatorCanvas');
+  var dragging = null;
+  function floorPoint(event, view) {
+    var box = canvas.getBoundingClientRect();
+    return {
+      rightMm: view.centreRight + (event.clientX - box.left - view.cssWidth / 2) / view.pixelsPerMm,
+      forwardMm: view.centreForward - (event.clientY - box.top - view.cssHeight / 2) / view.pixelsPerMm
+    };
+  }
+  function simulatorIsRunning() { return activeRun !== null && activeRun.targetName === 'simulator'; }
+  function whatIsUnder(point, view) {
+    function pixelsTo(rightMm, forwardMm) { return Math.sqrt(Math.pow((rightMm - point.rightMm) * view.pixelsPerMm, 2) + Math.pow((forwardMm - point.forwardMm) * view.pixelsPerMm, 2)); }
+    if (pixelsTo(SIMULATED_LAMP.rightMm, SIMULATED_LAMP.forwardMm) <= Math.max(18, 100 * view.pixelsPerMm)) { return 'lamp'; }
+    if (!simulatorIsRunning() && editorSettings.simulatorView !== 'closeUp' &&
+        pixelsTo(simulatorWorld.rightMm, simulatorWorld.forwardMm) <= Math.max(18, SIMULATED_ROBOT_LENGTH_MM / 2 * view.pixelsPerMm)) { return 'robot'; }
+    return null;
+  }
+  function keptOnTheFloor(point, marginMm) {
+    var rightMm = Math.round(point.rightMm / 10) * 10, forwardMm = Math.round(point.forwardMm / 10) * 10;
+    if (editorSettings.simulatorHasRoom) {
+      var room = simulatorRoomHalfSizes();
+      rightMm = clampNumber(rightMm, -room.halfWidth + marginMm, room.halfWidth - marginMm);
+      forwardMm = clampNumber(forwardMm, -room.halfDepth + marginMm, room.halfDepth - marginMm);
+    }
+    return { rightMm: rightMm, forwardMm: forwardMm };
+  }
+  canvas.addEventListener('pointerdown', function startDragging(event) {
+    if (!lastSimulatorView) { return; }
+    var what = whatIsUnder(floorPoint(event, lastSimulatorView), lastSimulatorView);
+    if (!what) { return; }
+    dragging = { what: what, view: lastSimulatorView };   // (the view stays put while dragging, so the robot cannot run away with it)
+    canvas.setPointerCapture(event.pointerId);
+    canvas.style.cursor = 'grabbing';
+    event.preventDefault();
+  });
+  canvas.addEventListener('pointermove', function drag(event) {
+    if (!dragging) {
+      if (event.pointerType === 'mouse' && lastSimulatorView) { canvas.style.cursor = whatIsUnder(floorPoint(event, lastSimulatorView), lastSimulatorView) ? 'grab' : ''; }
+      return;
+    }
+    if (dragging.what === 'lamp') {
+      var lampAt = keptOnTheFloor(floorPoint(event, dragging.view), 60);
+      SIMULATED_LAMP.rightMm = lampAt.rightMm;
+      SIMULATED_LAMP.forwardMm = lampAt.forwardMm;
+      drawSimulator();
+    } else {
+      var robotAt = keptOnTheFloor(floorPoint(event, dragging.view), SIMULATED_ROBOT_LENGTH_MM / 2);
+      editorSettings.simulatorStartRightMm = robotAt.rightMm;
+      editorSettings.simulatorStartForwardMm = robotAt.forwardMm;
+      resetSimulatorWorld();
+    }
+  });
+  function stopDragging() {
+    if (!dragging) { return; }
+    editorSettings.simulatorLampRightMm = SIMULATED_LAMP.rightMm;
+    editorSettings.simulatorLampForwardMm = SIMULATED_LAMP.forwardMm;
+    saveEditorSettings();
+    dragging = null;
+    canvas.style.cursor = '';
+  }
+  canvas.addEventListener('pointerup', stopDragging);
+  canvas.addEventListener('pointercancel', stopDragging);
+}
+
 function drawSimulator() {
   var canvas = elementById('simulatorCanvas');
   var cssWidth = canvas.clientWidth;
@@ -1609,6 +1679,7 @@ function drawSimulator() {
     centreForward = simulatorWorld.forwardMm;
   }
 
+  lastSimulatorView = { cssWidth: cssWidth, cssHeight: cssHeight, centreRight: centreRight, centreForward: centreForward, pixelsPerMm: pixelsPerMm };
   function screenX(rightMm) { return cssWidth / 2 + (rightMm - centreRight) * pixelsPerMm; }
   function screenY(forwardMm) { return cssHeight / 2 - (forwardMm - centreForward) * pixelsPerMm; }
 
@@ -3665,7 +3736,11 @@ var editorSettings = {
   simulatorIsBig: false,
   simulatorHasRoom: true,
   simulatorRoomWidthMm: 1600,
-  simulatorRoomDepthMm: 1600
+  simulatorRoomDepthMm: 1600,
+  simulatorStartRightMm: 0,      // where RUN and Back to start put the pretend robot (drag it there)
+  simulatorStartForwardMm: 0,
+  simulatorLampRightMm: SIMULATED_LAMP.rightMm,   // where the lamp sits (drag it there)
+  simulatorLampForwardMm: SIMULATED_LAMP.forwardMm
 };
 var isLoadingProgramIntoWorkspace = false;
 var saveTimer = null;
@@ -4100,6 +4175,12 @@ function loadEditorSettings() {
   if (!ROBOT_SKETCHES[editorSettings.sketchName]) { editorSettings.sketchName = 'mecanum_holonomic'; }
   editorSettings.robotName = tidyRobotName(editorSettings.robotName);
   editorSettings.runTarget = 'simulator';
+  ['simulatorStartRightMm', 'simulatorStartForwardMm', 'simulatorLampRightMm', 'simulatorLampForwardMm'].forEach(function (key) {
+    if (!isFinite(Number(editorSettings[key]))) { editorSettings[key] = 0; }
+    editorSettings[key] = Number(editorSettings[key]);
+  });
+  SIMULATED_LAMP.rightMm = editorSettings.simulatorLampRightMm;
+  SIMULATED_LAMP.forwardMm = editorSettings.simulatorLampForwardMm;
 }
 
 function loadActiveProgramIntoWorkspace() {
@@ -4568,7 +4649,7 @@ function showSimulatorSettings() {
   elementById('simulatorRoomDepthInput').value = editorSettings.simulatorRoomDepthMm;
   elementById('simulatorRoomWidthInput').disabled = !editorSettings.simulatorHasRoom;
   elementById('simulatorRoomDepthInput').disabled = !editorSettings.simulatorHasRoom;
-  elementById('simulatorCanvas').title = 'A pretend robot on a cutting mat: thin lines every 100 mm, bold every 500 mm. The dashed line is what the laser sees.';
+  elementById('simulatorCanvas').title = 'A pretend robot on a cutting mat: thin lines every 100 mm, bold every 500 mm. The dashed line is what the sensor sees. Drag the robot to choose where it starts, and drag the lamp anywhere.';
 }
 
 function readSimulatorSettingsFromPage() {
@@ -4591,7 +4672,7 @@ function fillHelpDialog() {
     '<p>A program can run another program: <b>run program</b> (in Start) runs the tab you pick by its name, then carries on. Give tabs names worth calling (This program…, Rename): the blocks that run a tab follow its new name. With more than one <b>when RUN is pressed</b> block in a tab, they run one after another, top one first.</p>' +
     '<h3>Try it</h3>' +
     '<p><b>Simulator</b> runs the program on a pretend robot, with pretend walls for the laser and sonar. <b>Robot</b> sends each block to the real robot as it runs and lights up the block it is doing. STOP always stops both.</p>' +
-    '<p class="dialog-fine">The mat has a thin line every 100 mm and a bold one every 500 mm; the dashed line is what the laser sees. The robot is a drawing of the kit, not a measured plan; the orange arrow is its nose. The simulator draws moves at ' + PROGRAM_SPEED_MM_PER_SEC + ' mm/s. Its turn speed (' + SIMULATED_TURN_DEGREES_PER_SEC + '°/s) and keep-driving speed (' + SIMULATED_FULL_POWER_MM_PER_SEC + ' mm/s at 100%) are made up; the real robot has its own from calibration. A real robot with a laser stops by itself 120 mm from a wall; the pretend one bumps into it.</p>' +
+    '<p class="dialog-fine">The mat has a thin line every 100 mm and a bold one every 500 mm; the dashed line is what the sensor sees. Drag the robot to choose where it starts (RUN and Back to start put it there), and drag the lamp anywhere, even while a program runs. The robot is a drawing of the kit, not a measured plan; the orange arrow is its nose. The simulator draws moves at ' + PROGRAM_SPEED_MM_PER_SEC + ' mm/s. Its turn speed (' + SIMULATED_TURN_DEGREES_PER_SEC + '°/s) and keep-driving speed (' + SIMULATED_FULL_POWER_MM_PER_SEC + ' mm/s at 100%) are made up; the real robot has its own from calibration. A real robot with a laser stops by itself 120 mm from a wall; the pretend one bumps into it.</p>' +
     '<h3>Get it onto a robot</h3>' +
     '<table class="help-table">' +
     '<tr><td>Run it live</td><td>Connect with Serial (USB or paired Bluetooth, computers) or Bluetooth (Android phones and computers), choose Robot, press RUN. This is the only way programs with sensor blocks can work, because the editor asks the robot what it sees while the program runs.</td></tr>' +
@@ -4789,6 +4870,7 @@ function wireUpPage() {
   elementById('simulatorRoomCheckbox').addEventListener('change', readSimulatorSettingsFromPage);
   elementById('simulatorRoomWidthInput').addEventListener('change', readSimulatorSettingsFromPage);
   elementById('simulatorRoomDepthInput').addEventListener('change', readSimulatorSettingsFromPage);
+  setUpSimulatorDragging();
   elementById('simulatorResetButton').addEventListener('click', function pressSimulatorReset() {
     if (activeRun !== null && activeRun.targetName === 'simulator') {
       addConsoleLine('app', 'Press STOP first, then Back to start.');
