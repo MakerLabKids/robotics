@@ -193,6 +193,16 @@ stopped (any key from ANY remote in the room, a sagging battery restarting the b
 `p?;` shows what is really stored. Still unknown: typed on the remote or sent from
 Blocks, and which firmware.
 
+Blockly guide and maps (2026-11-10). The user: an intro to programming with Blockly in the
+simulator, simple things first, and 10 maps from simple to hard where sensors and logic are
+needed (walls that appear and disappear, tiles that change), in the step-sheet style; plus a
+set of useful subroutines (simple and tunable) "not right in their face". Done:
+mecanum/blockly-guide.html (Programming with Blockly 0.1.0, two printed pages, PDF
+resources/blockly-guide.pdf; `python3 scripts/blockly-guide.py`, block pictures
+`node temp/shot-guide-blocks.js`, PDF `node temp/print-guide.js`), the maps and the toolbox
+in Blockly (see CLAUDE.md), maps-e2e. Linked from Home and Blockly's Help. Not tried by kids
+yet; the maps' difficulty and the toolbox's numbers are guesses to tune after class.
+
 Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings

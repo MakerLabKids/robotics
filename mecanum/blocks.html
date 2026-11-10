@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.23 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.24 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -545,7 +545,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.23';
+var EDITOR_VERSION = '0.1.24';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -5106,6 +5106,7 @@ function fillHelpDialog() {
     '<p>Each tab is one program with its own blocks, variables and subroutines. The number on a tab is its place in the row; tabs 1 to 9 are also the remote\'s slots 1 to 9, and they start out holding nine demos (+ New can put them back). Make a subroutine in <b>Subroutines</b>, give it a name, then use its call block as often as you like. To reuse one in another tab, select it, copy (Ctrl+C), switch tabs and paste (Ctrl+V).</p>' +
     '<p>A program can run another program: <b>run program</b> (in Start) runs the tab you pick by its name, then carries on. Give tabs names worth calling (This program…, Rename): the blocks that run a tab follow its new name. With more than one <b>when RUN is pressed</b> block in a tab, they run one after another, top one first.</p>' +
     '<h3>Try it</h3>' +
+    '<p><b>New here?</b> <a href="/mecanum/blockly-guide" target="_blank">Programming with Blockly</a>: first steps, then ten simulator maps to solve (pick one under the simulator: Map).</p>' +
     '<p><b>Simulator</b> runs the program on a pretend robot, with pretend walls for the laser and sonar. <b>Robot</b> sends each block to the real robot as it runs and lights up the block it is doing. STOP always stops both.</p>' +
     '<p class="dialog-fine">The mat has a thin line every 100 mm and a bold one every 500 mm; the dashed line is what the sensor sees. Drag the robot to choose where it starts (RUN and Back to start put it there), and drag the lamp anywhere, even while a program runs. The robot is a drawing of the kit, not a measured plan; the orange arrow is its nose. The simulator draws moves at ' + PROGRAM_SPEED_MM_PER_SEC + ' mm/s. Its turn speed (' + SIMULATED_TURN_DEGREES_PER_SEC + '°/s) and keep-driving speed (' + SIMULATED_FULL_POWER_MM_PER_SEC + ' mm/s at 100%) are made up; the real robot has its own from calibration. A real robot with a laser stops by itself 120 mm from a wall; the pretend one bumps into it.</p>' +
     '<h3>Get it onto a robot</h3>' +
