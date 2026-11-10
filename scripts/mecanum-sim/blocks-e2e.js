@@ -249,7 +249,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   });
   check(callBack.steps === 'g2 b10 g2' && callBack.names === '"PROGRAM":"' + callTest.callee + '" "PROGRAM":"' + callTest.callee + '"', 'read back from the robot, slot 9 opens with "run program" blocks naming tab 2: ' + callBack.steps);
 
-  // The robot's name: kN saves it, the next boot announces it, the page switches to that robot's tabs
+  // The robot's name: kN saves it, the next boot announces it; the tabs on the screen stay put (0.1.22)
+  const tabsBefore = await page.evaluate(() => { captureWorkspaceIntoActiveProgram(); return JSON.stringify(programStore.programs.map((p) => p.name)) + editorSettings.robotName + programStore.activeProgramId; });
   await page.evaluate(() => sendToRobot('kNTesty;'));
   await sleep(500);
   const bannerCount = (simLog.match(remoteBanner()) || []).length;
@@ -257,9 +258,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await waitFor(() => (simLog.match(remoteBanner()) || []).length > bannerCount, REMOTE_SKETCH + '.ino reboot banner');
   await waitFor(() => /ir: name Testy/.test(simLog), 'ir: name Testy at boot', 8000);
   await sleep(400);
-  check(await page.evaluate(() => editorSettings.robotName === 'Testy' && document.getElementById('robotChipButton').textContent === 'Robot: Testy ▾' && knownRobots().indexOf('Testy') !== -1), 'the page switched to robot "Testy" on its own and remembers it');
-  await page.evaluate(() => { switchToRobot('', 'test'); });
-  check(dialogs.every((d) => /Which robot/.test(d)) , 'nameless robots only ever prompt "which robot" (' + dialogs.length + ' prompts)');
+  const tabsAfter = await page.evaluate(() => JSON.stringify(programStore.programs.map((p) => p.name)) + editorSettings.robotName + programStore.activeProgramId);
+  check(tabsAfter === tabsBefore, 'a robot that says its name ("Testy") leaves the tabs on the screen as they are');
+  check(await page.evaluate(() => /Connected to robot "Testy"\. Your tabs stay as they are/.test(document.getElementById('consoleLines').innerText)), 'the console says which robot it is and that the tabs stay');
+  check(dialogs.length === 0, 'no "which robot" questions (' + dialogs.length + ' dialogs)');
 
   check(pageErrors.length === 0, 'no page errors' + (pageErrors.length ? ': ' + pageErrors.join(' | ') : ''));
   fs.writeFileSync(path.join(build, 'sim-log.txt'), simLog);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.21 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.22 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -540,7 +540,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.21';
+var EDITOR_VERSION = '0.1.22';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -4086,23 +4086,29 @@ function forgetCurrentRobot() {
 }
 
 // The robot said its name (ir.ino: "ir: name <name>" at boot, "K,name,<name>" on k?),
-// or the Bluetooth module is called after it.
+// or the Bluetooth module is called after it. Connecting NEVER changes the tabs on the
+// screen (since 0.1.22: it used to swap in that robot's own set, and the kids' program
+// seemed to vanish when they went from Simulator to Robot). The Robot menu still
+// switches sets by hand; if this robot has a set here, the console says where it is.
 var robotNameTimer = null;
+var robotNamesMentioned = {};
 function robotAnnouncedName(name) {
   clearTimeout(robotNameTimer);
   robotNameTimer = null;
   name = tidyRobotName(name);
   if (!name || MODULE_DEFAULT_NAMES.test(name)) { return; }
-  if (name !== editorSettings.robotName) { switchToRobot(name, 'connected'); }
+  if (name === editorSettings.robotName || robotNamesMentioned[name]) { return; }
+  robotNamesMentioned[name] = true;
+  var hasOwnSet = false;
+  try { hasOwnSet = localStorage.getItem(PROGRAM_STORAGE_KEY + '.robot.' + name) !== null; } catch (problem) { hasOwnSet = false; }
+  addConsoleLine('app', 'Connected to robot "' + name + '". Your tabs stay as they are.' +
+    (hasOwnSet ? ' Tabs saved earlier under its name are in the Robot menu (top left).' : ''));
 }
 
-// A robot that did not say its name within a moment of its banner: ask.
+// (Robots with no name used to get a "which robot is it?" question here; no longer.)
 function robotMayBeNameless() {
   clearTimeout(robotNameTimer);
-  robotNameTimer = setTimeout(function () {
-    robotNameTimer = null;
-    if (robotLink.isConnected && !editorSettings.robotName) { askWhichRobot('This robot has no name yet. Which robot is it?'); }
-  }, 2500);
+  robotNameTimer = null;
 }
 
 function loadProgramStore() {
