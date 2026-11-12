@@ -214,6 +214,20 @@ the undo arrows, apt-installed, not in the image), `python3 scripts/blockly-tour
 `node scripts/site-nav.js`, PDF `node temp/print-tour.js` (copy to resources/). Redo the
 shots whenever the editor's layout changes.
 
+Blockly tips and tricks (2026-11-12, the user: "a general blockly programming tips/guide. Use
+variables. Initialize them with text or math. right click to duplicate blocks. click on the gear
+in subroutines to set values ... especially all the things that are hidden or hard to discover.
+As well as the basics."): mecanum/blockly-tips.html (0.1.0, two printed pages,
+resources/blockly-tips.pdf), 24 cards, the hard-to-find ones tagged HIDDEN. Page 1: loose blocks,
+Ctrl+drag / X pulls one block out, Duplicate (D), keys, number slots, variables started with a
+number, math, text, a sensor, change by, rename/delete. Page 2: subroutines, the gear (inputs),
+Create 'get size', return, Highlight function definition, gears on if/join, comments, disable,
+collapse, the workspace menu, run program. Checked in the real editor (Blockly 13.2.1): D, X, C,
+Ctrl+drag heal, menu items; on a Mac the Ctrl keys are Cmd. Remake: `node
+scripts/blockly-tips-shots.js [scene...]`, `python3 scripts/blockly-tips.py`, `node
+scripts/site-nav.js`, PDF `node temp/print-tips.js` (copy to resources/). Linked from Home's
+Blockly guide tile, Blockly 0.1.26's Help and the guide (0.1.2).
+
 Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings

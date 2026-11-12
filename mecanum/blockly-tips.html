@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockly Tips and Tricks 0.1.0 - Maker Lab Kids</title>
+<meta name="description" content="Tips for programming the mecanum robot in Blockly: the basics, variables started with numbers, math, text or sensors, subroutines with inputs, the gears, right-click menus and keys that are easy to miss.">
+<!-- written by scripts/blockly-tips.py: edit that, then run it and node scripts/site-nav.js -->
+<style>
+  :root { --ink: #1c1f24; --dim: #5b6670; --orange: #c24400; --blue: #0b6fb3; --purple: #6b3fa0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #e9ecef; }
+  body { color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.35; }
+  .sheet { background: #fff; max-width: 8.5in; margin: 16px auto; padding: 0.4in 0.45in; box-shadow: 0 2px 14px rgba(0,0,0,0.15); }
+  .top { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .top img { height: 64px; width: auto; }
+  .top h1 { font-size: 24px; margin: 0; line-height: 1.1; }
+  .top .sub { color: var(--dim); font-size: 13px; }
+  .note { background: #fff4e5; border-left: 4px solid var(--orange); padding: 6px 10px; margin: 8px 0 12px; font-size: 13px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 10px; }
+  .step { border: 1.5px solid #c9ced4; border-radius: 10px; padding: 6px 8px; display: flex; flex-direction: column; }
+  .step.is-hidden { border-color: #b9a3d6; }
+  .step-head { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; line-height: 1.15; }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 13px; flex: none; }
+  .hidden { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--purple); border: 1.5px solid var(--purple); border-radius: 9px; padding: 0 5px; flex: none; }
+  .pic { display: flex; align-items: center; justify-content: center; height: 1.2in; margin: 3px 0 1px; overflow: hidden; }
+  .pic.keys-pic { height: auto; }
+  .pic img.blocks { max-width: 100%; max-height: 1.2in; width: auto; height: auto; }
+  .keys { border-collapse: collapse; font-size: 11.5px; width: 100%; line-height: 1.2; }
+  .keys td { padding: 1px 3px; vertical-align: top; }
+  .keys td:first-child { white-space: nowrap; }
+  kbd { font: 700 11px ui-monospace, Menlo, Consolas, monospace; border: 1px solid #9aa4ae; border-bottom-width: 2px; border-radius: 4px; padding: 0 3px; background: #f7f8f9; }
+  .step p { margin: 3px 0 0; font-size: 12px; line-height: 1.28; }
+  .sheet a { color: var(--blue); }
+  .tips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 10px; margin: 6px 0 8px; font-size: 11.5px; line-height: 1.25; }
+  .tips div { background: #f4f6f8; border-radius: 8px; padding: 4px 8px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: repeat(2, 1fr); } .tips { grid-template-columns: 1fr; } .sheet { padding: 16px; } .top img { height: 44px; } }
+  @media (max-width: 420px) { .steps { grid-template-columns: 1fr; } }
+  @media print {
+    @page { size: letter; margin: 0.3in 0.3in 0.45in;
+      @bottom-center { content: "Maker Lab Kids \00B7  robotics.makerlabkids.com"; font: 10px system-ui, sans-serif; color: #555; } }
+    .sheet a { color: inherit; }
+    .print-link { display: none; }
+    .top img { height: 46px; }
+    .note { margin: 6px 0 8px; padding: 4px 10px; }
+    html, body { background: #fff; }
+    .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    .sheet + .sheet { break-before: page; page-break-before: always; }
+    .num { background: none; color: var(--orange); border: 2px solid var(--orange); }
+    .note { background: none; }
+    .tips div { background: none; border: 1px solid #c9ced4; }
+    kbd { background: none; }
+  }
+</style>
+<link rel="stylesheet" href="/css/nav.css">
+</head>
+<body>
+<!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">IR Remote</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Sticks</a><a href="/mecanum/tune">Calibration</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks" class="active" aria-current="page">Blockly</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<!-- /mlk-nav -->
+<div class="sheet">
+  <div class="top">
+    <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div><h1>Blockly tips and tricks</h1><div class="sub">The basics, variables, and the handy things nobody finds by looking. <span class="print-link">Print it: <a href="../resources/blockly-tips.pdf">PDF</a>. New to Blockly? <a href="/mecanum/blockly-guide">Programming with Blockly</a>.</span></div></div>
+  </div>
+  <div class="note"><b>Click</b> a block to pick it. <b>Right-click</b> it for its menu. A <b>gear</b> changes its shape, a <b>triangle</b> is a list
+  to choose from, a <b>?</b> is a note. Cards marked <span class="hidden">hidden</span> are tricks you only find if someone shows you.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-head"><span class="num">1</span>Snap it on, or it does nothing</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-loose.png" alt="Blocks: Snap it on, or it does nothing" width="556" height="201"></div>
+      <p>Only blocks under <b>when RUN is pressed</b> (or in a subroutine) run. A loose block turns <b>gray</b> and is skipped.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">2</span>Pull out just one block<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-pull.png" alt="Blocks: Pull out just one block" width="493" height="187"></div>
+      <p>A drag takes every block under it too. Hold <b>Ctrl</b> while you drag to take just that one. Or click it, press <b>X</b>.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">3</span>Duplicate<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-duplicate.png" alt="Blocks: Duplicate" width="312" height="463"></div>
+      <p><b>Right-click</b>, <b>Duplicate</b>: a copy of the block and all inside it. Faster: click it, press <b>D</b>.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">4</span>Keys<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic keys-pic"><table class="keys"><tr><td><kbd>Ctrl+C</kbd> <kbd>Ctrl+V</kbd></td><td>copy, paste (other tabs too)</td></tr><tr><td><kbd>Ctrl+X</kbd></td><td>cut</td></tr><tr><td><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></td><td>undo, redo</td></tr><tr><td><kbd>Delete</kbd></td><td>delete it</td></tr><tr><td><kbd>D</kbd></td><td>duplicate it</td></tr><tr><td><kbd>X</kbd></td><td>pull it out of its stack</td></tr><tr><td><kbd>C</kbd></td><td>clean up: line blocks up</td></tr></table></div>
+      <p>Click a block first. Mac: <b>Cmd</b> for Ctrl.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">5</span>Numbers are slots<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-slot.png" alt="Blocks: Numbers are slots" width="393" height="189"></div>
+      <p>Click a number to type. Drop a <b>variable</b> or a <b>math</b> block on it. Drag that out: the number comes back.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">6</span>Make a variable</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-newvar.png" alt="Blocks: Make a variable" width="253" height="296"></div>
+      <p>A box with a name, for a number or some text. <b>Variables</b>, <b>Create variable...</b>, type a name like <b>side</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">7</span>Start it with a number</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-number.png" alt="Blocks: Start it with a number" width="301" height="181"></div>
+      <p><b>set side to 300</b>, then put the round <b>side</b> where a number goes. Change 300 once: every move follows.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">8</span>Start it with math</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-math.png" alt="Blocks: Start it with math" width="489" height="237"></div>
+      <p>Drop a <b>Math</b> block in: <b>100 &times; 3</b>, or <b>random integer 200 to 600</b> for a new number every run.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">9</span>Start it with text</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-text.png" alt="Blocks: Start it with text" width="576" height="243"></div>
+      <p>The <b>" "</b> block (<b>Text</b>) holds words. <b>create text with</b> glues words and numbers together for <b>say</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">10</span>Start it from a sensor</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-sensor.png" alt="Blocks: Start it from a sensor" width="574" height="294"></div>
+      <p><b>set wall to sonar distance</b> keeps what the sonar saw right then. Read it again later: did it change?</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">11</span>Change it as you go</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-change.png" alt="Blocks: Change it as you go" width="337" height="363"></div>
+      <p><b>change side by 100</b> adds 100 each time round: a spiral. <b>-100</b> makes it smaller.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">12</span>Rename or delete it<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-vardrop.png" alt="Blocks: Rename or delete it" width="321" height="285"></div>
+      <p>Click the <b>triangle</b> on a variable: pick another one, <b>Rename</b> it everywhere, or <b>Delete</b> it.</p>
+    </div>
+  </div>
+</div>
+<div class="sheet">
+  <div class="top">
+    <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div><h1>Subroutines, gears and menus</h1><div class="sub">Make your own blocks. Then the menus that hide behind a right-click.</div></div>
+  </div>
+  <div class="tips">
+    <div><b>What does it do?</b> Rest the mouse on a block: a hint pops up.</div>
+    <div><b>Set it first.</b> A variable never set is empty: <b>set</b> it at the top.</div>
+    <div><b>Watch it.</b> <b>say</b> a variable each time round, simulator at <b>real time</b>.</div>
+    <div><b>Keep it.</b> Programs live in this browser. <b>Share / phone...</b> saves a file.</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-head"><span class="num">13</span>Make a subroutine</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-submake.png" alt="Blocks: Make a subroutine" width="621" height="277"></div>
+      <p>Drag <b>subroutine</b> out of <b>Subroutines</b>, click its name to rename it, fill it. Its call (<b>square</b>) is in <b>Subroutines</b> now.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">14</span>The gear adds inputs<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-subgear.png" alt="Blocks: The gear adds inputs" width="425" height="324"></div>
+      <p>Click the <b>gear</b>. Drag <b>input name</b> into <b>inputs</b>, click the <b>x</b>, type <b>size</b>. Click the gear again to close.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">15</span>Use the input inside<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-subget.png" alt="Blocks: Use the input inside" width="461" height="375"></div>
+      <p>An input is a variable. <b>Right-click</b> the subroutine: <b>Create 'get size'</b> makes its block, <b>Create 'square'</b> a call.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">16</span>Give it a value</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-subcall.png" alt="Blocks: Give it a value" width="536" height="277"></div>
+      <p>Each call now has a slot: <b>square with size 300</b>, then <b>600</b>. One subroutine, any size.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">17</span>A subroutine that answers<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-subreturn.png" alt="Blocks: A subroutine that answers" width="343" height="345"></div>
+      <p>The second <b>subroutine</b> block ends in <b>return</b>: it gives back a number, so its call fits in a slot.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">18</span>Where is that subroutine?<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-highlight.png" alt="Blocks: Where is that subroutine?" width="651" height="407"></div>
+      <p><b>Right-click</b> a call: <b>Highlight function definition</b> shows the subroutine it runs.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">19</span>Gears on if and text<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-ifgear.png" alt="Blocks: Gears on if and text" width="398" height="317"></div>
+      <p>On <b>if</b>: drag in <b>else if</b> and <b>else</b>. On <b>create text with</b> and <b>create list with</b>: more <b>items</b>.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">20</span>Notes for people<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-comment.png" alt="Blocks: Notes for people" width="501" height="187"></div>
+      <p><b>Right-click</b>, <b>Add Comment</b>. Click the <b>?</b> to read it. The program ignores it. Subroutines come with one.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">21</span>Turn a block off<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-disable.png" alt="Blocks: Turn a block off" width="276" height="238"></div>
+      <p><b>Right-click</b>, <b>Disable Block</b>: it is skipped. Run it with and without. <b>Enable Block</b> turns it back on.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">22</span>Fold it up<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-collapse.png" alt="Blocks: Fold it up" width="276" height="235"></div>
+      <p><b>Right-click</b>, <b>Collapse Block</b>: one short line. It still runs. <b>Expand Block</b> opens it.</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">23</span>Right-click empty space<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-wsmenu.png" alt="Blocks: Right-click empty space" width="397" height="202"></div>
+      <p><b>Clean up Blocks</b> lines them up. <b>Collapse</b> or <b>Expand</b> all. <b>Delete</b> all (Ctrl+Z brings them back).</p>
+    </div>
+    <div class="step is-hidden">
+      <div class="step-head"><span class="num">24</span>Run another program<span class="hidden" title="Hard to find by looking">hidden</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-tips-runprogram.png" alt="Blocks: Run another program" width="542" height="187"></div>
+      <p><b>run program</b> (<b>Start</b>) runs another tab, then goes on. Two <b>when RUN</b> blocks: the top one runs first.</p>
+    </div>
+  </div>
+</div>
+<!-- mlk-foot -->
+<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a><span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a><span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>
+<!-- /mlk-foot -->
+</body>
+</html>
