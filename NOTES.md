@@ -228,6 +228,27 @@ scripts/blockly-tips-shots.js [scene...]`, `python3 scripts/blockly-tips.py`, `n
 scripts/site-nav.js`, PDF `node temp/print-tips.js` (copy to resources/). Linked from Home's
 Blockly guide tile, Blockly 0.1.26's Help and the guide (0.1.2).
 
+Debugging with Blockly (2026-11-12, the user: "a debugging guide. Both general debugging and
+our specific flavor" - say with the same variable the program uses, reset variables at the
+start, clear the console, console commands like u, organizing with subroutines, and "should they
+or should they not shadow variable names in subroutines?"): mecanum/blockly-debug.html (0.1.0,
+two printed pages, resources/blockly-debug.pdf). Measured in the simulator (Blockly 0.1.26):
+every RUN starts all variables empty (say shows "undefined", change by starts at 0); a drive
+whose slot holds an unset variable or text is SKIPPED with no warning; a subroutine input
+shadows a program variable of the same name (inside 300, outside still 100) though the
+Variables menu shows one name, so the sheet says do not reuse names; subroutines without
+inputs share the program's variables; each tab has its own variables, also through run
+program; an endless loop does not freeze the page and STOP works; sees closer than ignores
+-1, a compare with the distance does not. The console lines on the sheet are real
+(scripts/blockly-debug-console.json); the robot lines are written in the firmware's formats
+(U,<mm>; B,<direction>,<brightest>,<left>,<right> 0-1000, the light level block is brightest
+/ 10; move: done). Remake: `node scripts/blockly-debug-shots.js [scene...]`, `python3
+scripts/blockly-debug.py`, `node scripts/site-nav.js`, PDF `node temp/print-debug.js` (copy
+to resources/). Blockly 0.1.27: the command box hint says u, not rs (rs is the set-aside
+holonomic sketch's laser). Not done, worth asking: a warning in the editor when a move gets
+an empty or non-number value (today it silently skips); the tour screenshot still shows the
+old "e.g. rs" hint.
+
 Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings

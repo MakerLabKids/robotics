@@ -1,0 +1,172 @@
+{
+ "sayloop": [
+  [
+   "say",
+   "says: sonar: 1585"
+  ],
+  [
+   "simulator",
+   "sim: forward 200 mm   m0,200,0;"
+  ],
+  [
+   "say",
+   "says: sonar: 1385"
+  ],
+  [
+   "simulator",
+   "sim: forward 200 mm   m0,200,0;"
+  ],
+  [
+   "say",
+   "says: sonar: 1185"
+  ],
+  [
+   "simulator",
+   "sim: forward 200 mm   m0,200,0;"
+  ],
+  [
+   "say",
+   "says: sonar: 985"
+  ],
+  [
+   "simulator",
+   "sim: forward 200 mm   m0,200,0;"
+  ],
+  [
+   "say",
+   "says: sonar: 785"
+  ],
+  [
+   "simulator",
+   "sim: forward 200 mm   m0,200,0;"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "readonce": [
+  [
+   "say",
+   "says: light: 66"
+  ],
+  [
+   "simulator",
+   "sim: turn right 90°   m0,0,90;"
+  ],
+  [
+   "say",
+   "says: light: 66"
+  ],
+  [
+   "simulator",
+   "sim: turn right 90°   m0,0,90;"
+  ],
+  [
+   "say",
+   "says: light: 66"
+  ],
+  [
+   "simulator",
+   "sim: turn right 90°   m0,0,90;"
+  ],
+  [
+   "say",
+   "says: light: 66"
+  ],
+  [
+   "simulator",
+   "sim: turn right 90°   m0,0,90;"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "where": [
+  [
+   "say",
+   "says: 1: to the wall"
+  ],
+  [
+   "simulator",
+   "sim: keep driving   v40,0,0;"
+  ],
+  [
+   "simulator",
+   "sim: stop   x"
+  ],
+  [
+   "say",
+   "says: 2: turn around"
+  ],
+  [
+   "simulator",
+   "sim: turn right 180°   m0,0,180;"
+  ],
+  [
+   "say",
+   "says: 3: back"
+  ],
+  [
+   "simulator",
+   "sim: forward 500 mm   m0,500,0;"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "misspelled": [
+  [
+   "say",
+   "says: sides is undefined"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "shadow": [
+  [
+   "app",
+   "RUN \"debug shadow\" on the simulator."
+  ],
+  [
+   "say",
+   "says: 300"
+  ],
+  [
+   "say",
+   "says: 100"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "shared": [
+  [
+   "app",
+   "RUN \"debug shared\" on the simulator."
+  ],
+  [
+   "say",
+   "says: 3"
+  ],
+  [
+   "app",
+   "Program finished."
+  ]
+ ],
+ "willdo": {
+  "list": [
+   "forward 300 mmm0,300,0;",
+   "turn right 90°m0,0,90;",
+   "forward 300 mmm0,300,0;",
+   "turn right 90°m0,0,90;",
+   "say \"half way\""
+  ],
+  "notes": "From here on it depends on what the sonar sees, so the rest cannot be worked out ahead of time."
+ }
+}

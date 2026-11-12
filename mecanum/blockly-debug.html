@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debugging with Blockly 0.1.0 - Maker Lab Kids</title>
+<meta name="description" content="How to find bugs in a Blockly program for the mecanum robot: the console, say blocks, reading a sensor once, starting clean, subroutines and variable names, and asking the real robot with console commands.">
+<!-- written by scripts/blockly-debug.py: edit that, then run it and node scripts/site-nav.js -->
+<style>
+  :root { --ink: #1c1f24; --dim: #5b6670; --orange: #c24400; --blue: #0b6fb3; --purple: #6b3fa0; --green: #1d7a46; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #e9ecef; }
+  body { color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.35; }
+  .sheet { background: #fff; max-width: 8.5in; margin: 16px auto; padding: 0.4in 0.45in; box-shadow: 0 2px 14px rgba(0,0,0,0.15); }
+  .top { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .top img { height: 64px; width: auto; }
+  .top h1 { font-size: 24px; margin: 0; line-height: 1.1; }
+  .top .sub { color: var(--dim); font-size: 13px; }
+  .note { background: #fff4e5; border-left: 4px solid var(--orange); padding: 6px 10px; margin: 8px 0 12px; font-size: 13px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 10px; }
+  .step { border: 1.5px solid #c9ced4; border-radius: 10px; padding: 6px 8px; display: flex; flex-direction: column; gap: 3px; }
+  .step-head { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; line-height: 1.15; }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 13px; flex: none; }
+  .tag { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: 1.5px solid; border-radius: 9px; padding: 0 5px; flex: none; }
+  .tag-key { color: var(--green); }
+  .tag-robot { color: var(--purple); }
+  .pic { display: flex; align-items: center; justify-content: center; height: 1.2in; overflow: hidden; }
+  .pic.small { height: 1.0in; }
+  .pic.tiny { height: 0.45in; }
+  .pic img.blocks { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+  .pic.table-pic { height: auto; display: block; }
+  .console { font: 10.5px/1.3 ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace; background: #f4f6f8; border: 1px solid #d5dbe1; border-radius: 6px; padding: 3px 6px; white-space: pre-wrap; }
+  .console .c-say { color: #8a5a00; font-weight: 700; }
+  .console .c-simulator { color: #2b3f87; }
+  .console .c-sent { color: var(--blue); }
+  .console .c-robot { color: var(--green); }
+  .console .c-app { color: var(--dim); }
+  .keys { border-collapse: collapse; font-size: 11.5px; width: 100%; line-height: 1.25; }
+  .keys td { padding: 1px 3px; vertical-align: top; }
+  .keys td:first-child { white-space: nowrap; }
+  kbd { font: 700 11px ui-monospace, Menlo, Consolas, monospace; border: 1px solid #9aa4ae; border-bottom-width: 2px; border-radius: 4px; padding: 0 3px; background: #f7f8f9; }
+  code { font: 10.5px ui-monospace, Menlo, Consolas, monospace; }
+  .willdo { font-size: 11.5px; line-height: 1.25; }
+  .willdo ol { margin: 0; padding-left: 20px; }
+  .willdo-note { margin-top: 3px; background: #fff7d6; border-radius: 5px; padding: 2px 6px; color: #5b4500; }
+  .step p { margin: 0; font-size: 12px; line-height: 1.28; }
+  .step ol, .step ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.3; }
+  .step ol.loop li { margin: 1px 0; }
+  .sheet a { color: var(--blue); }
+  @media (max-width: 760px) { .steps { grid-template-columns: repeat(2, 1fr); } .sheet { padding: 16px; } .top img { height: 44px; } }
+  @media (max-width: 420px) { .steps { grid-template-columns: 1fr; } }
+  @media print {
+    @page { size: letter; margin: 0.3in 0.3in 0.45in;
+      @bottom-center { content: "Maker Lab Kids \00B7  robotics.makerlabkids.com"; font: 10px system-ui, sans-serif; color: #555; } }
+    .sheet a { color: inherit; }
+    .print-link { display: none; }
+    .top img { height: 46px; }
+    .note { margin: 6px 0 8px; padding: 4px 10px; background: none; }
+    html, body { background: #fff; }
+    .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    .sheet + .sheet { break-before: page; page-break-before: always; }
+    .num { background: none; color: var(--orange); border: 2px solid var(--orange); }
+    .console { background: none; }
+    kbd { background: none; }
+  }
+</style>
+<link rel="stylesheet" href="/css/nav.css">
+</head>
+<body>
+<!-- mlk-nav: written by scripts/site-nav.js, do not edit here -->
+<nav class="mlk-nav" aria-label="Robotics pages"><a class="mlk-nav-logo" href="https://makerlabkids.com/"><img src="/img/lockup.png" alt="Maker Lab Kids" width="300" height="99"></a><a href="/">Home</a><a href="/mecanum/remote-guide">IR Remote</a><a href="/mecanum/light">Light bot</a><a href="/mecanum/bluetooth">Sticks</a><a href="/mecanum/tune">Calibration</a><a href="/mecanum/wiring">Wiring</a><a href="/mecanum/blocks" class="active" aria-current="page">Blockly</a><a href="/mecanum/lessons/">Lessons</a></nav>
+<!-- /mlk-nav -->
+<div class="sheet">
+  <div class="top">
+    <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div><h1>Debugging with Blockly</h1><div class="sub">Finding out why the robot did not do what you meant. <span class="print-link">Print it: <a href="../resources/blockly-debug.pdf">PDF</a>. More: <a href="/mecanum/blockly-tips">Blockly tips and tricks</a>.</span></div></div>
+  </div>
+  <div class="note">A <b>bug</b> is the difference between what you think the program does and what it really does.
+  Do not guess: make the program <b>tell you</b>. It talks in the <b>Console</b>, next to the simulator.
+  Cards marked <span class="tag tag-key">try this</span> fix the most bugs.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-head"><span class="num">1</span>Read the console</div>
+      <div class="console"><div class="c-say">says: 1: to the wall</div><div class="c-simulator">sim: keep driving   v40,0,0;</div><div class="c-simulator">sim: stop   x</div><div class="c-say">says: 2: turn around</div><div class="c-simulator">sim: turn right 180°   m0,0,180;</div><div class="c-say">says: 3: back</div></div>
+      <p><b>says:</b> is your <b>say</b> block, <b>sim:</b> a move. <b>&#9888;</b> is a warning, <b>&#10006;</b> an error: the program stopped there.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">2</span>Watch it run</div>
+      <div class="pic"><img class="blocks" src="../img/blockly-debug-running.png" alt="Blocks: Watch it run" width="312" height="267"></div>
+      <p>The block that is running <b>lights up</b>. Set the simulator <b>Speed</b> to <b>real time</b> to follow along.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">3</span>Say what it sees</div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-sayloop.png" alt="Blocks: Say what it sees" width="576" height="374"></div>
+      <div class="console"><div class="c-say">says: sonar: 1585</div><div class="c-simulator">sim: forward 200 mm   m0,200,0;</div><div class="c-say">says: sonar: 1385</div></div>
+      <p>Put <b>say</b> inside the loop: the console shows the sensor <b>while</b> the program runs.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">4</span>Read once, use it twice<span class="tag tag-key" title="Try this first">try this</span></div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-readonce.png" alt="Blocks: Read once, use it twice" width="568" height="590"></div>
+      <div class="console"><div class="c-say">says: light: 66</div><div class="c-simulator">sim: turn right 90°   m0,0,90;</div></div>
+      <p>Every sensor block reads <b>again</b>. Read it into a variable once, then <b>say</b> that variable and <b>decide</b> with it: the number you see is the number it used.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">5</span>Label every say</div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-where.png" alt="Blocks: Label every say" width="608" height="460"></div>
+      <div class="console"><div class="c-say">says: 2: turn around</div><div class="c-say">says: 3: back</div></div>
+      <p>A bare <b>412</b> could be anything: say <b>"wall: "</b> and the number. Number your steps: the last one in the console is how far it got.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">6</span>Start clean<span class="tag tag-key" title="Try this first">try this</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-debug-clear.png" alt="Blocks: Start clean" width="292" height="280"></div>
+      <p>Right under <b>when RUN</b>: <b>clear the console</b>, then <b>set</b> every variable. Each run starts the same. (The <b>Clear</b> button empties it by hand.)</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">7</span>"undefined" means never set<span class="tag tag-key" title="Try this first">try this</span></div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-misspelled.png" alt="Blocks: "undefined" means never set" width="547" height="336"></div>
+      <div class="console"><div class="c-say">says: sides is undefined</div><div class="c-app">Program finished.</div></div>
+      <p>Every RUN starts all variables <b>empty</b>. <b>sides</b> is not <b>side</b>: a second variable nobody set. And the drive? <b>Skipped</b>, with no warning.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">8</span>Simulator first</div>
+      <div class="pic tiny"><img class="blocks" src="../img/blockly-debug-runon.png" alt="Blocks: Simulator first" width="163" height="37"></div>
+      <p>Wrong in the <b>simulator</b> too? It is the program. Right in the simulator, wrong on the robot? Look at the robot: its numbers, battery, sensor.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">9</span>One change at a time</div>
+      
+      <ol class="loop"><li>Guess what is wrong.</li><li>Change <b>one</b> thing.</li><li>RUN.</li><li>Look: better? Keep it. Not? <b>Undo</b> (Ctrl+Z).</li></ol>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">10</span>Make it smaller</div>
+      
+      <p>Right-click, <b>Disable Block</b> on half the program. Bug gone? It is in that half. Or put just <b>one subroutine</b> under a <b>when RUN</b> and test it alone.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">11</span>Run it three times</div>
+      
+      <p>Maps <b>4 to 10</b> change every run, and real floors and batteries change too. Worked once? Maybe lucky. Three in a row: it works.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">12</span>Explain it out loud</div>
+      
+      <p>Read your program to a friend (or a toy), block by block: "then it turns right 90..." Bugs show up when you say what each block <b>really</b> does.</p>
+    </div>
+  </div>
+</div>
+<div class="sheet">
+  <div class="top">
+    <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
+    <div><h1>Organize it, then ask the robot</h1><div class="sub">Programs that are easy to read are easy to fix. Then the real robot: what it sees, what it heard.</div></div>
+  </div>
+  <div class="note">Cards marked <span class="tag tag-robot">robot</span> need a robot connected (<b>Serial</b> or <b>Bluetooth</b>) and <b>Run on: Robot</b>.
+  Numbers on them are examples: yours will be different. That is the point of measuring.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-head"><span class="num">13</span>One job per subroutine<span class="tag tag-key" title="Try this first">try this</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-debug-jobs.png" alt="Blocks: One job per subroutine" width="541" height="229"></div>
+      <p>Do not pack it all into one long stack. Give each job a subroutine with a <b>name that says what it does</b>. The main program reads like a list.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">14</span>Inputs get their own names<span class="tag tag-key" title="Try this first">try this</span></div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-shadow.png" alt="Blocks: Inputs get their own names" width="668" height="277"></div>
+      <div class="console"><div class="c-say">says: 300</div><div class="c-say">says: 100</div></div>
+      <p>The input <b>size</b> said 300, the program's <b>size</b> stayed 100: <b>two boxes</b>, one name. Do not reuse a name: call the input <b>square size</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">15</span>Subroutines share the rest</div>
+      <div class="pic small"><img class="blocks" src="../img/blockly-debug-shared.png" alt="Blocks: Subroutines share the rest" width="608" height="325"></div>
+      <div class="console"><div class="c-say">says: 3</div></div>
+      <p>Every <b>other</b> variable is shared: <b>bump</b> changes the program's <b>count</b>. Handy for counters. To make a subroutine work on <b>any</b> number, use an input.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">16</span>Each tab is its own program</div>
+      <div class="console"><div class="c-say">says: 5</div><div class="c-say">says: 1</div></div>
+      <p><b>x</b> in one tab and <b>x</b> in another are two boxes. <b>run program</b> runs the other tab, but its variables stay there: here it said 5, and ours is still 1.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">17</span>Good names</div>
+      
+      <p><b>wall</b>, <b>side</b>, <b>light at start</b>: not <b>x</b> and <b>a</b>. A name that says what is inside makes the bug easy to spot.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">18</span>Save a copy first</div>
+      
+      <p>About to change a lot? <b>This program...</b>, <b>Duplicate</b>. Then try. Broken? The copy is still there. Small changes: <b>Ctrl+Z</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">19</span>Ask the robot<span class="tag tag-robot" title="Needs the real robot">robot</span></div>
+      <div class="pic table-pic"><table class="keys"><tr><td><kbd>u</kbd></td><td>the sonar: <code>U,412</code> is 412 mm, <code>U,-1</code> nothing in range</td></tr><tr><td><kbd>b</kbd></td><td>the light sensors: <code>B,</code>direction, brightest, left, right (0 to 1000)</td></tr><tr><td><kbd>p?;</kbd></td><td>what is saved in the remote slots</td></tr><tr><td><kbd>x</kbd></td><td>stop the wheels</td></tr><tr><td><kbd>?</kbd></td><td>the list of every command</td></tr></table></div>
+      <p>Connect, type in the box under the console, press <b>Send</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">20</span>Measure first<span class="tag tag-robot" title="Needs the real robot">robot</span></div>
+      <div class="console"><div class="c-sent">→ b</div><div class="c-robot">← B,0,412,398,412</div><div class="c-sent">→ b</div><div class="c-robot">← B,-13,846,846,520</div></div>
+      <p>Light numbers depend on the room. Read <b>b</b> where the robot will drive, then with the flashlight, and pick a number <b>in between</b>. The light level block is the brightest <b>&divide; 10</b>.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">21</span>Sonar -1 means nothing<span class="tag tag-robot" title="Needs the real robot">robot</span></div>
+      <div class="pic"><img class="blocks" src="../img/blockly-debug-minusone.png" alt="Blocks: Sonar -1 means nothing" width="643" height="433"></div>
+      <p><b>-1</b>: nothing in range (or no echo). <b>wall &lt; 300</b> is true for -1! Check <b>wall &gt; 0</b> too, or use <b>sees something closer than</b>: it ignores -1.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">22</span>The arrows: sent and answered<span class="tag tag-robot" title="Needs the real robot">robot</span></div>
+      <div class="console"><div class="c-sent">→ m0,300,0;</div><div class="c-robot">← move: done</div><div class="c-sent">→ u</div><div class="c-robot">← U,412</div><div class="c-say">says: wall: 412</div></div>
+      <p>With <b>Robot</b>: <b>&rarr;</b> is what the page sent, <b>&larr;</b> what the robot answered. No &larr; at all? The robot did not hear it.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">23</span>The robot will do</div>
+      <div class="pic table-pic"><div class="willdo"><ol><li>forward 300 mm</li><li>turn right 90°</li><li>forward 300 mm</li><li>turn right 90°</li><li>say &quot;half way&quot;</li></ol><div class="willdo-note">From here on it depends on what the sonar sees, so the rest cannot be worked out ahead of time.</div></div></div>
+      <p>Check the plan <b>before</b> you RUN: every move, in order, up to the first sensor block.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><span class="num">24</span>Robot not doing it?<span class="tag tag-robot" title="Needs the real robot">robot</span></div>
+      
+      <ul class="checks"><li>Switch on, shield light bright (dim: batteries).</li><li><b>Run on: Robot</b>, and connected.</li><li>One thing at a time over Bluetooth: wait for it, STOP if stuck.</li><li><b>u</b> and <b>b</b> answer? Sensor plugged in right.</li></ul>
+    </div>
+  </div>
+</div>
+<!-- mlk-foot -->
+<footer class="mlk-foot"><a href="/">Maker Lab Kids Robotics</a><span class="sep">&middot;</span><a href="https://makerlabkids.com/">makerlabkids.com</a><span class="sep">&middot;</span><a href="/archive/">Archive</a><span class="sep">&middot;</span><a href="https://github.com/MakerLabKids/robotics">Source</a></footer>
+<!-- /mlk-foot -->
+</body>
+</html>

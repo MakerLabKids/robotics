@@ -75,6 +75,7 @@ const PAGES = {
   "mecanum/blockly-guide.html": { active: "/mecanum/blocks" },
   "mecanum/blockly-tour.html": { active: "/mecanum/blocks" },
   "mecanum/blockly-tips.html": { active: "/mecanum/blocks" },
+  "mecanum/blockly-debug.html": { active: "/mecanum/blocks" },
   "mecanum/index.html": { setAside: "/mecanum/" },
   "mecanum/calibration.html": { setAside: "/mecanum/calibration", tool: true },
   "mecanum/rename.html": { setAside: "/mecanum/rename" },

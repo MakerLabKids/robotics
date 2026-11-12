@@ -15,7 +15,7 @@ from robot_svg import bot_top  # noqa: E402
 
 ROOT = os.path.join(HERE, "..")
 PAGE = os.path.join(ROOT, "mecanum", "blockly-guide.html")
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 
 WALL = "#8f98a3"
 STAR = "#f6c21c"
@@ -257,7 +257,7 @@ def build():
 <div class="sheet">
   <div class="top">
     <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
-    <div><h1>Programming with Blockly</h1><div class="sub">In the simulator first. Simple things first. <span class="print-link">Print it: <a href="../resources/blockly-guide.pdf">PDF</a>. What every part of the screen is: <a href="/mecanum/blockly-tour">The Blockly screen</a>. Tricks: <a href="/mecanum/blockly-tips">Blockly tips and tricks</a>.</span></div></div>
+    <div><h1>Programming with Blockly</h1><div class="sub">In the simulator first. Simple things first. <span class="print-link">Print it: <a href="../resources/blockly-guide.pdf">PDF</a>. What every part of the screen is: <a href="/mecanum/blockly-tour">The Blockly screen</a>. Tricks: <a href="/mecanum/blockly-tips">Blockly tips and tricks</a>. When it goes wrong: <a href="/mecanum/blockly-debug">Debugging with Blockly</a>.</span></div></div>
   </div>
   <div class="note">Every program starts under <b>when RUN is pressed</b>. Press <b>RUN</b> to try it, <b>STOP</b> to stop it,
   <b>Back to start</b> to put the robot back. Mistakes are fine: change one thing and run it again.</div>

@@ -11,7 +11,7 @@ import struct
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
 PAGE = os.path.join(ROOT, "mecanum", "blockly-tips.html")
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 KEYS = [
     ("Ctrl+C, Ctrl+V", "copy, paste (other tabs too)"),
@@ -177,7 +177,7 @@ def build():
 <div class="sheet">
   <div class="top">
     <img src="../img/lockup.png" alt="Maker Lab Kids" width="300" height="99">
-    <div><h1>Blockly tips and tricks</h1><div class="sub">The basics, variables, and the handy things nobody finds by looking. <span class="print-link">Print it: <a href="../resources/blockly-tips.pdf">PDF</a>. New to Blockly? <a href="/mecanum/blockly-guide">Programming with Blockly</a>.</span></div></div>
+    <div><h1>Blockly tips and tricks</h1><div class="sub">The basics, variables, and the handy things nobody finds by looking. <span class="print-link">Print it: <a href="../resources/blockly-tips.pdf">PDF</a>. New to Blockly? <a href="/mecanum/blockly-guide">Programming with Blockly</a>. When it goes wrong: <a href="/mecanum/blockly-debug">Debugging with Blockly</a>.</span></div></div>
   </div>
   <div class="note"><b>Click</b> a block to pick it. <b>Right-click</b> it for its menu. A <b>gear</b> changes its shape, a <b>triangle</b> is a list
   to choose from, a <b>?</b> is a note. Cards marked <span class="hidden">hidden</span> are tricks you only find if someone shows you.</div>
