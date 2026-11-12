@@ -249,6 +249,25 @@ holonomic sketch's laser). Not done, worth asking: a warning in the editor when 
 an empty or non-number value (today it silently skips); the tour screenshot still shows the
 old "e.g. rs" hint.
 
+Blockly layout for small screens (2026-11-12, the user: "our blockly env is hard to use on
+mobile or a low res monitor ... easier to see the different areas ... switch or maximize.
+maybe draggable proportions or show hide"). Blockly 0.1.28: wide screens get a dotted
+splitter between the blocks and the panel (drag; its › hides the panel; dragged shut hides
+it; double-click resets) and one between the simulator and the console (drag; Hide / Show
+simulator; dragged to the top hides the mat; to the bottom leaves only the console tabs).
+The title row hides by itself under 820 px tall, the site menu under 520 px (phones on their
+side); ⤢ next to undo hides both. Phones: the drawer under the blocks has a drag bar (a real
+button: Chrome's touch adjustment snaps a finger off a bare div onto the tabs) and ⤢ to fill
+the screen; the program tabs get their own row (they had no room at all at 390 px), This
+program... shows as ⋯, The robot will do as Will do. Room walls and size moved behind a Room
+button. Sizes live in editorSettings (sideWidthPx, sidePanelHidden, matHeightPx,
+simulatorHidden, drawerHeightPx, drawerMaximized, moreRoom). Bigger still works and replaces
+dragged sizes. Test: scripts/mecanum-sim/layout-e2e.js (in run-all; mouse drags on a
+1366 x 768 laptop, touch drags on a 390 x 844 phone, reload keeps the sizes). Gotcha: the
+site's `button:active { transform }` replaces a centering transform, so a pressed button
+jumped and the click landed on its parent: center with margins. Not redone yet: the Blockly
+Screen tour's screenshots (new splitters, ⤢, Room).
+
 Sonar on a real robot (2026-11-10): the user's robot on 0.10.87, pins checked, still answers U,-1.
 In sonarMm() that is either no echo start within 2 ms of the ping or an echo over 25 ms.
 Diagnostic sketch sonar-test/sonar-test.ino (served at /sonar-test/sonar-test.ino): pings

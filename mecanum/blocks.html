@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex">
-<title>Mecanum Blocks 0.1.27 - Maker Lab Kids</title>
+<title>Mecanum Blocks 0.1.28 - Maker Lab Kids</title>
 <style>
 :root {
   --bench: #e8ecef;
@@ -166,9 +166,13 @@ select { border: 1px solid var(--line); border-radius: var(--radius); background
 .flash-attention { animation: flashAttention 0.9s ease-in-out 2; }
 @keyframes flashAttention { 50% { box-shadow: 0 0 0 5px var(--chalk); } }
 
+/* The blocks, a splitter, then the simulator and console. --side-width is the panel's width:
+   the defaults below, or what a drag on the splitter left (set on the element by applyLayout). */
 .work-area {
+  --side-width: 400px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
+  grid-template-columns: minmax(0, 1fr) auto var(--side-width);
+  grid-row: 5;      /* stays in the tall row when More room hides the bars above it */
   min-height: 0;
 }
 .blockly-area { position: relative; min-width: 0; min-height: 0; background: var(--panel); }
@@ -176,20 +180,52 @@ select { border: 1px solid var(--line); border-radius: var(--radius); background
 .load-problem { padding: 24px; max-width: 60ch; }
 
 .side-panel {
+  --mat-default: min(380px, 42vh);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  border-left: 1px solid var(--line);
+  grid-template-rows: auto auto minmax(0, 1fr);
   background: var(--panel);
   min-height: 0;
   min-width: 0;
 }
+.simulator-section { grid-row: 1; min-width: 0; }
+.splitter-sim { grid-row: 2; }
+.pane-area { grid-row: 3; }
+@media (min-width: 901px) {
+  .side-panel.sim-hidden .simulator-section { display: none; }
+  .work-area.side-hidden { grid-template-columns: minmax(0, 1fr) auto 0; }
+  .work-area.side-hidden .side-panel { display: none; }
+}
+
+/* Splitters: drag to share the space, a button on each to hide a part */
+.splitter { position: relative; background: #e6ebf0; touch-action: none; user-select: none; display: flex; align-items: center; justify-content: center; }
+.splitter:hover, .splitter.is-dragging, .splitter:focus-visible { background: #cfd8e1; }
+.splitter-side { width: 12px; cursor: col-resize; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.splitter .grip { display: block; border-radius: 0; background: none; opacity: 0.6; }
+.splitter-side .grip { width: 6px; height: 36px; border-left: 2px dotted var(--ink-soft); border-right: 2px dotted var(--ink-soft); }
+.splitter-button { position: absolute; top: 8px; left: 50%; margin-left: -11px; z-index: 5; width: 22px; height: 40px; padding: 0; border-radius: 11px; font-size: 16px; font-weight: 700; line-height: 1; background: var(--panel); }
+.splitter-sim { height: 14px; cursor: row-resize; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.splitter-sim .grip { width: 40px; height: 6px; border-top: 2px dotted var(--ink-soft); border-bottom: 2px dotted var(--ink-soft); }
+.splitter-text-button { position: absolute; right: 6px; top: 50%; margin-top: -10px; padding: 0 8px; font-size: 12px; line-height: 18px; border-radius: 9px; background: var(--panel); }
+.side-panel.sim-hidden .splitter-sim { height: 26px; }
+.drawer-handle { display: none; }
+.drawer-maximize { display: none; }
+.room-button { font-size: 16px; padding-left: 9px; padding-right: 9px; }
+body.more-room .mlk-nav, body.more-room .site-bar { display: none; }
+.short-label { display: none; }
+.room-settings { display: inline-flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
+.room-settings[open] { flex-basis: 100%; }
+.room-settings summary { cursor: pointer; border: 1px solid var(--line); border-radius: var(--radius); padding: 3px 8px; background: var(--panel); list-style: none; }
+.room-settings summary::-webkit-details-marker { display: none; }
+.room-settings summary::after { content: " ▾"; }
+.room-settings[open] summary::after { content: " ▴"; }
+.room-settings[open] { display: flex; }
 .simulator-section { padding: 10px; border-bottom: 1px solid var(--line); }
 .simulator-task { margin: 2px 0 6px; font-size: 13px; font-weight: 600; color: var(--ink); }
 .simulator-mat { touch-action: none; }   /* (a finger drags the robot or the lamp, not the page) */
 .simulator-mat {
   display: block;
   width: 100%;
-  height: min(380px, 42vh);
+  height: var(--mat-height, var(--mat-default));
   border-radius: 6px;
   background: var(--mat);
 }
@@ -297,18 +333,25 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 .blocklyToolboxCategoryLabel { font-family: var(--ui-font) !important; }
 
 @media (min-width: 1500px) {
-  .work-area { grid-template-columns: minmax(0, 1fr) 440px; }
+  .work-area { --side-width: 440px; }
 }
 @media (max-width: 1400px) {
   .bar-group-label { display: none; }
-  .work-area { grid-template-columns: minmax(0, 1fr) 360px; }
+  .work-area { --side-width: 360px; }
+}
+/* short screens (a 1366 x 768 laptop): the page title row goes; phones on their side: the site menu too */
+@media (max-height: 820px) {
+  .site-bar { display: none; }
+}
+@media (max-height: 520px) {
+  body .mlk-nav { display: none; }
 }
 @media (max-width: 1150px) {
   .page-compat { display: none; }
 }
 @media (min-width: 901px) {
-  .work-area.has-big-simulator { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
-  .has-big-simulator .simulator-mat { height: min(54vh, 760px); }
+  .work-area.has-big-simulator { --side-width: 53vw; }
+  .has-big-simulator .side-panel { --mat-default: min(54vh, 760px); }
 }
 @media (max-width: 900px) {
   body { font-size: 14px; }
@@ -327,21 +370,36 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
   .run-bar button, .run-bar select { padding-left: 9px; padding-right: 9px; }
   .simulator-readout { white-space: normal; }
   .work-area { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
-  .side-panel { border-left: none; border-top: 2px solid var(--ink); grid-template-rows: minmax(0, 1fr); }
-  .pane-area { grid-row: 1; grid-column: 1; }
+  .splitter-side, .splitter-sim { display: none; }
+  .side-panel { border-left: none; border-top: 2px solid var(--ink); grid-template-rows: auto minmax(0, 1fr); --drawer-height: 46dvh; }
+  .drawer-handle { display: flex; grid-row: 1; width: 100%; height: 26px; padding: 0; border: none; border-radius: 0; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; background: #e6ebf0; border-bottom: 1px solid var(--line); }
+  .drawer-handle:active { transform: none; }
+  .drawer-handle .grip { width: 44px; height: 5px; border-radius: 3px; background: var(--ink-soft); opacity: 0.6; }
+  .side-panel.is-collapsed .drawer-handle { display: none; }
+  .drawer-maximize { display: inline-block; margin-left: auto; font-size: 15px; }
+  .side-panel.is-collapsed .drawer-maximize { display: none; }
+  .pane-area { grid-row: 2; grid-column: 1; }
   .pane-tab-simulator { display: inline-block; }
-  .simulator-section { display: none; grid-row: 1; grid-column: 1; margin-top: 37px; border-bottom: none; overflow: auto; }
-  .simulator-mat { height: 210px; }
+  .simulator-section { display: none; grid-row: 2; grid-column: 1; margin-top: 37px; border-bottom: none; overflow: auto; }
+  .simulator-mat { height: max(150px, calc(var(--drawer-height) - 190px)); }
   .work-area { grid-template-columns: minmax(0, 1fr); }
   .side-panel.is-collapsed .pane { display: none; }
   .side-panel.is-collapsed .simulator-section { display: none; }
-  .side-panel:not(.is-collapsed) { height: 46dvh; }
+  .side-panel:not(.is-collapsed) { height: var(--drawer-height); }
   .side-panel:not(.is-collapsed)[data-pane="simulator"] .simulator-section { display: block; }
   .side-panel[data-pane="simulator"] .pane { display: none; }
   .blocklyToolboxCategoryLabel { font-size: 13px !important; }
   .blocklyToolboxCategory { padding-right: 2px !important; }
   .sketch-select { display: none; }
   .share-columns { grid-template-columns: minmax(0, 1fr); }
+}
+/* phones: the tabs get a row of their own under the buttons, or they have no room at all */
+@media (max-width: 600px) {
+  .program-bar { flex-wrap: wrap; row-gap: 4px; }
+  .program-tabs { order: 10; flex: 1 0 100%; }
+  .program-bar-button:not(.robot-chip) { border-radius: 8px; border-bottom: 1px solid var(--line); margin-bottom: 2px; padding-left: 9px; padding-right: 9px; }
+  .long-label { display: none; }
+  .short-label { display: inline; }
 }
 @media (prefers-reduced-motion: reduce) {
   .flash-attention { animation: none; box-shadow: 0 0 0 5px var(--chalk); }
@@ -364,9 +422,10 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
   <button type="button" class="program-bar-button robot-chip" id="robotChipButton" title="Whose programs these are: each robot keeps its own tabs on this computer">Robot: shared ▾</button>
   <div class="program-tabs" id="programTabs" role="tablist" aria-label="Programs"></div>
   <button type="button" class="program-bar-button" id="addProgramButton" title="New program">+ New</button>
-  <button type="button" class="program-bar-button" id="programMenuButton" title="Rename, duplicate or delete this program">This program…</button>
+  <button type="button" class="program-bar-button" id="programMenuButton" title="Rename, duplicate or delete this program"><span class="long-label">This program…</span><span class="short-label" aria-hidden="true">⋯</span></button>
   <button type="button" class="program-bar-button" id="undoButton" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
   <button type="button" class="program-bar-button" id="redoButton" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
+  <button type="button" class="program-bar-button room-button" id="moreRoomButton" aria-pressed="false">⤢</button>
 </div>
 
 <div class="run-bar">
@@ -397,7 +456,14 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 <main class="work-area">
   <div class="blockly-area" id="blocklyArea"><div id="blocklyDiv"></div></div>
 
+  <div class="splitter splitter-side" id="sideSplitter" role="separator" aria-orientation="vertical" tabindex="0"
+       title="Drag to make the simulator and console wider or narrower (double-click: back to normal)">
+    <button type="button" class="splitter-button" id="sidePanelToggleButton">›</button>
+    <span class="grip"></span>
+  </div>
+
   <aside class="side-panel is-collapsed" id="sidePanel" data-pane="console">
+    <button type="button" class="drawer-handle" id="drawerHandle" aria-label="Drag up or down to make this part bigger or smaller" title="Drag up or down to make this part bigger or smaller"><span class="grip"></span></button>
     <section class="simulator-section" id="simulatorSection" aria-label="Simulator">
       <canvas class="simulator-mat" id="simulatorCanvas"></canvas>
       <p class="simulator-readout" id="simulatorReadout"></p>
@@ -422,18 +488,27 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
         </label>
         <button type="button" class="wide-screen-button" id="simulatorBiggerButton">Bigger</button>
         <button type="button" id="simulatorFullScreenButton" title="The simulator on the whole screen (Esc leaves)">Full screen</button>
-        <label><input type="checkbox" id="simulatorRoomCheckbox"> walls</label>
-        <label><input type="number" id="simulatorRoomWidthInput" min="400" step="100" aria-label="Room width in millimeters"> ×</label>
-        <label><input type="number" id="simulatorRoomDepthInput" min="400" step="100" aria-label="Room depth in millimeters"> mm</label>
         <button type="button" id="simulatorResetButton">Back to start</button>
+        <details class="room-settings">
+          <summary title="The walls around the floor and its size">Room</summary>
+          <label><input type="checkbox" id="simulatorRoomCheckbox"> walls</label>
+          <label><input type="number" id="simulatorRoomWidthInput" min="400" step="100" aria-label="Room width in millimeters"> ×</label>
+          <label><input type="number" id="simulatorRoomDepthInput" min="400" step="100" aria-label="Room depth in millimeters"> mm</label>
+        </details>
       </div>
     </section>
+    <div class="splitter splitter-sim" id="simSplitter" role="separator" aria-orientation="horizontal" tabindex="0"
+         title="Drag to share the space between the simulator and the console (double-click: back to normal)">
+      <span class="grip"></span>
+      <button type="button" class="splitter-text-button" id="simulatorToggleButton">▲ Hide simulator</button>
+    </div>
     <div class="pane-area">
       <div class="pane-tabs" id="paneTabs">
         <button type="button" class="pane-tab-simulator" data-pane="simulator">Simulator</button>
         <button type="button" data-pane="console">Console</button>
-        <button type="button" data-pane="willdo">The robot will do</button>
+        <button type="button" data-pane="willdo"><span class="long-label">The robot will do</span><span class="short-label">Will do</span></button>
         <button type="button" data-pane="code">Code</button>
+        <button type="button" class="drawer-maximize" id="drawerMaximizeButton">⤢</button>
       </div>
       <div class="pane pane-console" data-pane-body="console">
         <div class="console-lines" id="consoleLines" aria-live="polite"></div>
@@ -545,7 +620,7 @@ code { font-family: var(--mono-font); font-size: 0.92em; }
 
 /* ============================ CONFIG ============================ */
 
-var EDITOR_VERSION = '0.1.27';
+var EDITOR_VERSION = '0.1.28';
 var EDITOR_COMPATIBILITY_NOTE = 'for mecanum_holonomic 0.10.12+, programming.ino and ir.ino';
 var BLOCKLY_MEDIA_PATH = 'vendor/blockly/media/';
 var PUBLISHED_PAGE_ADDRESS = 'https://robotics.makerlabkids.com/mecanum/blocks.html';
@@ -4049,7 +4124,15 @@ var editorSettings = {
   simulatorStartForwardMm: 0,
   simulatorLampRightMm: SIMULATED_LAMP.rightMm,   // where the lamp sits (drag it there)
   simulatorLampForwardMm: SIMULATED_LAMP.forwardMm,
-  simulatorMap: 'square'          // which of SIMULATOR_MAPS
+  simulatorMap: 'square',         // which of SIMULATOR_MAPS
+  // the layout (see LAYOUT): null = the page's own size for this screen
+  sideWidthPx: null,              // the simulator + console panel, dragged wider or narrower
+  sidePanelHidden: false,
+  matHeightPx: null,              // the simulator mat, dragged taller or shorter
+  simulatorHidden: false,
+  drawerHeightPx: null,           // phones: the part under the blocks
+  drawerMaximized: false,
+  moreRoom: false                 // the site menu and the title row hidden
 };
 var isLoadingProgramIntoWorkspace = false;
 var saveTimer = null;
@@ -5066,6 +5149,212 @@ function pressPaneTab(paneName) {
   openSidePane(paneName);
 }
 
+/* ============================ LAYOUT: splitters, hide and show ============================ */
+/* Wide screens: the blocks | a splitter | the panel (simulator, a splitter, the console).
+   Drag a splitter to share the space; its button hides a part; double-click puts it back to
+   the page's own size. Phones (900 px and narrower): the panel is a drawer under the blocks
+   with a handle to drag and a button to fill the screen. Every size is kept in editorSettings. */
+
+var LAYOUT_MIN_SIDE_PX = 260, LAYOUT_MIN_BLOCKS_PX = 300, LAYOUT_MIN_MAT_PX = 90, LAYOUT_CONSOLE_ROOM_PX = 100;
+
+function isSmallLayout() { return window.matchMedia('(max-width: 900px)').matches; }
+
+function clampNumber(value, low, high) { return Math.max(low, Math.min(high, value)); }
+
+function largestSideWidth() {
+  return Math.max(LAYOUT_MIN_SIDE_PX, document.querySelector('.work-area').clientWidth - LAYOUT_MIN_BLOCKS_PX - 12);
+}
+
+// The tallest the mat can be with the console's tabs still on screen (console room as well
+// unless the kid dragged it bigger on purpose).
+function largestMatHeight(leaveConsoleRoom) {
+  var sidePanel = elementById('sidePanel');
+  var mat = elementById('simulatorCanvas');
+  var rest = elementById('simulatorSection').offsetHeight - mat.offsetHeight;
+  var below = elementById('simSplitter').offsetHeight + elementById('paneTabs').offsetHeight + 2;
+  return sidePanel.clientHeight - rest - below - (leaveConsoleRoom ? LAYOUT_CONSOLE_ROOM_PX : 0);
+}
+
+function fitSimulatorMat() {
+  var sidePanel = elementById('sidePanel');
+  if (isSmallLayout() || editorSettings.simulatorHidden || editorSettings.sidePanelHidden || sidePanel.clientHeight === 0) {
+    sidePanel.style.removeProperty('--mat-height');
+    return;
+  }
+  var wanted = editorSettings.matHeightPx;
+  if (!wanted) {
+    var big = Boolean(editorSettings.simulatorIsBig);
+    wanted = Math.min(big ? 760 : 380, window.innerHeight * (big ? 0.54 : 0.42));
+  }
+  var height = clampNumber(wanted, LAYOUT_MIN_MAT_PX, Math.max(LAYOUT_MIN_MAT_PX, largestMatHeight(!editorSettings.matHeightPx)));
+  sidePanel.style.setProperty('--mat-height', Math.round(height) + 'px');
+}
+
+function applyLayout() {
+  var workArea = document.querySelector('.work-area');
+  var sidePanel = elementById('sidePanel');
+  document.body.classList.toggle('more-room', Boolean(editorSettings.moreRoom));
+  var roomButton = elementById('moreRoomButton');
+  roomButton.setAttribute('aria-pressed', editorSettings.moreRoom ? 'true' : 'false');
+  roomButton.textContent = editorSettings.moreRoom ? '⤡' : '⤢';
+  roomButton.title = editorSettings.moreRoom ? 'Show the site menu again' : 'More room: hide the site menu and the title';
+
+  workArea.classList.toggle('side-hidden', Boolean(editorSettings.sidePanelHidden));
+  if (editorSettings.sideWidthPx && !editorSettings.simulatorIsBig) {
+    workArea.style.setProperty('--side-width', Math.round(clampNumber(editorSettings.sideWidthPx, LAYOUT_MIN_SIDE_PX, largestSideWidth())) + 'px');
+  } else {
+    workArea.style.removeProperty('--side-width');
+  }
+  var sideButton = elementById('sidePanelToggleButton');
+  sideButton.textContent = editorSettings.sidePanelHidden ? '‹' : '›';
+  sideButton.title = editorSettings.sidePanelHidden ? 'Show the simulator and the console' : 'Hide the simulator and the console: more room for blocks';
+
+  sidePanel.classList.toggle('sim-hidden', Boolean(editorSettings.simulatorHidden));
+  elementById('simulatorToggleButton').textContent = editorSettings.simulatorHidden ? '▼ Show simulator' : '▲ Hide simulator';
+
+  if (editorSettings.drawerMaximized) {
+    sidePanel.style.setProperty('--drawer-height', workArea.clientHeight + 'px');
+  } else if (editorSettings.drawerHeightPx) {
+    sidePanel.style.setProperty('--drawer-height', Math.round(clampNumber(editorSettings.drawerHeightPx, 120, workArea.clientHeight)) + 'px');
+  } else {
+    sidePanel.style.removeProperty('--drawer-height');
+  }
+  var maximizeButton = elementById('drawerMaximizeButton');
+  maximizeButton.textContent = editorSettings.drawerMaximized ? '⤡' : '⤢';
+  maximizeButton.title = editorSettings.drawerMaximized ? 'Make it smaller again: show the blocks' : 'Fill the screen with this part';
+
+  fitSimulatorMat();
+  if (blockWorkspace !== null) { Blockly.svgResize(blockWorkspace); }
+  drawSimulator();
+}
+
+function changeLayout(changes) {
+  for (var key in changes) { editorSettings[key] = changes[key]; }
+  saveEditorSettings();
+  applyLayout();
+}
+
+// A pointer drag on a handle: start(event) returns what move and end need.
+function makeDragHandle(handle, start, move, end) {
+  handle.addEventListener('pointerdown', function beginDrag(event) {
+    var pressed = event.target.closest('button');
+    if ((pressed && pressed !== handle) || (event.pointerType === 'mouse' && event.button !== 0)) { return; }
+    event.preventDefault();
+    var state = start(event);
+    if (state === null) { return; }
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add('is-dragging');
+    function moveDrag(moveEvent) { move(state, moveEvent.clientX - event.clientX, moveEvent.clientY - event.clientY); }
+    function endDrag() {
+      handle.removeEventListener('pointermove', moveDrag);
+      handle.removeEventListener('pointerup', endDrag);
+      handle.removeEventListener('pointercancel', endDrag);
+      handle.classList.remove('is-dragging');
+      end(state);
+    }
+    handle.addEventListener('pointermove', moveDrag);
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+  });
+}
+
+function wireUpLayout() {
+  var workArea = document.querySelector('.work-area');
+  var sidePanel = elementById('sidePanel');
+  var sideSplitter = elementById('sideSplitter');
+  var simSplitter = elementById('simSplitter');
+
+  // the panel's width; dragged almost shut it hides
+  makeDragHandle(sideSplitter, function startSideDrag() {
+    return { from: editorSettings.sidePanelHidden ? 0 : sidePanel.offsetWidth, width: null };
+  }, function moveSideDrag(state, dx) {
+    state.width = clampNumber(state.from - dx, 0, largestSideWidth());
+    workArea.classList.toggle('side-hidden', state.width < 120);
+    workArea.style.setProperty('--side-width', Math.round(Math.max(state.width, LAYOUT_MIN_SIDE_PX)) + 'px');
+  }, function endSideDrag(state) {
+    if (state.width === null) { return; }
+    if (state.width < 120) { changeLayout({ sidePanelHidden: true }); return; }
+    changeLayout({ sidePanelHidden: false, simulatorIsBig: false, sideWidthPx: Math.round(Math.max(state.width, LAYOUT_MIN_SIDE_PX)) });
+    showSimulatorSettings();
+  });
+  sideSplitter.addEventListener('dblclick', function resetSideWidth() { changeLayout({ sideWidthPx: null, sidePanelHidden: false }); });
+  sideSplitter.addEventListener('keydown', function keySideSplitter(event) {
+    var step = { ArrowLeft: 30, ArrowRight: -30 }[event.key];
+    if (step) {
+      event.preventDefault();
+      changeLayout({ sidePanelHidden: false, simulatorIsBig: false, sideWidthPx: clampNumber(sidePanel.offsetWidth + step, LAYOUT_MIN_SIDE_PX, largestSideWidth()) });
+      showSimulatorSettings();
+    }
+  });
+  elementById('sidePanelToggleButton').addEventListener('click', function toggleSidePanel() {
+    changeLayout({ sidePanelHidden: !editorSettings.sidePanelHidden });
+  });
+
+  // the mat's height against the console; dragged almost shut the simulator hides
+  makeDragHandle(simSplitter, function startSimDrag() {
+    return { from: editorSettings.simulatorHidden ? 0 : elementById('simulatorCanvas').offsetHeight, height: null, wasHidden: Boolean(editorSettings.simulatorHidden) };
+  }, function moveSimDrag(state, dx, dy) {
+    if (state.wasHidden && dy > 20) {
+      // it opens at the smallest size; the drag carries on from there
+      state.wasHidden = false;
+      editorSettings.simulatorHidden = false;
+      sidePanel.classList.remove('sim-hidden');
+      state.from = LAYOUT_MIN_MAT_PX - dy;
+    }
+    if (state.wasHidden) { return; }
+    state.height = clampNumber(state.from + dy, 0, Math.max(LAYOUT_MIN_MAT_PX, largestMatHeight(false)));
+    sidePanel.style.setProperty('--mat-height', Math.round(Math.max(state.height, LAYOUT_MIN_MAT_PX * 0.6)) + 'px');
+  }, function endSimDrag(state) {
+    if (state.height === null) { applyLayout(); return; }
+    if (state.height < LAYOUT_MIN_MAT_PX * 0.6) { changeLayout({ simulatorHidden: true }); return; }
+    changeLayout({ simulatorHidden: false, matHeightPx: Math.round(Math.max(state.height, LAYOUT_MIN_MAT_PX)) });
+  });
+  simSplitter.addEventListener('dblclick', function resetMat(event) {
+    if (event.target.closest('button')) { return; }
+    changeLayout({ matHeightPx: null, simulatorHidden: false });
+  });
+  simSplitter.addEventListener('keydown', function keySimSplitter(event) {
+    var step = { ArrowUp: -30, ArrowDown: 30 }[event.key];
+    if (step) {
+      event.preventDefault();
+      changeLayout({ simulatorHidden: false, matHeightPx: clampNumber(elementById('simulatorCanvas').offsetHeight + step, LAYOUT_MIN_MAT_PX, largestMatHeight(false)) });
+    }
+  });
+  elementById('simulatorToggleButton').addEventListener('click', function toggleSimulator() {
+    changeLayout({ simulatorHidden: !editorSettings.simulatorHidden });
+  });
+
+  // phones: the drawer under the blocks
+  makeDragHandle(elementById('drawerHandle'), function startDrawerDrag() {
+    return { from: sidePanel.offsetHeight, height: null };
+  }, function moveDrawerDrag(state, dx, dy) {
+    state.height = clampNumber(state.from - dy, 60, workArea.clientHeight);
+    sidePanel.style.setProperty('--drawer-height', Math.round(state.height) + 'px');
+  }, function endDrawerDrag(state) {
+    if (state.height === null) { return; }
+    if (state.height < 110) {
+      sidePanel.classList.add('is-collapsed');
+      showSidePane();
+      changeLayout({ drawerMaximized: false });
+      return;
+    }
+    changeLayout({ drawerHeightPx: Math.round(state.height), drawerMaximized: state.height >= workArea.clientHeight - 24 });
+  });
+  elementById('drawerMaximizeButton').addEventListener('click', function toggleDrawerSize() {
+    changeLayout({ drawerMaximized: !editorSettings.drawerMaximized });
+  });
+
+  elementById('moreRoomButton').addEventListener('click', function toggleMoreRoom() {
+    changeLayout({ moreRoom: !editorSettings.moreRoom });
+  });
+
+  window.addEventListener('resize', applyLayout);
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(function panelResized() { fitSimulatorMat(); }).observe(sidePanel);
+  }
+  applyLayout();
+}
+
 function chooseRunTarget(targetName) {
   editorSettings.runTarget = targetName;
   var buttons = elementById('runTargetButtons').querySelectorAll('button');
@@ -5105,6 +5394,8 @@ function fillHelpDialog() {
     '<p>Drag blocks from the left and snap them under <b>when RUN is pressed</b>. Blocks that are not joined to a start block or a subroutine turn gray and do nothing.</p>' +
     '<p>Each tab is one program with its own blocks, variables and subroutines. The number on a tab is its place in the row; tabs 1 to 9 are also the remote\'s slots 1 to 9, and they start out holding nine demos (+ New can put them back). Make a subroutine in <b>Subroutines</b>, give it a name, then use its call block as often as you like. To reuse one in another tab, select it, copy (Ctrl+C), switch tabs and paste (Ctrl+V).</p>' +
     '<p>A program can run another program: <b>run program</b> (in Start) runs the tab you pick by its name, then carries on. Give tabs names worth calling (This program…, Rename): the blocks that run a tab follow its new name. With more than one <b>when RUN is pressed</b> block in a tab, they run one after another, top one first.</p>' +
+    '<h3>Make room</h3>' +
+    '<p>Drag the dotted bar between the blocks and the simulator to share the space; its <b>›</b> button hides the simulator and console (<b>‹</b> brings them back). The dotted bar between the simulator and the console works the same way: drag it, or <b>Hide simulator</b>. Double-click a bar to put it back. <b>⤢</b> (next to undo) hides the site menu. On a phone, drag the bar above the Simulator / Console tabs, or press <b>⤢</b> there to fill the screen. This browser remembers the sizes.</p>' +
     '<h3>Try it</h3>' +
     '<p><b>New here?</b> <a href="/mecanum/blockly-guide" target="_blank">Programming with Blockly</a>: first steps, then ten simulator maps to solve (pick one under the simulator: Map). <a href="/mecanum/blockly-tour" target="_blank">The Blockly screen</a>: what every part of this page is. <a href="/mecanum/blockly-tips" target="_blank">Blockly tips and tricks</a>: variables, the gears, right-click menus and keys that are easy to miss. <a href="/mecanum/blockly-debug" target="_blank">Debugging with Blockly</a>: the console, say blocks, and commands to ask the robot what it sees.</p>' +
     '<p><b>Simulator</b> runs the program on a pretend robot, with pretend walls for the laser and sonar. <b>Robot</b> sends each block to the real robot as it runs and lights up the block it is doing. STOP always stops both.</p>' +
@@ -5264,7 +5555,7 @@ function wireUpPage() {
 
   elementById('paneTabs').addEventListener('click', function pressPaneTabButton(event) {
     var button = event.target.closest('button');
-    if (button) { pressPaneTab(button.dataset.pane); }
+    if (button && button.dataset.pane) { pressPaneTab(button.dataset.pane); }
   });
 
   elementById('consoleSendForm').addEventListener('submit', function submitConsoleCommand(event) {
@@ -5284,9 +5575,13 @@ function wireUpPage() {
   elementById('simulatorSpeedSelect').addEventListener('change', readSimulatorSettingsFromPage);
   elementById('simulatorViewSelect').addEventListener('change', readSimulatorSettingsFromPage);
   elementById('simulatorBiggerButton').addEventListener('click', function pressSimulatorBigger() {
+    // Bigger and Smaller are the page's two sizes: they replace any dragged ones
     editorSettings.simulatorIsBig = !editorSettings.simulatorIsBig;
+    editorSettings.sideWidthPx = null;
+    editorSettings.matHeightPx = null;
+    editorSettings.simulatorHidden = false;
     readSimulatorSettingsFromPage();
-    Blockly.svgResize(blockWorkspace);
+    applyLayout();
   });
   elementById('simulatorFullScreenButton').addEventListener('click', function pressSimulatorFullScreen() {
     var section = elementById('simulatorSection');
@@ -5361,6 +5656,7 @@ function startEditor() {
   renderProgramTabs();
   loadActiveProgramIntoWorkspace();
   showSidePane();
+  wireUpLayout();
   resetSimulatorWorld();
   addConsoleLine('app', 'Mecanum Blocks v' + EDITOR_VERSION + ' ready. RUN uses the simulator until a robot is connected.');
   if (!('serial' in navigator) && !('bluetooth' in navigator)) {

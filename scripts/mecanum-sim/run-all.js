@@ -11,15 +11,15 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // (autocal and tape test the old app-driven calibration: calibration.ino is by hand now)
-const SUITES = ['sensors', 'program', 'sticks', 'calpage', 'rename', 'ir', 'programming', 'blocks', 'tune', 'maps'];
-const USB_ONLY = ['ir', 'programming', 'blocks', 'maps'];   // (maps-e2e: the Blocks simulator only, no robot)   // (ir-e2e and programming-e2e drive the simulator from a script, Bluetooth pin included; blocks-e2e points the page's serial link at it)
+const SUITES = ['sensors', 'program', 'sticks', 'calpage', 'rename', 'ir', 'programming', 'blocks', 'tune', 'maps', 'layout'];
+const USB_ONLY = ['ir', 'programming', 'blocks', 'maps', 'layout'];   // (maps-e2e: the Blocks simulator only, no robot; layout-e2e: the Blocks page's splitters, no robot)   // (ir-e2e and programming-e2e drive the simulator from a script, Bluetooth pin included; blocks-e2e points the page's serial link at it)
 const JOBS = Math.max(1, parseInt(process.argv[2] || process.env.MECANUM_JOBS || '4', 10));
 const runs = [];
 SUITES.forEach((suite) => (USB_ONLY.includes(suite) ? ['usb'] : ['usb', 'bt']).forEach((link) => runs.push({ suite, link })));
 runs.push({ suite: 'blocks', link: 'programming' });   // the Blocks page again, its remote half on programming.ino
 runs.push({ suite: 'sticks', link: 'bt programming' });   // the Sticks page as the class uses it: programming.ino over Bluetooth
 // Longest suites first so the tail is short.
-const ORDER = { calpage: 0, tune: 0, autocal: 1, tape: 2, blocks: 3, maps: 3, program: 4, sensors: 5, sticks: 6, rename: 7, ir: 8, programming: 9 };
+const ORDER = { calpage: 0, tune: 0, autocal: 1, tape: 2, blocks: 3, maps: 3, layout: 9, program: 4, sensors: 5, sticks: 6, rename: 7, ir: 8, programming: 9 };
 runs.sort((a, b) => ORDER[a.suite] - ORDER[b.suite]);
 
 // The two sketches must share the same motion code before any suite runs.
